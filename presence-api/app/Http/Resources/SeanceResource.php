@@ -16,6 +16,16 @@ class SeanceResource extends JsonResource
             'id' => $this->id,
             'salle' => $this->whenLoaded('salle', fn () => $this->salle->nom),
             'enseignant' => $this->whenLoaded('enseignant', fn () => $this->enseignant->name),
+            'matiere' => $this->whenLoaded('courseTemplate', fn () => $this->courseTemplate?->matiere?->nom),
+            'push' => $this->whenLoaded('pushRequest', fn () => $this->pushRequest ? [
+                'etudiants_presents' => $this->pushRequest->etudiants_presents,
+                'status' => $this->pushRequest->status->value,
+            ] : null),
+            // Présence de l'étudiant courant — seulement peuplé quand
+            // SeanceController::today() a chargé `presences` filtrée sur son
+            // propre id (vue Étudiant uniquement).
+            'ma_presence' => $this->whenLoaded('presences', fn () => $this->presences->first()?->etat?->value),
+            'position_envoyee' => $this->whenLoaded('position', fn () => $this->position !== null),
             'groupe' => $this->groupe,
             'date_seance' => $this->date_seance?->toDateString(),
             'jour' => $this->jour->value,

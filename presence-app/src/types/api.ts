@@ -53,6 +53,7 @@ export interface Seance {
   matiere?: string;
   push?: { etudiants_presents: number; status: PushStatus } | null;
   ma_presence?: PresenceState | null;
+  position_envoyee?: boolean;
 }
 
 export interface RosterEntry {

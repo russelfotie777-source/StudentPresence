@@ -10,11 +10,13 @@ use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\PdfController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PresenceController;
+use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\RequeteController;
 use App\Http\Controllers\Api\SalleController;
 use App\Http\Controllers\Api\SeanceController;
 use App\Http\Controllers\Api\SemaineController;
 use App\Http\Controllers\Api\SessionHistoryController;
+use App\Http\Controllers\Api\StudentSearchController;
 use App\Http\Controllers\Api\TarifHeureController;
 use Illuminate\Support\Facades\Route;
 
@@ -86,4 +88,8 @@ Route::middleware(['auth:sanctum', 'validated'])->group(function () {
 
     Route::post('/requetes', [RequeteController::class, 'store']);
     Route::get('/requetes/mine', [RequeteController::class, 'mine']);
+
+    Route::get('/students/search', [StudentSearchController::class, 'index']);
+    Route::get('/promotions', [PromotionController::class, 'index']);
+    Route::post('/promotions', [PromotionController::class, 'store']);
 });

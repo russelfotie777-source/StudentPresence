@@ -22,6 +22,16 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    /**
+     * Sans ça, un User fraîchement créé sans `quota` explicite (ex.
+     * AuthController::register) expose `quota: null` en mémoire tant que le
+     * modèle n'a pas été rechargé depuis la base — Eloquent ne relit pas les
+     * valeurs par défaut des colonnes après un insert.
+     */
+    protected $attributes = [
+        'quota' => 0,
+    ];
+
     protected function casts(): array
     {
         return [
