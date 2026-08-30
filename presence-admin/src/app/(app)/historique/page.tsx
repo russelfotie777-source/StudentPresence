@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import { salleHooks } from "@/hooks/use-catalog";
 import type { Seance } from "@/types/api";
 
 interface HistoriqueResponse {
@@ -15,6 +17,7 @@ interface HistoriqueResponse {
 
 export default function HistoriquePage() {
   const [salleId, setSalleId] = useState("");
+  const { data: salles } = salleHooks.useList();
 
   const { data, isLoading } = useQuery({
     queryKey: ["historique-seances", salleId],
@@ -26,7 +29,21 @@ export default function HistoriquePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-zinc-900">Historique des séances</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-zinc-900">Historique des séances</h1>
+        <Select value={salleId} onValueChange={(v) => setSalleId(v ?? "")}>
+          <SelectTrigger className="w-56">
+            <SelectValue placeholder="Toutes les salles" />
+          </SelectTrigger>
+          <SelectContent>
+            {salles?.map((s) => (
+              <SelectItem key={s.id} value={String(s.id)}>
+                {s.nom}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {data && (
         <div className="flex gap-4 text-sm text-zinc-600">
