@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import { useConfirmRoster, useRoster } from "@/hooks/use-seances";
 import { ApiError } from "@/lib/api-client";
 import type { Seance } from "@/types/api";
@@ -92,21 +94,32 @@ export function RosterDialog({
         )}
 
         {roster && (
-          <div className="flex flex-col divide-y">
-            {roster.map((etudiant) => (
-              <label
-                key={etudiant.id}
-                className="flex items-center justify-between gap-2 py-2 text-sm"
-              >
-                <span>{etudiant.name}</span>
-                <input
-                  type="checkbox"
-                  checked={checked.has(etudiant.id)}
-                  onChange={() => toggle(etudiant.id)}
-                  className="h-4 w-4"
-                />
-              </label>
-            ))}
+          <div className="flex flex-col gap-1.5">
+            {roster.map((etudiant) => {
+              const isChecked = checked.has(etudiant.id);
+              return (
+                <label
+                  key={etudiant.id}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors",
+                    isChecked ? "border-primary/30 bg-primary/5" : "border-border",
+                  )}
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                    {etudiant.name
+                      .split(" ")
+                      .map((p) => p[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()}
+                  </div>
+                  <span className="flex-1 truncate font-medium text-foreground">
+                    {etudiant.name}
+                  </span>
+                  <Checkbox checked={isChecked} onCheckedChange={() => toggle(etudiant.id)} />
+                </label>
+              );
+            })}
             {roster.length === 0 && (
               <p className="py-4 text-center text-sm text-muted-foreground">
                 Aucun étudiant trouvé pour cette salle/niveau.

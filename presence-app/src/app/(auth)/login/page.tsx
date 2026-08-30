@@ -3,11 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLogin } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
 
@@ -39,60 +38,62 @@ export default function LoginPage() {
       : null;
 
   return (
-    <Card className="border-violet-800/40 bg-white/5 backdrop-blur">
-      <CardHeader>
-        <CardTitle className="text-white">Connexion</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {errorMessage && (
-            <Alert variant="destructive">
-              <AlertDescription>{errorMessage}</AlertDescription>
-            </Alert>
-          )}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div>
+        <h2 className="text-xl font-semibold text-foreground">Connexion</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Entrez vos identifiants pour continuer.
+        </p>
+      </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="phone" className="text-violet-100">
-              Téléphone
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              autoComplete="tel"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="border-violet-700/50 bg-white/10 text-white placeholder:text-violet-300"
-            />
-          </div>
+      {errorMessage && (
+        <div className="flex items-start gap-2 rounded-xl bg-destructive/10 px-3.5 py-3 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password" className="text-violet-100">
-              Mot de passe
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border-violet-700/50 bg-white/10 text-white placeholder:text-violet-300"
-            />
-          </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="phone">Téléphone</Label>
+        <Input
+          id="phone"
+          type="tel"
+          autoComplete="tel"
+          required
+          placeholder="6XX XXX XXX"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="h-12 rounded-xl text-base"
+        />
+      </div>
 
-          <Button type="submit" disabled={login.isPending} className="mt-2">
-            {login.isPending ? "Connexion…" : "Se connecter"}
-          </Button>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="password">Mot de passe</Label>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="h-12 rounded-xl text-base"
+        />
+      </div>
 
-          <p className="text-center text-sm text-violet-200">
-            Pas encore de compte ?{" "}
-            <Link href="/register" className="font-medium text-white underline">
-              S&apos;inscrire
-            </Link>
-          </p>
-        </form>
-      </CardContent>
-    </Card>
+      <Button
+        type="submit"
+        disabled={login.isPending}
+        className="mt-1 h-12 rounded-xl text-base font-medium shadow-sm"
+      >
+        {login.isPending ? "Connexion…" : "Se connecter"}
+      </Button>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Pas encore de compte ?{" "}
+        <Link href="/register" className="font-medium text-primary">
+          S&apos;inscrire
+        </Link>
+      </p>
+    </form>
   );
 }

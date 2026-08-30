@@ -65,7 +65,12 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Le campus est au Cameroun (WAT, UTC+1, pas de changement d'heure) —
+    // l'ancienne app fixait explicitement Africa/Douala côté salaireprof.php.
+    // Load-bearing ici : toute la fenêtre active ±15min (Seance::isActive)
+    // et les horodatages debut_reel/fin_reelle comparent des heures murales
+    // réelles, pas UTC.
+    'timezone' => 'Africa/Douala',
 
     /*
     |--------------------------------------------------------------------------

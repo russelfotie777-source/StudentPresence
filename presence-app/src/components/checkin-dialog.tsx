@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { CheckCircle2, Loader2, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -50,35 +51,48 @@ export function CheckInDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-3 py-2">
+        <div className="flex flex-col items-center gap-3 py-4 text-center">
           {geo.status === "loading" && (
-            <p className="text-sm text-muted-foreground">Localisation en cours…</p>
+            <>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground">Localisation en cours…</p>
+            </>
+          )}
+
+          {geo.status === "success" && !checkIn.isSuccess && (
+            <>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <MapPin className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Position obtenue. Confirmez pour valider votre présence — la distance avec le
+                délégué est vérifiée côté serveur.
+              </p>
+            </>
+          )}
+
+          {checkIn.isSuccess && (
+            <>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success/15">
+                <CheckCircle2 className="h-6 w-6 text-success" />
+              </div>
+              <p className="text-sm font-medium text-foreground">
+                Présence confirmée ({checkIn.data?.distance}m du délégué)
+              </p>
+            </>
           )}
 
           {geo.status === "error" && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="text-left">
               <AlertDescription>{geo.errorMessage}</AlertDescription>
             </Alert>
           )}
 
-          {geo.status === "success" && !checkIn.isSuccess && (
-            <p className="text-sm text-muted-foreground">
-              Position obtenue. Confirmez pour valider votre présence — la distance avec le
-              délégué est vérifiée côté serveur.
-            </p>
-          )}
-
           {apiError && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="text-left">
               <AlertDescription>{apiError}</AlertDescription>
-            </Alert>
-          )}
-
-          {checkIn.isSuccess && (
-            <Alert>
-              <AlertDescription>
-                Présence confirmée ({checkIn.data?.distance}m du délégué).
-              </AlertDescription>
             </Alert>
           )}
         </div>
@@ -92,6 +106,7 @@ export function CheckInDialog({
           <Button
             onClick={handleConfirm}
             disabled={!geo.coords || checkIn.isPending || checkIn.isSuccess}
+            className="rounded-lg"
           >
             {checkIn.isPending ? "Envoi…" : "Confirmer ma présence"}
           </Button>
