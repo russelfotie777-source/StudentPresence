@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,11 +29,17 @@ export function RosterDialog({
   const confirmRoster = useConfirmRoster(seance.id);
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
+  // Initialise `checked` dès que le roster arrive (données async de
+  // useRoster) — setState pendant le rendu plutôt que dans un effet, pattern
+  // recommandé par React pour "ajuster un state quand une prop change" :
+  // https://react.dev/learn/you-might-not-need-an-effect
+  const [syncedRoster, setSyncedRoster] = useState(roster);
+  if (roster !== syncedRoster) {
+    setSyncedRoster(roster);
     if (roster) {
       setChecked(new Set(roster.filter((r) => r.etat === "present").map((r) => r.id)));
     }
-  }, [roster]);
+  }
 
   const attendu = seance.push?.etudiants_presents ?? null;
   const depasse = attendu !== null && checked.size > attendu;

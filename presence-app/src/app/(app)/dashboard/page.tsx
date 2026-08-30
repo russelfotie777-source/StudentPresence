@@ -34,6 +34,9 @@ export default function DashboardPage() {
             <Link href="/requetes" className="text-violet-700 underline">
               Requêtes
             </Link>
+            <Link href="/promotion" className="text-violet-700 underline">
+              Promotion
+            </Link>
           </nav>
         )}
       </div>
