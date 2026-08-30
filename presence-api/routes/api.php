@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccountValidationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
+use App\Http\Controllers\Api\EnseignantController;
 use App\Http\Controllers\Api\FiliereController;
 use App\Http\Controllers\Api\MatiereController;
 use App\Http\Controllers\Api\NiveauController;
@@ -53,6 +54,8 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
 
     Route::apiResource('course-templates', CourseTemplateController::class);
     Route::post('/course-templates/{courseTemplate}/generate', [CourseTemplateController::class, 'generate']);
+
+    Route::get('/enseignants', [EnseignantController::class, 'index']);
 
     Route::get('/tarifs-heures', [TarifHeureController::class, 'index']);
     Route::put('/tarifs-heures/{niveau}', [TarifHeureController::class, 'update']);
