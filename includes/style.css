@@ -1,0 +1,125 @@
+:root {
+    --violet-neon: #bc13fe;
+    --noir-profond: #0a0a0a;
+    --blanc: #ffffff;
+}
+
+body {
+    background-color: var(--noir-profond);
+    color: var(--blanc);
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.auth-container {
+    background-color: rgba(10, 10, 10, 0.8);
+    border: 2px solid var(--violet-neon);
+    border-radius: 10px;
+    box-shadow: 0 0 20px var(--violet-neon);
+    padding: 30px;
+    width: 350px;
+    animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 10px var(--violet-neon);
+    }
+    to {
+        box-shadow: 0 0 20px var(--violet-neon), 0 0 30px var(--violet-neon);
+    }
+}
+
+h1 {
+    color: var(--violet-neon);
+    text-align: center;
+    margin-bottom: 25px;
+    text-shadow: 0 0 10px var(--violet-neon);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--violet-neon);
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--noir-profond);
+    border: 1px solid var(--violet-neon);
+    border-radius: 5px;
+    color: var(--blanc);
+    font-size: 16px;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--blanc);
+    box-shadow: 0 0 10px var(--violet-neon);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--violet-neon);
+    color: var(--noir-profond);
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+button:hover {
+    background-color: var(--blanc);
+    color: var(--noir-profond);
+    box-shadow: 0 0 15px var(--violet-neon);
+}
+
+.error {
+    color: #ff3860;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.success {
+    color: #09c372;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.navbar {
+    background-color: var(--noir-profond);
+    border-bottom: 1px solid var(--violet-neon);
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar a {
+    color: var(--violet-neon);
+    text-decoration: none;
+    margin-left: 20px;
+    transition: all 0.3s;
+}
+
+.navbar a:hover {
+    color: var(--blanc);
+    text-shadow: 0 0 10px var(--violet-neon);
+}
+
+.classroom-field {
+    display: none;
+}
