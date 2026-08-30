@@ -60,8 +60,6 @@ export interface Enseignant {
 export function useEnseignants() {
   return useQuery({
     queryKey: ["enseignants"],
-    // Pas d'endpoint dédié : on réutilise la recherche d'étudiants côté
-    // enseignant ? Non — il faut un endpoint propre. Voir note ci-dessous.
     queryFn: () => apiFetch<Enseignant[]>("/api/enseignants"),
   });
 }

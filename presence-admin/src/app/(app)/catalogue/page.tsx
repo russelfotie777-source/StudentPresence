@@ -84,7 +84,7 @@ function FilieresPanel() {
   return (
     <Card>
       <CardContent className="flex flex-col gap-3 py-4">
-        <Select value={niveauId} onValueChange={setNiveauId}>
+        <Select value={niveauId} onValueChange={(v) => setNiveauId(v ?? "")}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Filtrer par niveau" />
           </SelectTrigger>
@@ -143,7 +143,7 @@ function SallesPanel() {
   return (
     <Card>
       <CardContent className="flex flex-col gap-3 py-4">
-        <Select value={filiereId} onValueChange={setFiliereId}>
+        <Select value={filiereId} onValueChange={(v) => setFiliereId(v ?? "")}>
           <SelectTrigger className="w-56">
             <SelectValue placeholder="Filtrer par filière" />
           </SelectTrigger>
@@ -158,7 +158,7 @@ function SallesPanel() {
 
         <div className="flex flex-wrap gap-2">
           <Input placeholder="Nom de la salle" value={nom} onChange={(e) => setNom(e.target.value)} />
-          <Select value={formation} onValueChange={setFormation}>
+          <Select value={formation} onValueChange={(v) => setFormation(v ?? "FI")}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
