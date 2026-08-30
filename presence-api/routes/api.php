@@ -7,12 +7,14 @@ use App\Http\Controllers\Api\FiliereController;
 use App\Http\Controllers\Api\MatiereController;
 use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\PdfController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\RequeteController;
 use App\Http\Controllers\Api\SalleController;
 use App\Http\Controllers\Api\SeanceController;
 use App\Http\Controllers\Api\SemaineController;
+use App\Http\Controllers\Api\SessionHistoryController;
 use App\Http\Controllers\Api\TarifHeureController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +53,8 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
     Route::post('/requetes/{requete}/process', [RequeteController::class, 'process']);
 
     Route::get('/payroll/teachers/{teacher}', [PayrollController::class, 'forTeacher']);
+
+    Route::get('/historique-seances', [SessionHistoryController::class, 'index']);
 });
 
 // Cœur métier : présence — accessible à Étudiant/Délégué/Enseignant selon
@@ -66,6 +70,7 @@ Route::middleware(['auth:sanctum', 'validated'])->group(function () {
     Route::post('/seances/{seance}/check-in', [PresenceController::class, 'checkIn']);
     Route::get('/seances/{seance}/roster', [PresenceController::class, 'roster']);
     Route::post('/seances/{seance}/confirm-roster', [PresenceController::class, 'confirmRoster']);
+    Route::get('/seances/{seance}/presence-list.pdf', [PdfController::class, 'presenceList']);
 
     Route::get('/payroll/me', [PayrollController::class, 'me']);
 
