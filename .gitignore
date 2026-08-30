@@ -1,11 +1,36 @@
-# Real credentials (see *.example.php for the templates to copy from)
-includes/config.php
-superprotect/includes/db.php
-superprotect/includes/admin_credentials.php
+# --- legacy-php/ (ancienne app PHP, v1) ---
+# Vrais identifiants (voir *.example.php pour les modèles)
+legacy-php/includes/config.php
+legacy-php/superprotect/includes/db.php
+legacy-php/superprotect/includes/admin_credentials.php
 
-# Real student-submitted files (attendance dispute proof photos, etc.)
-uploads/requetes/*
-!uploads/requetes/.gitkeep
+# Vrais fichiers déposés par des utilisateurs (preuves de contestation, etc.)
+legacy-php/uploads/requetes/*
+!legacy-php/uploads/requetes/.gitkeep
+
+# --- presence-api/ (Laravel) ---
+presence-api/.env
+presence-api/vendor/
+presence-api/node_modules/
+presence-api/storage/*.key
+presence-api/storage/pail
+presence-api/public/storage
+presence-api/public/build
+presence-api/public/hot
+presence-api/.phpunit.result.cache
+presence-api/.phpunit.cache
+
+# --- presence-app/ et presence-admin/ (Next.js) ---
+presence-app/node_modules/
+presence-app/.next/
+presence-app/out/
+presence-app/.env*
+!presence-app/.env*.example
+presence-admin/node_modules/
+presence-admin/.next/
+presence-admin/out/
+presence-admin/.env*
+!presence-admin/.env*.example
 
 # OS/editor cruft
 .DS_Store
