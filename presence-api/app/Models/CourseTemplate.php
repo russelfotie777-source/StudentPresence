@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Weekday;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['matiere_id', 'enseignant_id', 'salle_id', 'groupe', 'jour', 'heure_debut', 'heure_fin', 'date_debut', 'date_fin', 'actif'])]
 class CourseTemplate extends Model
 {
+    use HasFactory;
+
     protected function casts(): array
     {
         return [
