@@ -196,7 +196,7 @@ function CourseTemplatesSection() {
                 <p className="text-xs text-zinc-500">
                   {t.jour} {t.heure_debut}–{t.heure_fin} · {t.date_debut} → {t.date_fin}
                 </p>
-                {results[t.id] && <p className="text-xs text-violet-700">{results[t.id]}</p>}
+                {results[t.id] && <p className="text-xs text-primary">{results[t.id]}</p>}
               </div>
               <Button
                 size="sm"
