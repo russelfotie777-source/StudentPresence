@@ -15,7 +15,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'phone', 'email', 'password', 'role', 'formation', 'salle_id', 'niveau_id', 'filiere_id'])]
+#[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -95,11 +95,25 @@ class User extends Authenticatable
 
     /**
      * Vrai si une promotion temporaire (Étudiant → Délégué) est active en ce moment.
-     * Contrairement à l'ancienne app, ce n'est jamais figé en session : c'est
-     * recalculé à chaque requête via un middleware (voir EnsureRoleAbilities).
+     * Contrairement à l'ancienne app, ce n'est jamais figé en session/token : c'est
+     * recalculé à chaque requête via effectiveRole() / le middleware EnsureRole.
      */
     public function hasActivePromotion(): bool
     {
         return $this->promotionsRecues()->where('date_fin', '>', now())->exists();
+    }
+
+    /**
+     * Rôle réellement applicable pour cette requête : identique à `role`, sauf
+     * pour un Étudiant avec une promotion temporaire active, qui agit alors
+     * comme Délégué de sa propre salle.
+     */
+    public function effectiveRole(): UserRole
+    {
+        if ($this->role === UserRole::Etudiant && $this->hasActivePromotion()) {
+            return UserRole::Delegue;
+        }
+
+        return $this->role;
     }
 }

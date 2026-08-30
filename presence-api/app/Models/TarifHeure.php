@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['niveau_id', 'tarif_heure'])]
 class TarifHeure extends Model
 {
+    // Table réelle "tarifs_heures" — la convention Eloquent par défaut
+    // donnerait "tarif_heures".
+    protected $table = 'tarifs_heures';
+
     protected function casts(): array
     {
         return ['tarif_heure' => 'decimal:2'];
