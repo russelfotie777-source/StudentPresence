@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['seance_id', 'delegue_id', 'latitude', 'longitude'])]
 class PositionSeance extends Model
 {
+    use HasFactory;
+
     // Table réelle "positions_seances" — la convention Eloquent par défaut
     // donnerait "position_seances".
     protected $table = 'positions_seances';

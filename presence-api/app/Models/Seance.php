@@ -31,6 +31,7 @@ class Seance extends Model
             'etat_prof' => PresenceState::class,
             'etat_final' => PresenceState::class,
             'presences_locked' => 'boolean',
+            'quota_credited_at' => 'datetime',
         ];
     }
 
@@ -64,7 +65,14 @@ class Seance extends Model
         return $this->hasOne(PositionSeance::class);
     }
 
-    public function push(): HasOne
+    /**
+     * Nommée `pushRequest` (et non `push`) : Eloquent\Model définit déjà une
+     * méthode native `push()` (sauvegarde récursive du modèle + relations) —
+     * un relation nommée pareil compile, mais l'accès magique `$seance->push`
+     * reste toujours null car Eloquent refuse de résoudre en relation un nom
+     * qui collisionne avec une méthode existante de la classe Model de base.
+     */
+    public function pushRequest(): HasOne
     {
         return $this->hasOne(Push::class);
     }
@@ -80,12 +88,16 @@ class Seance extends Model
      */
     public function debutPrevu(): Carbon
     {
-        return Carbon::parse($this->date_seance?->toDateString() ?? today()->toDateString().' '.$this->heure_debut);
+        $date = $this->date_seance?->toDateString() ?? today()->toDateString();
+
+        return Carbon::parse("{$date} {$this->heure_debut}");
     }
 
     public function finPrevue(): Carbon
     {
-        return Carbon::parse($this->date_seance?->toDateString() ?? today()->toDateString().' '.$this->heure_fin);
+        $date = $this->date_seance?->toDateString() ?? today()->toDateString();
+
+        return Carbon::parse("{$date} {$this->heure_fin}");
     }
 
     /**

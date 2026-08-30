@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Enums\PresenceState;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['seance_id', 'etudiant_id', 'etat', 'date_marquage'])]
 class PresenceEtudiant extends Model
 {
+    use HasFactory;
+
     // Convention Eloquent par défaut : "presence_etudiants" (ne pluralise que
     // le dernier mot) — la vraie table (héritée de l'ancienne app) est
     // "presences_etudiants".
