@@ -1,0 +1,11 @@
+# Real credentials (see *.example.php for the templates to copy from)
+includes/config.php
+superprotect/includes/db.php
+superprotect/includes/admin_credentials.php
+
+# Real student-submitted files (attendance dispute proof photos, etc.)
+uploads/requetes/*
+!uploads/requetes/.gitkeep
+
+# OS/editor cruft
+.DS_Store
