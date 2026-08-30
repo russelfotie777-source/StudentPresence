@@ -50,7 +50,7 @@ export default function AdminRequetesPage() {
                       href={r.preuve_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm text-violet-700 underline"
+                      className="text-sm text-primary underline"
                     >
                       Voir la preuve
                     </a>
