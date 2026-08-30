@@ -32,6 +32,10 @@ return new class extends Migration
             // un champ de notes libres.
             $table->boolean('presences_locked')->default(false);
             $table->text('commentaires')->nullable();
+            // Idempotence du crédit d'heures au quota de l'enseignant (voir
+            // SeanceController::markDelegue) — corrige un bug de double-
+            // comptage de l'ancienne app.
+            $table->timestamp('quota_credited_at')->nullable();
             $table->timestamps();
 
             $table->index(['salle_id', 'semaine_id', 'jour']);
