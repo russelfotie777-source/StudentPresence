@@ -29,11 +29,21 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+// Lecture publique du catalogue (niveaux/filières/salles) : nécessaire pour
+// peupler le formulaire d'inscription (register.php le faisait déjà côté
+// ancienne app, sans authentification). Uniquement index/show — la
+// création/modification reste réservée à l'admin ci-dessous.
+Route::middleware([])->group(function () {
+    Route::apiResource('niveaux', NiveauController::class)->only(['index', 'show']);
+    Route::apiResource('filieres', FiliereController::class)->only(['index', 'show']);
+    Route::apiResource('salles', SalleController::class)->only(['index', 'show']);
+});
+
 // Catalogue académique + planification — réservé au back-office admin.
 Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function () {
-    Route::apiResource('niveaux', NiveauController::class);
-    Route::apiResource('filieres', FiliereController::class);
-    Route::apiResource('salles', SalleController::class);
+    Route::apiResource('niveaux', NiveauController::class)->except(['index', 'show']);
+    Route::apiResource('filieres', FiliereController::class)->except(['index', 'show']);
+    Route::apiResource('salles', SalleController::class)->except(['index', 'show']);
     Route::apiResource('matieres', MatiereController::class);
 
     Route::apiResource('semaines', SemaineController::class);
