@@ -2,44 +2,84 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
+use App\Enums\ValidationStatus;
+use App\Models\Salle;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
             'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'phone' => fake()->unique()->numerify('6#########'),
             'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'role' => UserRole::Etudiant,
+            'validation_status' => ValidationStatus::Approved,
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
+    public function etudiant(?Salle $salle = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+        return $this->state(function () use ($salle) {
+            $salle ??= Salle::factory()->create();
+
+            return [
+                'role' => UserRole::Etudiant,
+                'validation_status' => ValidationStatus::Approved,
+                'formation' => $salle->formation,
+                'salle_id' => $salle->id,
+                'filiere_id' => $salle->filiere_id,
+                'niveau_id' => $salle->filiere->niveau_id,
+            ];
+        });
+    }
+
+    public function delegue(?Salle $salle = null): static
+    {
+        return $this->state(function () use ($salle) {
+            $salle ??= Salle::factory()->create();
+
+            return [
+                'role' => UserRole::Delegue,
+                'validation_status' => ValidationStatus::Approved,
+                'formation' => $salle->formation,
+                'salle_id' => $salle->id,
+                'filiere_id' => $salle->filiere_id,
+                'niveau_id' => $salle->filiere->niveau_id,
+            ];
+        });
+    }
+
+    public function enseignant(): static
+    {
+        return $this->state(fn () => [
+            'role' => UserRole::Enseignant,
+            'validation_status' => ValidationStatus::Approved,
         ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'role' => UserRole::Admin,
+            'validation_status' => ValidationStatus::Approved,
+        ]);
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn () => ['validation_status' => ValidationStatus::None]);
     }
 }

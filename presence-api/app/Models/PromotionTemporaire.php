@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['etudiant_id', 'promoteur_id', 'date_debut', 'date_fin', 'duree_minutes'])]
 class PromotionTemporaire extends Model
 {
+    // Table réelle "promotions_temporaires" — la convention Eloquent par
+    // défaut donnerait "promotion_temporaires".
+    protected $table = 'promotions_temporaires';
+
     protected function casts(): array
     {
         return [

@@ -14,6 +14,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class RequeteEnseignant extends Model
 {
+    // Table réelle "requetes_enseignants" — la convention Eloquent par
+    // défaut donnerait "requete_enseignants".
+    protected $table = 'requetes_enseignants';
+
     protected function casts(): array
     {
         return [

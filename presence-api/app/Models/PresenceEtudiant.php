@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['seance_id', 'etudiant_id', 'etat', 'date_marquage'])]
 class PresenceEtudiant extends Model
 {
+    // Convention Eloquent par défaut : "presence_etudiants" (ne pluralise que
+    // le dernier mot) — la vraie table (héritée de l'ancienne app) est
+    // "presences_etudiants".
+    protected $table = 'presences_etudiants';
+
     protected function casts(): array
     {
         return [
