@@ -41,6 +41,7 @@ export function PushDialog({
             min={0}
             value={count}
             onChange={(e) => setCount(Number(e.target.value))}
+            className="h-12 rounded-xl text-center text-lg font-semibold"
           />
         </div>
 
@@ -48,6 +49,7 @@ export function PushDialog({
           <Button
             onClick={() => push.mutate(count, { onSuccess: () => onOpenChange(false) })}
             disabled={push.isPending}
+            className="rounded-lg"
           >
             {push.isPending ? "Envoi…" : "Valider"}
           </Button>

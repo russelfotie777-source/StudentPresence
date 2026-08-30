@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyPayroll } from "@/hooks/use-payroll";
 
@@ -14,73 +13,66 @@ export default function SalairePage() {
   const { data, isLoading } = useMyPayroll();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-zinc-900">Mon salaire</h1>
-        <Link href="/dashboard" className="text-sm text-violet-700 underline">
-          Retour
-        </Link>
-      </div>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Mon salaire</h1>
 
-      {isLoading && <Skeleton className="h-24 w-full rounded-xl" />}
+      {isLoading && <Skeleton className="h-28 w-full rounded-2xl" />}
 
       {data && (
         <>
-          <Card>
-            <CardContent className="grid grid-cols-2 gap-4 py-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-violet-700">
-                  {formatFcfa(data.total_salaire)}
-                </p>
-                <p className="text-xs text-zinc-500">Total</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatFcfa(data.total_penalite_retard)}
-                </p>
-                <p className="text-xs text-zinc-500">Pénalités de retard</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-border bg-card p-4 text-center">
+              <p className="text-2xl font-bold text-primary">{formatFcfa(data.total_salaire)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Total gagné</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4 text-center">
+              <p className="text-2xl font-bold text-destructive">
+                {formatFcfa(data.total_penalite_retard)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Pénalités de retard</p>
+            </div>
+          </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             {data.lignes.map((ligne) => (
-              <Card key={ligne.seance_id}>
-                <CardContent className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="text-sm font-medium">{ligne.matiere ?? "—"}</p>
-                    <p className="text-xs text-zinc-500">
-                      {ligne.date} · {ligne.salle} · {ligne.heure_debut}
-                    </p>
-                    {ligne.retard_minutes > 0 && (
-                      <Badge variant="outline" className="mt-1 text-amber-700">
-                        {ligne.retard_minutes} min de retard
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-violet-700">
-                      {formatFcfa(ligne.salaire)}
-                    </p>
-                    {ligne.penalite_retard > 0 && (
-                      <>
-                        <p className="text-xs text-red-600">
-                          -{formatFcfa(ligne.penalite_retard)}
-                        </p>
-                        <Link
-                          href={`/requetes?seance_id=${ligne.seance_id}`}
-                          className="text-xs text-violet-700 underline"
-                        >
-                          Contester
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <div
+                key={ligne.seance_id}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {ligne.matiere ?? "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {ligne.date} · {ligne.salle} · {ligne.heure_debut}
+                  </p>
+                  {ligne.retard_minutes > 0 && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-medium text-warning-foreground">
+                      <AlertTriangle className="h-3 w-3" />
+                      {ligne.retard_minutes} min de retard
+                    </span>
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-semibold text-foreground">{formatFcfa(ligne.salaire)}</p>
+                  {ligne.penalite_retard > 0 && (
+                    <>
+                      <p className="text-xs text-destructive">
+                        -{formatFcfa(ligne.penalite_retard)}
+                      </p>
+                      <Link
+                        href={`/requetes?seance_id=${ligne.seance_id}`}
+                        className="text-xs font-medium text-primary"
+                      >
+                        Contester
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
             ))}
             {data.lignes.length === 0 && (
-              <p className="mt-8 text-center text-sm text-zinc-500">
+              <p className="mt-8 text-center text-sm text-muted-foreground">
                 Aucune séance rémunérée pour l&apos;instant.
               </p>
             )}
