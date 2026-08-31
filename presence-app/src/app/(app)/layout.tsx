@@ -37,7 +37,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col bg-background">
-      <main className="flex flex-1 flex-col px-4 pt-6 pb-24">
+      <main
+        className="flex flex-1 flex-col px-4 pt-6"
+        style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}
+      >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={pathname}
