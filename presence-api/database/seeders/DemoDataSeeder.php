@@ -25,11 +25,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Jeu de données de démonstration réaliste : niveau L3, deux filières,
- * enseignants/délégués/étudiants nommés (identifiants fixes affichés en fin
- * de commande), 8 semaines d'historique de séances/présences + une séance
- * "en direct" bornée sur l'heure courante pour tester le pointage tout de
- * suite. Idempotent : rejouable sans dupliquer (updateOrCreate partout, et
+ * Jeu de données de démonstration réaliste : les 3 niveaux réels du campus
+ * (L1/L2/L3), avec filières/salles/matières de L3 reprises du nom et de la
+ * structure de l'ancienne base (la cohorte "Niveau 2" de l'ancienne app est
+ * celle qui passe en L3 cette année — voir CLAUDE.md). Étudiants identifiés
+ * par matricule (pas par téléphone — seul le personnel Délégué/Enseignant a
+ * un vrai numéro), comme dans l'ancienne app. 8 semaines d'historique de
+ * séances/présences/salaires à taux variables + une séance "en direct"
+ * bornée sur l'heure courante pour tester le pointage tout de suite.
+ * Idempotent : rejouable sans dupliquer (updateOrCreate partout, et
  * SeanceGenerator lui-même n'insère jamais deux fois la même séance).
  *
  * php artisan db:seed --class=DemoDataSeeder
@@ -42,22 +46,31 @@ class DemoDataSeeder extends Seeder
     {
         $this->generator = app(SeanceGenerator::class);
 
+        // Le campus n'a que 3 niveaux ; seul le L3 (cohorte active cette
+        // année) reçoit un catalogue/historique complet dans cette démo.
+        Niveau::updateOrCreate(['nom' => 'L1']);
+        Niveau::updateOrCreate(['nom' => 'L2']);
         $niveau = Niveau::updateOrCreate(['nom' => 'L3']);
 
-        $filiereGL = Filiere::updateOrCreate(['nom' => 'Génie Logiciel', 'niveau_id' => $niveau->id]);
-        $filiereRT = Filiere::updateOrCreate(['nom' => 'Réseaux & Télécoms', 'niveau_id' => $niveau->id]);
+        $filiereGI = Filiere::updateOrCreate(['nom' => 'Génie Informatique', 'niveau_id' => $niveau->id]);
+        $filiereGRT = Filiere::updateOrCreate(['nom' => 'GRT', 'niveau_id' => $niveau->id]);
 
-        $salleA = Salle::updateOrCreate(['nom' => 'Amphi A101'], ['filiere_id' => $filiereGL->id, 'formation' => 'FI']);
-        $salleB = Salle::updateOrCreate(['nom' => 'Salle B203'], ['filiere_id' => $filiereRT->id, 'formation' => 'FI']);
+        // Noms de salles réels de l'ancienne base (pas des libellés inventés).
+        $salleA = Salle::updateOrCreate(['nom' => 'A23-FI'], ['filiere_id' => $filiereGI->id, 'formation' => 'FI']);
+        $salleB = Salle::updateOrCreate(['nom' => 'D4-FA'], ['filiere_id' => $filiereGRT->id, 'formation' => 'FA']);
 
-        TarifHeure::updateOrCreate(['niveau_id' => $niveau->id], ['tarif_heure' => 2500]);
+        TarifHeure::updateOrCreate(['niveau_id' => $niveau->id], ['tarif_heure' => 3000]);
 
+        // Matières réelles de l'ancienne base (codes/noms repris tels quels).
         $matieres = [
-            'ALG301' => 'Algorithmique Avancée',
-            'BDD301' => 'Bases de Données',
-            'RES301' => 'Réseaux Informatiques',
-            'ANG301' => 'Anglais Technique',
-            'GL301' => 'Génie Logiciel',
+            'GI 321' => 'Mathématiques Discrètes',
+            'GI 314' => 'Réseaux et Technologie de Communication',
+            'GI 324' => 'Méthodes d\'Optimisation',
+            'GI 332' => 'Comptabilité et Méthode de Gestion',
+            'GRT 311' => 'Électronique Analogique et Digitale',
+            'GRT 321' => 'Transmission sans Fil',
+            'GRT 323' => 'Traitement Digital du Signal',
+            'GRT 332' => 'Introduction à la Cybersécurité',
         ];
         $matiereModels = collect($matieres)->map(
             fn ($nom, $code) => Matiere::updateOrCreate(['code' => $code], ['nom' => $nom])
@@ -65,17 +78,19 @@ class DemoDataSeeder extends Seeder
 
         $matiereDemo = Matiere::updateOrCreate(['code' => 'DEMO-LIVE'], ['nom' => 'Séance de démonstration']);
 
-        $profAlgoGL = $this->teacher('699000010', 'Pr. Étienne Mballa');
-        $profBddRes = $this->teacher('699000011', 'Pr. Aïcha Ndoumbé');
-        $profAngDemo = $this->teacher('699000012', 'Pr. Samuel Onana');
+        $profGI1 = $this->teacher('699000010', 'Pr. Étienne Mballa');
+        $profGI2 = $this->teacher('699000011', 'Pr. Aïcha Ndoumbé');
+        $profGRT = $this->teacher('699000012', 'Pr. Samuel Onana');
 
-        $delegueA = $this->delegue('699000001', 'Délégué Amphi A101', $salleA);
-        $delegueB = $this->delegue('699000002', 'Délégué Salle B203', $salleB);
+        $delegueA = $this->delegue('699000001', 'Délégué A23-FI', $salleA);
+        $delegueB = $this->delegue('699000002', 'Délégué D4-FA', $salleB);
 
-        $etudiantDemo = $this->etudiant('699000003', 'Étudiant Démo', $salleA);
+        // Étudiants identifiés par matricule (format réel de l'ancienne
+        // base : AAI##### — ex. 24I01234), pas par numéro de téléphone.
+        $etudiantDemo = $this->etudiant('24I09001', 'Étudiant Démo', $salleA);
         $studentsA = collect([$etudiantDemo])
-            ->concat($this->classRoster($salleA, 13));
-        $studentsB = $this->classRoster($salleB, 14);
+            ->concat($this->classRoster($salleA, 13, 9100));
+        $studentsB = $this->classRoster($salleB, 14, 9200);
 
         $today = Carbon::today();
         $mondayThisWeek = $today->clone()->startOfWeek(Carbon::MONDAY);
@@ -99,18 +114,18 @@ class DemoDataSeeder extends Seeder
         // enseignant (un même prof ne peut pas être dans deux salles à la
         // fois au même horaire).
         $timetableA = [
-            Weekday::Lundi->value => ['matiere' => 'ALG301', 'prof' => $profAlgoGL, 'debut' => '08:00', 'fin' => '10:00'],
-            Weekday::Mardi->value => ['matiere' => 'BDD301', 'prof' => $profBddRes, 'debut' => '10:15', 'fin' => '12:15'],
-            Weekday::Mercredi->value => ['matiere' => 'RES301', 'prof' => $profBddRes, 'debut' => '08:00', 'fin' => '10:00'],
-            Weekday::Jeudi->value => ['matiere' => 'ANG301', 'prof' => $profAngDemo, 'debut' => '14:00', 'fin' => '15:30'],
-            Weekday::Vendredi->value => ['matiere' => 'GL301', 'prof' => $profAlgoGL, 'debut' => '10:15', 'fin' => '12:15'],
+            Weekday::Lundi->value => ['matiere' => 'GI 321', 'prof' => $profGI1, 'debut' => '08:00', 'fin' => '10:00'],
+            Weekday::Mardi->value => ['matiere' => 'GI 314', 'prof' => $profGI2, 'debut' => '10:15', 'fin' => '12:15'],
+            Weekday::Mercredi->value => ['matiere' => 'GI 324', 'prof' => $profGI2, 'debut' => '08:00', 'fin' => '10:00'],
+            Weekday::Jeudi->value => ['matiere' => 'GI 332', 'prof' => $profGRT, 'debut' => '14:00', 'fin' => '15:30'],
+            Weekday::Vendredi->value => ['matiere' => 'GI 321', 'prof' => $profGI1, 'debut' => '10:15', 'fin' => '12:15'],
         ];
         $timetableB = [
-            Weekday::Lundi->value => ['matiere' => 'RES301', 'prof' => $profBddRes, 'debut' => '14:00', 'fin' => '16:00'],
-            Weekday::Mardi->value => ['matiere' => 'GL301', 'prof' => $profAlgoGL, 'debut' => '14:00', 'fin' => '16:00'],
-            Weekday::Mercredi->value => ['matiere' => 'ALG301', 'prof' => $profAlgoGL, 'debut' => '14:00', 'fin' => '16:00'],
-            Weekday::Jeudi->value => ['matiere' => 'BDD301', 'prof' => $profBddRes, 'debut' => '08:00', 'fin' => '10:00'],
-            Weekday::Vendredi->value => ['matiere' => 'ANG301', 'prof' => $profAngDemo, 'debut' => '14:00', 'fin' => '16:00'],
+            Weekday::Lundi->value => ['matiere' => 'GRT 321', 'prof' => $profGI2, 'debut' => '14:00', 'fin' => '16:00'],
+            Weekday::Mardi->value => ['matiere' => 'GRT 332', 'prof' => $profGI1, 'debut' => '14:00', 'fin' => '16:00'],
+            Weekday::Mercredi->value => ['matiere' => 'GRT 311', 'prof' => $profGI1, 'debut' => '14:00', 'fin' => '16:00'],
+            Weekday::Jeudi->value => ['matiere' => 'GRT 323', 'prof' => $profGI2, 'debut' => '08:00', 'fin' => '10:00'],
+            Weekday::Vendredi->value => ['matiere' => 'GRT 311', 'prof' => $profGRT, 'debut' => '14:00', 'fin' => '16:00'],
         ];
 
         $seances = collect();
@@ -145,7 +160,7 @@ class DemoDataSeeder extends Seeder
 
         $liveTemplate = CourseTemplate::create([
             'matiere_id' => $matiereDemo->id,
-            'enseignant_id' => $profAngDemo->id,
+            'enseignant_id' => $profGRT->id,
             'salle_id' => $salleA->id,
             // Groupe dédié (≠ "G1" des cours réguliers) : évite tout conflit
             // de créneau avec le cours normal de la salle si ce seeder est
@@ -178,13 +193,13 @@ class DemoDataSeeder extends Seeder
 
         $this->command?->info('Démo prête : consultez le tableau ci-dessous pour vous connecter.');
         $this->command?->table(
-            ['Rôle', 'Téléphone', 'Mot de passe', 'Nom'],
+            ['Rôle', 'Identifiant', 'Mot de passe', 'Nom'],
             [
-                ['Délégué', '699000001', 'password', $delegueA->name.' — Amphi A101'],
-                ['Délégué', '699000002', 'password', $delegueB->name.' — Salle B203'],
-                ['Étudiant', '699000003', 'password', $etudiantDemo->name.' — Amphi A101'],
-                ['Enseignant', '699000010', 'password', $profAlgoGL->name.' (séance en direct aujourd\'hui : non, cours normal)'],
-                ['Enseignant', '699000012', 'password', $profAngDemo->name.' — a une séance EN DIRECT là, maintenant'],
+                ['Délégué', '699000001 (téléphone)', 'password', $delegueA->name.' — A23-FI'],
+                ['Délégué', '699000002 (téléphone)', 'password', $delegueB->name.' — D4-FA'],
+                ['Étudiant', '24I09001 (matricule)', 'password', $etudiantDemo->name.' — A23-FI'],
+                ['Enseignant', '699000010 (téléphone)', 'password', $profGI1->name.' (cours normal)'],
+                ['Enseignant', '699000012 (téléphone)', 'password', $profGRT->name.' — a une séance EN DIRECT là, maintenant'],
             ],
         );
     }
@@ -214,10 +229,10 @@ class DemoDataSeeder extends Seeder
         );
     }
 
-    private function etudiant(string $phone, string $name, Salle $salle): User
+    private function etudiant(string $matricule, string $name, Salle $salle): User
     {
         return User::updateOrCreate(
-            ['phone' => $phone],
+            ['phone' => $matricule],
             [
                 'name' => $name,
                 'password' => Hash::make('password'),
@@ -234,9 +249,15 @@ class DemoDataSeeder extends Seeder
     /**
      * @return Collection<int, User>
      */
-    private function classRoster(Salle $salle, int $count): Collection
+    private function classRoster(Salle $salle, int $count, int $matriculeStart): Collection
     {
-        return User::factory()->count($count)->etudiant($salle)->create();
+        return collect(range(0, $count - 1))->map(
+            fn (int $i) => $this->etudiant(
+                '24I'.str_pad((string) ($matriculeStart + $i), 5, '0', STR_PAD_LEFT),
+                fake()->name(),
+                $salle,
+            )
+        );
     }
 
     /**

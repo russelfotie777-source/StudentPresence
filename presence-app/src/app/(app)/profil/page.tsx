@@ -41,14 +41,18 @@ export default function ProfilPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <InfoRow icon={Phone} label="Téléphone" value={user.phone} />
+        <InfoRow
+          icon={Phone}
+          label={isEtudiant ? "Matricule" : "Téléphone"}
+          value={user.phone}
+        />
         {user.salle && <InfoRow icon={School} label="Salle" value={user.salle.nom} />}
         {user.filiere && <InfoRow icon={BookOpen} label="Filière" value={user.filiere.nom} />}
         {user.niveau && <InfoRow icon={GraduationCap} label="Niveau" value={user.niveau.nom} />}
       </div>
 
       {isEtudiant && (trendLoading ? (
-        <Skeleton className="h-[248px] w-full rounded-2xl" />
+        <Skeleton className="h-[192px] w-full rounded-2xl" />
       ) : (
         <AttendanceTrendChart data={trend ?? []} />
       ))}

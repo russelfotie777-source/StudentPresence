@@ -100,12 +100,17 @@ export default function RegisterPage() {
         />
       </Field>
 
-      <Field label="Téléphone" htmlFor="phone" error={fieldErrors?.phone?.[0]}>
+      <Field
+        label={role === "Etudiant" ? "Matricule" : "Téléphone"}
+        htmlFor="phone"
+        error={fieldErrors?.phone?.[0]}
+      >
         <Input
           id="phone"
-          type="tel"
+          type={role === "Etudiant" ? "text" : "tel"}
+          autoComplete={role === "Etudiant" ? "off" : "tel"}
           required
-          placeholder="6XX XXX XXX"
+          placeholder={role === "Etudiant" ? "24I01234" : "6XX XXX XXX"}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className={inputClass}

@@ -193,7 +193,12 @@ function StudentActions({
 
   return (
     <motion.div whileTap={{ scale: 0.96 }} className="flex-1">
-      <Button size="sm" className="h-10 w-full gap-1.5 rounded-lg" onClick={onCheckIn}>
+      <Button
+        size="sm"
+        variant="success"
+        className="h-10 w-full gap-1.5 rounded-lg"
+        onClick={onCheckIn}
+      >
         <MapPin className="h-4 w-4" />
         Je suis présent(e)
       </Button>
@@ -218,7 +223,7 @@ function DelegateActions({
       )}
       <Button
         size="sm"
-        variant={seance.etat_delegue === "present" ? "default" : "outline"}
+        variant={seance.etat_delegue === "present" ? "success" : "outline"}
         className="h-10 flex-1 rounded-lg"
         disabled={disabled || seance.etat_delegue === "present"}
         onClick={() => mark.mutate({ etat: "present", set_debut_reel: true })}
@@ -256,7 +261,7 @@ function TeacherActions({ seance, onPush }: { seance: Seance; onPush: () => void
     <>
       <Button
         size="sm"
-        variant={seance.etat_prof === "present" ? "default" : "outline"}
+        variant={seance.etat_prof === "present" ? "success" : "outline"}
         className="h-10 flex-1 rounded-lg"
         disabled={disabled || seance.etat_prof === "present"}
         onClick={() => mark.mutate("present")}

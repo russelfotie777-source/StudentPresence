@@ -56,13 +56,13 @@ export default function LoginPage() {
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="phone">Téléphone</Label>
+        <Label htmlFor="phone">Téléphone ou matricule</Label>
         <Input
           id="phone"
-          type="tel"
-          autoComplete="tel"
+          type="text"
+          autoComplete="username"
           required
-          placeholder="6XX XXX XXX"
+          placeholder="6XX XXX XXX ou 24I01234"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="h-12 rounded-xl text-base"
