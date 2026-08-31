@@ -82,7 +82,7 @@ function RequetesContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
         onSubmit={handleSubmit}
-        className="surface-card flex flex-col gap-3 rounded-2xl border border-line p-4"
+        className="flex flex-col gap-3 rounded-2xl border border-line bg-card p-4 shadow-sm"
       >
         <p className="text-sm font-semibold text-ink-900">Contester une séance</p>
         <div className="flex flex-col gap-1.5">
@@ -145,7 +145,7 @@ function RequetesContent() {
           <motion.div
             key={r.id}
             variants={itemVariants}
-            className="surface-card flex flex-col gap-1.5 rounded-2xl border border-line p-4"
+            className="flex flex-col gap-1.5 rounded-2xl border border-line bg-card p-4"
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-ink-900">

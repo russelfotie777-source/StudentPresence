@@ -83,7 +83,7 @@ export default function SalairePage() {
               <motion.div
                 key={ligne.seance_id}
                 variants={itemVariants}
-                className="surface-card flex items-center justify-between gap-3 rounded-2xl border border-line p-4"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card p-4"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink-900">{ligne.matiere ?? "—"}</p>
