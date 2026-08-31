@@ -1,9 +1,9 @@
-import { SpaceEmptyState } from "@/components/space-empty-state";
+import { OrbitHero } from "@/components/orbit-hero";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-screen flex-1 flex-col overflow-hidden bg-background">
-      <SpaceEmptyState heightClass="h-52" roundedClass="rounded-b-[2rem]" />
+      <OrbitHero heightClass="h-52" roundedClass="rounded-b-[2rem]" />
 
       <div className="relative mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pb-12">
         <div className="relative z-10 -mt-9 mb-8 flex flex-col items-center gap-3 text-center">
