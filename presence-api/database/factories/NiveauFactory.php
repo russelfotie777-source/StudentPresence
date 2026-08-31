@@ -15,8 +15,12 @@ class NiveauFactory extends Factory
      */
     public function definition(): array
     {
+        // Un pool de 5 valeurs fixes ("L1".."M2") s'épuise vite sur une
+        // grande suite de tests (l'état "unique" de Faker n'est jamais reset
+        // entre tests sans le trait WithFaker) — les tests qui ont besoin
+        // d'un vrai nom de niveau ("L3" etc.) le passent déjà en override.
         return [
-            'nom' => fake()->unique()->randomElement(['L1', 'L2', 'L3', 'M1', 'M2']),
+            'nom' => fake()->unique()->lexify('Niveau-????'),
         ];
     }
 }

@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\AccountValidationController;
+use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\EnseignantController;
 use App\Http\Controllers\Api\FiliereController;
+use App\Http\Controllers\Api\FormationRequestController;
 use App\Http\Controllers\Api\MatiereController;
 use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\PayrollController;
@@ -67,6 +69,10 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
     Route::get('/requetes', [RequeteController::class, 'index']);
     Route::post('/requetes/{requete}/process', [RequeteController::class, 'process']);
 
+    Route::get('/formation-requests', [FormationRequestController::class, 'index']);
+    Route::post('/formation-requests/{demande}/approve', [FormationRequestController::class, 'approve']);
+    Route::post('/formation-requests/{demande}/reject', [FormationRequestController::class, 'reject']);
+
     Route::get('/payroll/teachers/{teacher}', [PayrollController::class, 'forTeacher']);
 
     Route::get('/historique-seances', [SessionHistoryController::class, 'index']);
@@ -76,6 +82,9 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
 // l'action (chaque contrôleur vérifie le rôle effectif en interne).
 Route::middleware(['auth:sanctum', 'validated'])->group(function () {
     Route::get('/seances/today', [SeanceController::class, 'today']);
+    Route::get('/seances/history', [SeanceController::class, 'history']);
+    Route::get('/me/attendance-stats', [AttendanceStatsController::class, 'me']);
+    Route::get('/me/attendance-trend', [AttendanceStatsController::class, 'trend']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);
     Route::post('/seances/{seance}/push', [SeanceController::class, 'push']);
@@ -91,6 +100,9 @@ Route::middleware(['auth:sanctum', 'validated'])->group(function () {
 
     Route::post('/requetes', [RequeteController::class, 'store']);
     Route::get('/requetes/mine', [RequeteController::class, 'mine']);
+
+    Route::post('/formation-requests', [FormationRequestController::class, 'store']);
+    Route::get('/me/formation-requests', [FormationRequestController::class, 'mine']);
 
     Route::get('/students/search', [StudentSearchController::class, 'index']);
     Route::get('/promotions', [PromotionController::class, 'index']);

@@ -79,6 +79,16 @@ export interface RequeteEnseignant {
   commentaire_admin: string | null;
 }
 
+export interface DemandeFormation {
+  id: number;
+  salle_cible?: { id: number; nom: string } | null;
+  motif: string | null;
+  statut: RequestStatus;
+  date_creation: string;
+  date_traitement: string | null;
+  commentaire_admin: string | null;
+}
+
 export interface PayrollLine {
   seance_id: number;
   date: string | null;
