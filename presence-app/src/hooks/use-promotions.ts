@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 
 export interface StudentSearchResult {
@@ -46,6 +47,7 @@ export function useCreatePromotion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promotions"] });
       queryClient.invalidateQueries({ queryKey: ["students", "search"] });
+      toast.success("Promotion temporaire accordée.");
     },
   });
 }

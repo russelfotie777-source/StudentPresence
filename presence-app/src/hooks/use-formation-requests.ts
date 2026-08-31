@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import type { DemandeFormation } from "@/types/api";
 
 export function useMyFormationRequests(enabled: boolean) {
@@ -23,6 +24,10 @@ export function useSubmitFormationRequest() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["formation-requests", "mine"] });
+      toast.success("Demande envoyée.");
+    },
+    onError: (error) => {
+      toast.error(error instanceof ApiError ? error.message : "L'envoi a échoué.");
     },
   });
 }

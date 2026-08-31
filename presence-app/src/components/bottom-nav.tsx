@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, MessageSquareWarning, UserPlus, User } from "lucide-react";
+import { Home, History, Wallet, MessageSquareWarning, UserPlus, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/api";
 
@@ -12,7 +12,13 @@ interface NavItem {
   icon: typeof Home;
 }
 
-const BASE_ITEMS: NavItem[] = [{ href: "/dashboard", label: "Accueil", icon: Home }];
+// Historique visible partout : le délégué reste un étudiant (juste désigné
+// avec des droits en plus) et un enseignant consulte aussi ses séances
+// passées, donc l'onglet vit dans le socle commun à tous les rôles.
+const BASE_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: "Accueil", icon: Home },
+  { href: "/historique", label: "Historique", icon: History },
+];
 
 const TEACHER_ITEMS: NavItem[] = [
   { href: "/salaire", label: "Salaire", icon: Wallet },

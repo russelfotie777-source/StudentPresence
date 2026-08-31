@@ -82,6 +82,7 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
 // l'action (chaque contrôleur vérifie le rôle effectif en interne).
 Route::middleware(['auth:sanctum', 'validated'])->group(function () {
     Route::get('/seances/today', [SeanceController::class, 'today']);
+    Route::get('/seances/history', [SeanceController::class, 'history']);
     Route::get('/me/attendance-stats', [AttendanceStatsController::class, 'me']);
     Route::get('/me/attendance-trend', [AttendanceStatsController::class, 'trend']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);

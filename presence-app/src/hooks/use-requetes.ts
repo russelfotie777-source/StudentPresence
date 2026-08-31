@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import type { RequeteEnseignant } from "@/types/api";
 
@@ -22,6 +23,7 @@ export function useSubmitRequete() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["requetes", "mine"] });
+      toast.success("Requête envoyée.");
     },
   });
 }
