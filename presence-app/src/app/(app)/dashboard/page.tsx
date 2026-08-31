@@ -10,6 +10,7 @@ import { RosterDialog } from "@/components/roster-dialog";
 import { PushDialog } from "@/components/push-dialog";
 import { SendPositionButton } from "@/components/send-position-button";
 import { useMe } from "@/hooks/use-auth";
+import { useAttendanceStats } from "@/hooks/use-attendance-stats";
 import { useMarkDelegue, useMarkProf, useTodaySeances } from "@/hooks/use-seances";
 import type { Seance } from "@/types/api";
 
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const { data: me } = useMe();
   const { data: seances, isLoading } = useTodaySeances();
   const role = me?.user.effective_role;
+  const { data: stats } = useAttendanceStats(role === "Etudiant");
 
   const [checkInSeance, setCheckInSeance] = useState<Seance | null>(null);
   const [rosterSeance, setRosterSeance] = useState<Seance | null>(null);
@@ -43,13 +45,31 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-sm text-muted-foreground capitalize">
-          {jourFr} {today.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Bonjour, {firstName(me?.user.name)} 👋
-        </h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="mb-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-ink-300">
+            {jourFr} {today.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+          </p>
+          <h1 className="font-display text-[28px] font-bold leading-none tracking-tight text-ink-900">
+            Bonjour,
+            <br />
+            {firstName(me?.user.name)}.
+          </h1>
+        </div>
+        {stats?.taux !== null && stats?.taux !== undefined && (
+          <div
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+            style={{
+              background: `conic-gradient(var(--indigo-600) 0% ${stats.taux}%, var(--surface-2) ${stats.taux}% 100%)`,
+            }}
+          >
+            <div className="flex h-[45px] w-[45px] items-center justify-center rounded-full bg-surface-1 shadow-sm">
+              <span className="font-display text-[13px] font-extrabold text-ink-900">
+                {stats.taux}%
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {isLoading && (
@@ -61,14 +81,25 @@ export default function DashboardPage() {
       )}
 
       {!isLoading && seances?.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <CalendarX className="h-5 w-5 text-muted-foreground" />
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-14 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
+            <CalendarX className="h-5 w-5 text-ink-300" />
           </div>
           <div>
-            <p className="font-medium text-foreground">Aucune séance aujourd&apos;hui</p>
-            <p className="mt-1 text-sm text-muted-foreground">Profitez-en pour vous reposer.</p>
+            <p className="font-medium text-ink-900">Aucune séance aujourd&apos;hui</p>
+            <p className="mt-1 text-sm text-ink-500">Profitez-en pour vous reposer.</p>
           </div>
+        </div>
+      )}
+
+      {!isLoading && seances && seances.length > 0 && (
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-display text-lg font-bold tracking-tight text-ink-900">
+            Aujourd&apos;hui
+          </h2>
+          <span className="text-[12.5px] font-semibold text-ink-300">
+            {seances.length} séance{seances.length > 1 ? "s" : ""}
+          </span>
         </div>
       )}
 
