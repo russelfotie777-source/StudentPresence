@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AccountValidationController;
+use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\EnseignantController;
@@ -76,6 +77,7 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
 // l'action (chaque contrôleur vérifie le rôle effectif en interne).
 Route::middleware(['auth:sanctum', 'validated'])->group(function () {
     Route::get('/seances/today', [SeanceController::class, 'today']);
+    Route::get('/me/attendance-stats', [AttendanceStatsController::class, 'me']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);
     Route::post('/seances/{seance}/push', [SeanceController::class, 'push']);
