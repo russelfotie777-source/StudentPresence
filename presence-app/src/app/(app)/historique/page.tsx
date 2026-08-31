@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, type Variants } from "motion/react";
-import { CalendarX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SpaceEmptyState } from "@/components/space-empty-state";
 import { cn } from "@/lib/utils";
 import { useHistorySeances } from "@/hooks/use-seances";
 import type { Seance } from "@/types/api";
@@ -60,15 +60,10 @@ export default function HistoriquePage() {
       )}
 
       {!isLoading && seances?.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-14 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
-            <CalendarX className="h-5 w-5 text-ink-300" />
-          </div>
-          <div>
-            <p className="font-medium text-ink-900">Aucun historique pour l&apos;instant</p>
-            <p className="mt-1 text-sm text-ink-500">Vos séances passées apparaîtront ici.</p>
-          </div>
-        </div>
+        <SpaceEmptyState
+          title="Aucun historique pour l'instant"
+          subtitle="Vos séances passées apparaîtront ici."
+        />
       )}
 
       {groups.map((group) => (

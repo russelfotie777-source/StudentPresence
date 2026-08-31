@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { motion, type Variants } from "motion/react";
-import { CalendarX, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SeanceCard } from "@/components/seance-card";
+import { SpaceEmptyState } from "@/components/space-empty-state";
 import { CheckInDialog } from "@/components/checkin-dialog";
 import { RosterDialog } from "@/components/roster-dialog";
 import { PushDialog } from "@/components/push-dialog";
@@ -91,15 +92,10 @@ export default function DashboardPage() {
       )}
 
       {!isLoading && seances?.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-14 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
-            <CalendarX className="h-5 w-5 text-ink-300" />
-          </div>
-          <div>
-            <p className="font-medium text-ink-900">Aucune séance aujourd&apos;hui</p>
-            <p className="mt-1 text-sm text-ink-500">Profitez-en pour vous reposer.</p>
-          </div>
-        </div>
+        <SpaceEmptyState
+          title="Aucune séance aujourd'hui"
+          subtitle="Profitez-en pour vous reposer."
+        />
       )}
 
       {!isLoading && seances && seances.length > 0 && (
