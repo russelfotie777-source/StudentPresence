@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, type Variants } from "motion/react";
 import { CalendarX, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,7 +10,10 @@ import { CheckInDialog } from "@/components/checkin-dialog";
 import { RosterDialog } from "@/components/roster-dialog";
 import { PushDialog } from "@/components/push-dialog";
 import { SendPositionButton } from "@/components/send-position-button";
+import { AttendanceRing } from "@/components/attendance-ring";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useMe } from "@/hooks/use-auth";
+import { useAttendanceStats } from "@/hooks/use-attendance-stats";
 import { useMarkDelegue, useMarkProf, useTodaySeances } from "@/hooks/use-seances";
 import type { Seance } from "@/types/api";
 
@@ -27,10 +31,21 @@ function firstName(name?: string) {
   return name?.split(" ")[0] ?? "";
 }
 
+const listVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+};
+
 export default function DashboardPage() {
   const { data: me } = useMe();
   const { data: seances, isLoading } = useTodaySeances();
   const role = me?.user.effective_role;
+  const { data: stats } = useAttendanceStats(role === "Etudiant");
 
   const [checkInSeance, setCheckInSeance] = useState<Seance | null>(null);
   const [rosterSeance, setRosterSeance] = useState<Seance | null>(null);
@@ -43,14 +58,29 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-sm text-muted-foreground capitalize">
-          {jourFr} {today.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Bonjour, {firstName(me?.user.name)} 👋
-        </h1>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="flex items-start justify-between"
+      >
+        <div>
+          <p className="mb-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-ink-300">
+            {jourFr} {today.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+          </p>
+          <h1 className="font-display text-[28px] font-bold leading-none tracking-tight text-ink-900">
+            Bonjour,
+            <br />
+            {firstName(me?.user.name)}.
+          </h1>
+        </div>
+        <div className="flex flex-col items-end gap-2.5">
+          <ThemeToggle />
+          {stats?.taux !== null && stats?.taux !== undefined && (
+            <AttendanceRing percent={stats.taux} />
+          )}
+        </div>
+      </motion.div>
 
       {isLoading && (
         <div className="flex flex-col gap-3">
@@ -61,35 +91,53 @@ export default function DashboardPage() {
       )}
 
       {!isLoading && seances?.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <CalendarX className="h-5 w-5 text-muted-foreground" />
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-14 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
+            <CalendarX className="h-5 w-5 text-ink-300" />
           </div>
           <div>
-            <p className="font-medium text-foreground">Aucune séance aujourd&apos;hui</p>
-            <p className="mt-1 text-sm text-muted-foreground">Profitez-en pour vous reposer.</p>
+            <p className="font-medium text-ink-900">Aucune séance aujourd&apos;hui</p>
+            <p className="mt-1 text-sm text-ink-500">Profitez-en pour vous reposer.</p>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
+      {!isLoading && seances && seances.length > 0 && (
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-display text-lg font-bold tracking-tight text-ink-900">
+            Aujourd&apos;hui
+          </h2>
+          <span className="text-[12.5px] font-semibold text-ink-300">
+            {seances.length} séance{seances.length > 1 ? "s" : ""}
+          </span>
+        </div>
+      )}
+
+      <motion.div
+        variants={listVariants}
+        initial="hidden"
+        animate="show"
+        className="flex flex-col gap-3"
+      >
         {seances?.map((seance) => (
-          <SeanceCard key={seance.id} seance={seance}>
-            {role === "Etudiant" && (
-              <StudentActions seance={seance} onCheckIn={() => setCheckInSeance(seance)} />
-            )}
-            {role === "Delegue" && (
-              <DelegateActions
-                seance={seance}
-                onConfirmRoster={() => setRosterSeance(seance)}
-              />
-            )}
-            {role === "Enseignant" && (
-              <TeacherActions seance={seance} onPush={() => setPushSeance(seance)} />
-            )}
-          </SeanceCard>
+          <motion.div key={seance.id} variants={itemVariants}>
+            <SeanceCard seance={seance}>
+              {role === "Etudiant" && (
+                <StudentActions seance={seance} onCheckIn={() => setCheckInSeance(seance)} />
+              )}
+              {role === "Delegue" && (
+                <DelegateActions
+                  seance={seance}
+                  onConfirmRoster={() => setRosterSeance(seance)}
+                />
+              )}
+              {role === "Enseignant" && (
+                <TeacherActions seance={seance} onPush={() => setPushSeance(seance)} />
+              )}
+            </SeanceCard>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {checkInSeance && (
         <CheckInDialog
@@ -144,10 +192,17 @@ function StudentActions({
   }
 
   return (
-    <Button size="sm" className="h-10 flex-1 gap-1.5 rounded-lg" onClick={onCheckIn}>
-      <MapPin className="h-4 w-4" />
-      Je suis présent(e)
-    </Button>
+    <motion.div whileTap={{ scale: 0.96 }} className="flex-1">
+      <Button
+        size="sm"
+        variant="success"
+        className="h-10 w-full gap-1.5 rounded-lg"
+        onClick={onCheckIn}
+      >
+        <MapPin className="h-4 w-4" />
+        Je suis présent(e)
+      </Button>
+    </motion.div>
   );
 }
 
@@ -168,7 +223,7 @@ function DelegateActions({
       )}
       <Button
         size="sm"
-        variant={seance.etat_delegue === "present" ? "default" : "outline"}
+        variant={seance.etat_delegue === "present" ? "success" : "outline"}
         className="h-10 flex-1 rounded-lg"
         disabled={disabled || seance.etat_delegue === "present"}
         onClick={() => mark.mutate({ etat: "present", set_debut_reel: true })}
@@ -206,7 +261,7 @@ function TeacherActions({ seance, onPush }: { seance: Seance; onPush: () => void
     <>
       <Button
         size="sm"
-        variant={seance.etat_prof === "present" ? "default" : "outline"}
+        variant={seance.etat_prof === "present" ? "success" : "outline"}
         className="h-10 flex-1 rounded-lg"
         disabled={disabled || seance.etat_prof === "present"}
         onClick={() => mark.mutate("present")}

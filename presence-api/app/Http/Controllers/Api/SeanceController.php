@@ -46,6 +46,35 @@ class SeanceController extends Controller
     }
 
     /**
+     * Historique des séances passées de l'utilisateur connecté (onglet
+     * Historique côté app — étudiant/délégué/enseignant), même périmètre par
+     * rôle que today() mais sur les jours précédents. N'existait pas dans
+     * l'ancienne app pour ces rôles (réservé à l'admin/superprotect).
+     */
+    public function history(Request $request)
+    {
+        $user = $request->user();
+
+        $query = Seance::query()
+            ->with(['salle', 'enseignant', 'courseTemplate.matiere', 'pushRequest', 'position'])
+            ->where('date_seance', '<', now()->toDateString());
+
+        $role = $user->effectiveRole();
+
+        match ($role) {
+            UserRole::Delegue => $query->where('salle_id', $user->salle_id),
+            UserRole::Enseignant => $query->where('enseignant_id', $user->id),
+            UserRole::Etudiant => $query->where('salle_id', $user->salle_id)
+                ->with(['presences' => fn ($q) => $q->where('etudiant_id', $user->id)]),
+            default => $query->whereRaw('1 = 0'),
+        };
+
+        return SeanceResource::collection(
+            $query->orderByDesc('date_seance')->orderByDesc('heure_debut')->limit(200)->get()
+        );
+    }
+
+    /**
      * Marquage etat_delegue par le délégué, avec horodatage début/fin réel.
      * Fenêtre active ±15 min (Seance::isActive), comme dashboard.php.
      */

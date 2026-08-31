@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { GrainOverlay } from "@/components/grain-overlay";
 import { cn } from "@/lib/utils";
 import { useConfirmRoster, useRoster } from "@/hooks/use-seances";
 import { ApiError } from "@/lib/api-client";
@@ -45,6 +46,7 @@ export function RosterDialog({
 
   const attendu = seance.push?.etudiants_presents ?? null;
   const depasse = attendu !== null && checked.size > attendu;
+  const progressPct = attendu ? Math.min(100, (checked.size / attendu) * 100) : 0;
 
   function toggle(id: number) {
     setChecked((prev) => {
@@ -59,22 +61,39 @@ export function RosterDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Confirmer la liste de présence</DialogTitle>
-          <DialogDescription>
-            {seance.matiere} — {seance.salle}, {seance.heure_debut}
-            {attendu !== null && (
-              <>
-                {" "}
-                · effectif déclaré par l&apos;enseignant :{" "}
-                <strong className={depasse ? "text-destructive" : ""}>
-                  {checked.size} / {attendu}
-                </strong>
-              </>
-            )}
-          </DialogDescription>
+          <DialogTitle className="font-display text-lg font-bold">
+            Confirmer la présence
+          </DialogTitle>
         </DialogHeader>
+
+        {/* Effectif — carte hero façon billet */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 px-5 py-4 shadow-[0_20px_40px_-14px_rgba(79,70,229,.5)]">
+          <GrainOverlay />
+          <div className="relative">
+            <span className="text-[11.5px] font-bold uppercase tracking-wide text-white/70">
+              Effectif déclaré par l&apos;enseignant
+            </span>
+            <div className="my-1.5 flex items-end gap-2">
+              <span className="font-display text-[38px] font-extrabold leading-none tracking-tight text-white">
+                {checked.size}
+              </span>
+              <span className="pb-1 text-[15px] font-semibold text-white/65">
+                / {attendu ?? "—"} présents
+              </span>
+            </div>
+            <div className="flex h-1.5 gap-1 overflow-hidden rounded-full bg-white/25">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  depasse ? "bg-rose-400" : "bg-white",
+                )}
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
         {!seance.push && (
           <Alert variant="destructive">
@@ -102,10 +121,10 @@ export function RosterDialog({
                   key={etudiant.id}
                   className={cn(
                     "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors",
-                    isChecked ? "border-primary/30 bg-primary/5" : "border-border",
+                    isChecked ? "border-indigo-100 bg-indigo-50" : "border-line",
                   )}
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
                     {etudiant.name
                       .split(" ")
                       .map((p) => p[0])
@@ -113,7 +132,7 @@ export function RosterDialog({
                       .join("")
                       .toUpperCase()}
                   </div>
-                  <span className="flex-1 truncate font-medium text-foreground">
+                  <span className="flex-1 truncate font-semibold text-ink-900">
                     {etudiant.name}
                   </span>
                   <Checkbox checked={isChecked} onCheckedChange={() => toggle(etudiant.id)} />
@@ -121,7 +140,7 @@ export function RosterDialog({
               );
             })}
             {roster.length === 0 && (
-              <p className="py-4 text-center text-sm text-muted-foreground">
+              <p className="py-4 text-center text-sm text-ink-500">
                 Aucun étudiant trouvé pour cette salle/niveau.
               </p>
             )}
@@ -142,8 +161,12 @@ export function RosterDialog({
               })
             }
             disabled={!seance.push || depasse || confirmRoster.isPending}
+            className="gap-1.5 rounded-xl bg-ink-900 hover:bg-ink-700"
           >
-            {confirmRoster.isPending ? "Envoi…" : "Verrouiller et valider"}
+            <Lock className="h-4 w-4" />
+            {confirmRoster.isPending
+              ? "Envoi…"
+              : `Verrouiller et valider · ${checked.size}`}
           </Button>
         </DialogFooter>
       </DialogContent>

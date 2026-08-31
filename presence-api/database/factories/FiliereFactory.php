@@ -16,8 +16,12 @@ class FiliereFactory extends Factory
      */
     public function definition(): array
     {
+        // Un pool de 4 valeurs fixes s'épuise vite sur une grande suite de
+        // tests (l'état "unique" de Faker n'est jamais reset entre tests
+        // sans le trait WithFaker) — la vraie contrainte DB est de toute
+        // façon (nom, niveau_id), pas nom seul.
         return [
-            'nom' => fake()->unique()->randomElement(['Informatique', 'Génie Civil', 'Génie Électrique', 'Gestion']),
+            'nom' => fake()->unique()->lexify('Filière ????'),
             'niveau_id' => Niveau::factory(),
         ];
     }

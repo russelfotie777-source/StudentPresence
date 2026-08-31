@@ -2,7 +2,8 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, Paperclip } from "lucide-react";
+import { motion, type Variants } from "motion/react";
+import { AlertCircle, MessageSquareWarning, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,10 +12,19 @@ import { ApiError } from "@/lib/api-client";
 import type { RequestStatus } from "@/types/api";
 import { cn } from "@/lib/utils";
 
-const STATUS_LABELS: Record<RequestStatus, { label: string; className: string }> = {
-  en_attente: { label: "En attente", className: "bg-warning/20 text-warning-foreground" },
-  acceptee: { label: "Acceptée", className: "bg-success/15 text-success" },
-  rejetee: { label: "Rejetée", className: "bg-destructive/10 text-destructive" },
+const STATUS_LABELS: Record<RequestStatus, { label: string; dot: string; className: string }> = {
+  en_attente: { label: "En attente", dot: "bg-amber-500", className: "bg-warning/20 text-warning-foreground" },
+  acceptee: { label: "Acceptée", dot: "bg-emerald-500", className: "bg-success/15 text-success" },
+  rejetee: { label: "Rejetée", dot: "bg-rose-500", className: "bg-destructive/10 text-destructive" },
+};
+
+const listVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+};
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
 };
 
 export default function RequetesPage() {
@@ -57,13 +67,23 @@ function RequetesContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Mes requêtes</h1>
-
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4"
+      <motion.h1
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="font-display text-[26px] font-bold tracking-tight text-ink-900"
       >
-        <p className="text-sm font-medium text-foreground">Contester une séance</p>
+        Mes requêtes
+      </motion.h1>
+
+      <motion.form
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-3 rounded-2xl border border-line bg-card p-4 shadow-sm"
+      >
+        <p className="text-sm font-semibold text-ink-900">Contester une séance</p>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="seance_id">N° de séance</Label>
           <Input
@@ -90,7 +110,7 @@ function RequetesContent() {
           <Label htmlFor="preuve">Preuve (image ou PDF, 5 Mo max)</Label>
           <label
             htmlFor="preuve"
-            className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-input px-3 text-sm text-muted-foreground"
+            className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-input px-3 text-sm text-ink-500 transition-colors hover:border-primary/50 hover:text-ink-900"
           >
             <Paperclip className="h-4 w-4" />
             {file ? file.name : "Choisir un fichier"}
@@ -110,40 +130,51 @@ function RequetesContent() {
             <span>{errorMessage}</span>
           </div>
         )}
-        <Button type="submit" disabled={submit.isPending} className="h-11 rounded-xl">
-          {submit.isPending ? "Envoi…" : "Envoyer la requête"}
-        </Button>
-      </form>
+        <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 22 }}>
+          <Button type="submit" disabled={submit.isPending} className="h-11 w-full rounded-xl">
+            {submit.isPending ? "Envoi…" : "Envoyer la requête"}
+          </Button>
+        </motion.div>
+      </motion.form>
 
-      <div className="flex flex-col gap-2.5">
-        {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
+      {isLoading && <p className="text-sm text-ink-500">Chargement…</p>}
+
+      <motion.div variants={listVariants} initial="hidden" animate="show" className="flex flex-col gap-2.5">
         {requetes?.map((r) => (
-          <div key={r.id} className="flex flex-col gap-1.5 rounded-2xl border border-border bg-card p-4">
+          <motion.div
+            key={r.id}
+            variants={itemVariants}
+            className="flex flex-col gap-1.5 rounded-2xl border border-line bg-card p-4"
+          >
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-ink-900">
                 {r.matiere} — {r.salle}
               </p>
               <span
                 className={cn(
-                  "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                  "flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium",
                   STATUS_LABELS[r.statut].className,
                 )}
               >
+                <span className={cn("h-1.5 w-1.5 rounded-full", STATUS_LABELS[r.statut].dot)} />
                 {STATUS_LABELS[r.statut].label}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">{r.description}</p>
+            <p className="text-xs text-ink-500">{r.description}</p>
             {r.commentaire_admin && (
-              <p className="text-xs italic text-muted-foreground/80">
-                Réponse admin : {r.commentaire_admin}
-              </p>
+              <p className="text-xs italic text-ink-300">Réponse admin : {r.commentaire_admin}</p>
             )}
-          </div>
+          </motion.div>
         ))}
         {requetes?.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground">Aucune requête pour l&apos;instant.</p>
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-14 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
+              <MessageSquareWarning className="h-5 w-5 text-ink-300" />
+            </div>
+            <p className="text-sm text-ink-500">Aucune requête pour l&apos;instant.</p>
+          </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

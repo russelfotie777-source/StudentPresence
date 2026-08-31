@@ -40,9 +40,11 @@ export default function LoginPage() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">Connexion</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Entrez vos identifiants pour continuer.
+        <h2 className="font-display text-[28px] font-bold leading-tight tracking-tight text-ink-900">
+          Bon retour.
+        </h2>
+        <p className="mt-1.5 text-[15px] text-ink-500">
+          Connectez-vous pour pointer votre présence du jour.
         </p>
       </div>
 
@@ -54,13 +56,13 @@ export default function LoginPage() {
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="phone">Téléphone</Label>
+        <Label htmlFor="phone">Matricule</Label>
         <Input
           id="phone"
-          type="tel"
-          autoComplete="tel"
+          type="text"
+          autoComplete="username"
           required
-          placeholder="6XX XXX XXX"
+          placeholder="24I01234"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="h-12 rounded-xl text-base"
@@ -88,9 +90,9 @@ export default function LoginPage() {
         {login.isPending ? "Connexion…" : "Se connecter"}
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-ink-500">
         Pas encore de compte ?{" "}
-        <Link href="/register" className="font-medium text-primary">
+        <Link href="/register" className="font-bold text-indigo-600">
           S&apos;inscrire
         </Link>
       </p>

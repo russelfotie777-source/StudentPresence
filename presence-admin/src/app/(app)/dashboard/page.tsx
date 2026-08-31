@@ -60,9 +60,9 @@ export default function DashboardPage() {
 function StatCard({ label, value, href }: { label: string; value: number; href: string }) {
   return (
     <Link href={href}>
-      <Card className="transition-colors hover:border-violet-400">
+      <Card className="transition-colors hover:border-primary/50">
         <CardContent className="py-5">
-          <p className="text-3xl font-bold text-violet-700">{value}</p>
+          <p className="text-3xl font-bold text-primary">{value}</p>
           <p className="text-sm text-zinc-500">{label}</p>
         </CardContent>
       </Card>
@@ -74,7 +74,7 @@ function QuickLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100"
+      className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10"
     >
       {label}
     </Link>
