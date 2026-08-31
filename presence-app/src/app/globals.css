@@ -202,6 +202,25 @@
   }
 }
 
+@layer components {
+  /* Texture de carte commune (clair ET sombre) : léger voile indigo du haut
+     vers le bas + liseré lumineux interne + ombre teintée douce, pour que
+     les cartes ne soient jamais un simple aplat de couleur unie — quel que
+     soit le thème actif (le sombre avait tous les dégradés/halos, le clair
+     restait plat en comparaison). */
+  .surface-card {
+    background-color: var(--card);
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--indigo-500) 11%, transparent) 0%,
+      transparent 60%
+    );
+    box-shadow:
+      inset 0 1px 0 0 color-mix(in srgb, white 14%, transparent),
+      0 16px 32px -18px color-mix(in srgb, var(--indigo-600) 68%, transparent);
+  }
+}
+
 /* Micro-interactions du design canvas premium */
 @keyframes dc-pulse {
   0% { transform: scale(0.8); opacity: 0.55; }
