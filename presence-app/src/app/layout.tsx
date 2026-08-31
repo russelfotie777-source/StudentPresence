@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -32,10 +33,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
+      suppressHydrationWarning
       className={`${display.variable} ${body.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <QueryProvider>{children}</QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
