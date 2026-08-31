@@ -82,7 +82,7 @@ export default function PromotionPage() {
           <motion.div
             key={s.id}
             variants={itemVariants}
-            className="surface-card flex items-center justify-between gap-3 rounded-2xl border border-line p-4"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card p-4"
           >
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-ink-900">{s.name}</p>
@@ -117,7 +117,7 @@ export default function PromotionPage() {
           {actives.map((p) => (
             <div
               key={p.id}
-              className="surface-card flex items-center justify-between rounded-2xl border border-line p-4 text-sm"
+              className="flex items-center justify-between rounded-2xl border border-line bg-card p-4 text-sm"
             >
               <span className="font-medium text-ink-900">
                 {p.etudiant.name} <span className="font-normal text-ink-500">— {p.etudiant.salle?.nom}</span>
