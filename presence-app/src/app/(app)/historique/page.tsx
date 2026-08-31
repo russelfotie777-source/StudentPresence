@@ -94,7 +94,7 @@ function HistoriqueRow({ seance }: { seance: Seance }) {
   const present = statut === "present";
 
   return (
-    <div className="surface-card flex items-center gap-3 rounded-2xl border border-line p-4">
+    <div className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4">
       <div className="flex w-[52px] shrink-0 flex-col items-center rounded-xl bg-surface-2 py-2 text-center">
         <span className="font-display text-[15px] font-bold leading-none text-ink-900">
           {seance.heure_debut.slice(0, 5)}

@@ -95,7 +95,7 @@ export function SeanceCard({
   }
 
   return (
-    <div className="surface-card flex flex-col gap-3 rounded-2xl border border-line p-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-card p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="flex w-[52px] shrink-0 flex-col items-center rounded-xl bg-surface-2 py-2 text-center">
           <span className="font-display text-[15px] font-bold leading-none text-ink-900">
