@@ -1,14 +1,26 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import type { RosterEntry, Seance } from "@/types/api";
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof ApiError ? error.message : fallback;
+}
 
 export function useTodaySeances() {
   return useQuery({
     queryKey: ["seances", "today"],
     queryFn: () => apiFetch<Seance[]>("/api/seances/today"),
     refetchInterval: 60_000, // la fenêtre active ±15min bouge avec l'horloge
+  });
+}
+
+export function useHistorySeances() {
+  return useQuery({
+    queryKey: ["seances", "history"],
+    queryFn: () => apiFetch<Seance[]>("/api/seances/history"),
   });
 }
 
@@ -26,7 +38,11 @@ export function useSendPosition(seanceId: number) {
         method: "POST",
         body: JSON.stringify(coords),
       }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success("Position envoyée aux étudiants.");
+    },
+    onError: (error) => toast.error(errorMessage(error, "Impossible d'envoyer la position.")),
   });
 }
 
@@ -39,7 +55,11 @@ export function useCheckIn(seanceId: number) {
         method: "POST",
         body: JSON.stringify(coords),
       }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success("Présence confirmée !");
+    },
+    onError: (error) => toast.error(errorMessage(error, "Le pointage a échoué.")),
   });
 }
 
@@ -56,7 +76,11 @@ export function useMarkDelegue(seanceId: number) {
         method: "POST",
         body: JSON.stringify(input),
       }),
-    onSuccess: invalidate,
+    onSuccess: (_data, input) => {
+      invalidate();
+      toast.success(input.etat === "present" ? "Enseignant marqué présent." : "Enseignant marqué absent.");
+    },
+    onError: (error) => toast.error(errorMessage(error, "Le marquage a échoué.")),
   });
 }
 
@@ -69,7 +93,11 @@ export function useMarkProf(seanceId: number) {
         method: "POST",
         body: JSON.stringify({ etat }),
       }),
-    onSuccess: invalidate,
+    onSuccess: (_data, etat) => {
+      invalidate();
+      toast.success(etat === "present" ? "Marqué présent." : "Marqué absent.");
+    },
+    onError: (error) => toast.error(errorMessage(error, "Le marquage a échoué.")),
   });
 }
 
@@ -82,7 +110,11 @@ export function usePush(seanceId: number) {
         method: "POST",
         body: JSON.stringify({ etudiants_presents }),
       }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success("Effectif déclaré.");
+    },
+    onError: (error) => toast.error(errorMessage(error, "L'envoi a échoué.")),
   });
 }
 
@@ -107,6 +139,8 @@ export function useConfirmRoster(seanceId: number) {
     onSuccess: () => {
       invalidate();
       queryClient.invalidateQueries({ queryKey: ["seances", seanceId, "roster"] });
+      toast.success("Liste de présence confirmée et verrouillée.");
     },
+    onError: (error) => toast.error(errorMessage(error, "La confirmation a échoué.")),
   });
 }
