@@ -67,14 +67,18 @@ export function SpaceEmptyState({
   title,
   subtitle,
   className,
+  heightClass = "h-56",
+  roundedClass = "rounded-3xl",
 }: {
   title?: string;
   subtitle?: string;
   className?: string;
+  heightClass?: string;
+  roundedClass?: string;
 }) {
   return (
     <div
-      className={`relative flex h-56 flex-col items-center justify-end overflow-hidden rounded-3xl ${className ?? ""}`}
+      className={`relative flex ${heightClass} flex-col items-center justify-end overflow-hidden ${roundedClass} ${className ?? ""}`}
     >
       <div
         aria-hidden
