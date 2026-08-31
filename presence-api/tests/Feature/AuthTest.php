@@ -62,17 +62,12 @@ class AuthTest extends TestCase
         ]);
     }
 
-    public function test_fm_room_capacity_is_enforced_at_fifty(): void
+    public function test_fm_formation_is_rejected_at_registration(): void
     {
         $salle = Salle::factory()->create(['formation' => FormationType::FI]);
-        User::factory()->count(50)->create([
-            'role' => UserRole::Etudiant,
-            'formation' => FormationType::FM,
-            'salle_id' => $salle->id,
-        ]);
 
         $response = $this->postJson('/api/auth/register', [
-            'name' => 'Cinquante-Et-Unième',
+            'name' => 'Étudiant Migrant',
             'phone' => '699334455',
             'password' => 'password123',
             'role' => UserRole::Etudiant->value,
@@ -82,7 +77,7 @@ class AuthTest extends TestCase
             'filiere_id' => $salle->filiere_id,
         ]);
 
-        $response->assertUnprocessable()->assertJsonValidationErrors('salle_id');
+        $response->assertUnprocessable()->assertJsonValidationErrors('formation');
     }
 
     public function test_login_fails_with_wrong_password(): void

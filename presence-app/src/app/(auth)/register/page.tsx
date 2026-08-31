@@ -217,7 +217,6 @@ export default function RegisterPage() {
               <SelectContent>
                 <SelectItem value="FI">Formation Initiale</SelectItem>
                 <SelectItem value="FA">Formation Alternance</SelectItem>
-                {role === "Etudiant" && <SelectItem value="FM">Formation Migrante</SelectItem>}
               </SelectContent>
             </Select>
           </Field>
