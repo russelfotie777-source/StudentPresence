@@ -211,15 +211,13 @@
   .surface-card {
     background-color: var(--card);
     background-image: linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--indigo-500) 22%, transparent) 0%,
-      transparent 48%
+      180deg,
+      color-mix(in srgb, var(--indigo-500) 11%, transparent) 0%,
+      transparent 60%
     );
-    border-color: color-mix(in srgb, var(--indigo-500) 30%, var(--line)) !important;
     box-shadow:
-      inset 0 1.5px 0 0 color-mix(in srgb, white 22%, transparent),
-      0 3px 8px -3px color-mix(in srgb, var(--indigo-600) 40%, transparent),
-      0 22px 40px -16px color-mix(in srgb, var(--indigo-600) 60%, transparent);
+      inset 0 1px 0 0 color-mix(in srgb, white 14%, transparent),
+      0 16px 32px -18px color-mix(in srgb, var(--indigo-600) 68%, transparent);
   }
 }
 
