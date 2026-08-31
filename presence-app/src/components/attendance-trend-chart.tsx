@@ -35,7 +35,7 @@ function TrendTooltip({
 export function AttendanceTrendChart({ data }: { data: AttendanceTrendPoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-10 text-center">
+      <div className="flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-line py-6 text-center">
         <TrendingUp className="h-5 w-5 text-ink-300" />
         <p className="text-sm text-ink-500">
           Pas encore assez de séances pour tracer une tendance.
@@ -47,7 +47,7 @@ export function AttendanceTrendChart({ data }: { data: AttendanceTrendPoint[] })
   const average = Math.round(data.reduce((sum, p) => sum + p.taux, 0) / data.length);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-line bg-card p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-line bg-card p-4">
       <div
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full opacity-40 blur-3xl"
@@ -57,7 +57,7 @@ export function AttendanceTrendChart({ data }: { data: AttendanceTrendPoint[] })
         }}
       />
 
-      <div className="relative mb-1 flex items-baseline justify-between">
+      <div className="relative mb-0.5 flex items-baseline justify-between">
         <div>
           <h3 className="font-display text-[15px] font-bold tracking-tight text-ink-900">
             Ma progression
@@ -69,7 +69,7 @@ export function AttendanceTrendChart({ data }: { data: AttendanceTrendPoint[] })
         </span>
       </div>
 
-      <div className="relative h-[168px] w-full">
+      <div className="relative h-[120px] w-full">
         <ResponsiveContainer width="100%" height="100%" debounce={0}>
           <AreaChart data={data} margin={{ top: 16, right: 8, bottom: 0, left: 0 }}>
             <defs>
