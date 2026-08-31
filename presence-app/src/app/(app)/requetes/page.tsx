@@ -3,7 +3,8 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, type Variants } from "motion/react";
-import { AlertCircle, MessageSquareWarning, Paperclip } from "lucide-react";
+import { AlertCircle, Paperclip } from "lucide-react";
+import { SpaceEmptyState } from "@/components/space-empty-state";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -166,14 +167,7 @@ function RequetesContent() {
             )}
           </motion.div>
         ))}
-        {requetes?.length === 0 && (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-14 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
-              <MessageSquareWarning className="h-5 w-5 text-ink-300" />
-            </div>
-            <p className="text-sm text-ink-500">Aucune requête pour l&apos;instant.</p>
-          </div>
-        )}
+        {requetes?.length === 0 && <SpaceEmptyState title="Aucune requête pour l'instant" />}
       </motion.div>
     </div>
   );
