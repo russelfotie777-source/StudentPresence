@@ -8,6 +8,7 @@ import {
   CalendarRange,
   BadgeCheck,
   MessageSquareWarning,
+  ArrowLeftRight,
   Wallet,
   History,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const SECTIONS = [
   { href: "/emplois-du-temps", label: "Emplois du temps", icon: CalendarRange },
   { href: "/validations", label: "Validations", icon: BadgeCheck },
   { href: "/requetes", label: "Requêtes enseignants", icon: MessageSquareWarning },
+  { href: "/demandes-formation", label: "Migrations FA → FI", icon: ArrowLeftRight },
   { href: "/tarifs", label: "Tarifs horaires", icon: Wallet },
   { href: "/historique", label: "Historique des séances", icon: History },
 ];

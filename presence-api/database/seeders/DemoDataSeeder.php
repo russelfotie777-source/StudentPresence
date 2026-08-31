@@ -90,7 +90,18 @@ class DemoDataSeeder extends Seeder
         $etudiantDemo = $this->etudiant('24I09001', 'Étudiant Démo', $salleA);
         $studentsA = collect([$etudiantDemo])
             ->concat($this->classRoster($salleA, 13, 9100));
-        $studentsB = $this->classRoster($salleB, 14, 9200);
+
+        // Étudiante FA dédiée à la démo du parcours "demande de migration
+        // FA → FI" (Profil > Passer en Formation Initiale, puis admin >
+        // Migrations FA → FI).
+        $etudiantDemoFA = $this->etudiant('24I09201', 'Étudiant Démo FA', $salleB);
+        $studentsB = collect([$etudiantDemoFA])
+            ->concat($this->classRoster($salleB, 13, 9300));
+
+        $admin = User::updateOrCreate(
+            ['phone' => '690000099'],
+            ['name' => 'Admin Démo', 'password' => Hash::make('password'), 'role' => UserRole::Admin, 'validation_status' => ValidationStatus::Approved],
+        );
 
         $today = Carbon::today();
         $mondayThisWeek = $today->clone()->startOfWeek(Carbon::MONDAY);
@@ -197,9 +208,11 @@ class DemoDataSeeder extends Seeder
             [
                 ['Délégué', '699000001 (téléphone)', 'password', $delegueA->name.' — A23-FI'],
                 ['Délégué', '699000002 (téléphone)', 'password', $delegueB->name.' — D4-FA'],
-                ['Étudiant', '24I09001 (matricule)', 'password', $etudiantDemo->name.' — A23-FI'],
+                ['Étudiant', '24I09001 (matricule)', 'password', $etudiantDemo->name.' — A23-FI (FI)'],
+                ['Étudiant', '24I09201 (matricule)', 'password', $etudiantDemoFA->name.' — D4-FA (FA, pour tester "Passer en FI")'],
                 ['Enseignant', '699000010 (téléphone)', 'password', $profGI1->name.' (cours normal)'],
                 ['Enseignant', '699000012 (téléphone)', 'password', $profGRT->name.' — a une séance EN DIRECT là, maintenant'],
+                ['Admin', '690000099 (téléphone)', 'password', $admin->name.' — presence-admin'],
             ],
         );
     }
