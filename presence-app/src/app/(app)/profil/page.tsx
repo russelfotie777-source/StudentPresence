@@ -43,7 +43,7 @@ export default function ProfilPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="surface-card overflow-hidden rounded-2xl border border-border">
         <InfoRow
           icon={Phone}
           label={isEtudiant ? "Matricule" : "Téléphone"}
@@ -96,7 +96,7 @@ function FormationMigrationCard() {
   }
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-card p-4">
+    <div className="surface-card flex flex-col gap-2.5 rounded-2xl border border-line p-4">
       <div className="flex items-center gap-2">
         <ArrowLeftRight className="h-4 w-4 text-primary" />
         <p className="text-sm font-semibold text-ink-900">Passer en Formation Initiale</p>

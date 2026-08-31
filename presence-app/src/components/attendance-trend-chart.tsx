@@ -47,7 +47,7 @@ export function AttendanceTrendChart({ data }: { data: AttendanceTrendPoint[] })
   const average = Math.round(data.reduce((sum, p) => sum + p.taux, 0) / data.length);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-line bg-card p-4">
+    <div className="surface-card relative overflow-hidden rounded-2xl border border-line p-4">
       <div
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full opacity-40 blur-3xl"
