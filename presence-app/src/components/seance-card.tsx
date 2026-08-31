@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "motion/react";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GrainOverlay } from "@/components/grain-overlay";
@@ -26,16 +29,26 @@ export function SeanceCard({
     return (
       <div className="flex flex-col gap-3">
         {/* Carte-billet : le signature moment du système */}
-        <div className="relative flex overflow-visible rounded-[22px] bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-[0_20px_40px_-14px_rgba(79,70,229,.5)]">
+        <motion.div
+          className="relative flex overflow-visible rounded-[22px] bg-gradient-to-br from-indigo-500 to-indigo-600"
+          animate={{
+            boxShadow: [
+              "0 20px 40px -14px rgba(79,70,229,.5)",
+              "0 22px 48px -12px rgba(79,70,229,.7)",
+              "0 20px 40px -14px rgba(79,70,229,.5)",
+            ],
+          }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+        >
           <GrainOverlay className="rounded-[22px]" />
 
           <div className="relative min-w-0 flex-1 p-4">
             <div className="mb-2 flex items-center gap-2">
               <span className="relative flex h-1.5 w-1.5 rounded-full bg-white">
-                <span className="absolute inset-[-3px] rounded-full bg-white/50" />
+                <span className="absolute inset-[-3px] animate-dc-pulse rounded-full bg-white" />
               </span>
               <span className="text-[10.5px] font-bold uppercase tracking-wider text-white/85">
-                En cours
+                En direct
               </span>
             </div>
             <p className="truncate font-display text-[15px] font-bold text-white">
@@ -60,7 +73,7 @@ export function SeanceCard({
               {seance.heure_debut.slice(0, 5)}
             </span>
           </div>
-        </div>
+        </motion.div>
 
         <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-ink-500">
           <span className="flex items-center gap-1.5">
