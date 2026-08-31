@@ -77,8 +77,10 @@ export default function RegisterPage() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">Créer un compte</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">
+          Créer un compte
+        </h2>
+        <p className="mt-1.5 text-[15px] text-ink-500">
           Renseignez vos informations pour commencer.
         </p>
       </div>
