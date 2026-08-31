@@ -7,9 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -51,32 +50,72 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Palette de la direction visuelle (canvas de design) — hex exacts,
+     pas oklch, pour rester pixel-fidèle aux maquettes. */
+  --color-ink-900: var(--ink-900);
+  --color-ink-700: var(--ink-700);
+  --color-ink-500: var(--ink-500);
+  --color-ink-300: var(--ink-300);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-indigo-600: var(--indigo-600);
+  --color-indigo-500: var(--indigo-500);
+  --color-indigo-100: var(--indigo-100);
+  --color-indigo-50: var(--indigo-50);
+  --color-amber-500: var(--amber-500);
+  --color-amber-100: var(--amber-100);
+  --color-emerald-500: var(--emerald-500);
+  --color-emerald-100: var(--emerald-100);
+  --color-rose-500: var(--rose-500);
+  --color-rose-100: var(--rose-100);
 }
 
 :root {
-  --background: oklch(0.985 0.003 285);
-  --foreground: oklch(0.19 0.02 285);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.19 0.02 285);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.19 0.02 285);
-  --primary: oklch(0.511 0.213 271);
-  --primary-foreground: oklch(0.99 0.004 271);
-  --secondary: oklch(0.96 0.008 271);
-  --secondary-foreground: oklch(0.32 0.04 271);
-  --muted: oklch(0.96 0.006 285);
-  --muted-foreground: oklch(0.52 0.02 285);
-  --accent: oklch(0.94 0.03 271);
-  --accent-foreground: oklch(0.36 0.15 271);
-  --success: oklch(0.6 0.14 152);
-  --success-foreground: oklch(0.99 0.01 152);
-  --warning: oklch(0.75 0.15 75);
-  --warning-foreground: oklch(0.28 0.06 75);
-  --destructive: oklch(0.577 0.22 27.325);
-  --destructive-foreground: oklch(0.99 0.005 27);
-  --border: oklch(0.92 0.006 285);
-  --input: oklch(0.92 0.006 285);
-  --ring: oklch(0.511 0.213 271);
+  --ink-900: #14121f;
+  --ink-700: #443f5c;
+  --ink-500: #726c8a;
+  --ink-300: #b3aec7;
+  --surface-0: #faf9f7;
+  --surface-1: #ffffff;
+  --surface-2: #f1eef9;
+  --line: #e8e4f2;
+  --indigo-600: #4f46e5;
+  --indigo-500: #655cea;
+  --indigo-100: #e8e5fc;
+  --indigo-50: #f4f2fe;
+  --amber-500: #f2994a;
+  --amber-100: #fdead2;
+  --emerald-500: #0fa572;
+  --emerald-100: #dcf5ea;
+  --rose-500: #e14a63;
+  --rose-100: #fbe6ea;
+
+  --background: var(--surface-0);
+  --foreground: var(--ink-900);
+  --card: var(--surface-1);
+  --card-foreground: var(--ink-900);
+  --popover: var(--surface-1);
+  --popover-foreground: var(--ink-900);
+  --primary: var(--indigo-600);
+  --primary-foreground: #ffffff;
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink-700);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-500);
+  --accent: var(--indigo-100);
+  --accent-foreground: var(--indigo-600);
+  --success: var(--emerald-500);
+  --success-foreground: #ffffff;
+  --warning: var(--amber-500);
+  --warning-foreground: #4a2a06;
+  --destructive: var(--rose-500);
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--indigo-600);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -143,3 +182,24 @@
     @apply font-sans;
   }
 }
+
+/* Micro-interactions du design canvas premium */
+@keyframes dc-pulse {
+  0% { transform: scale(0.8); opacity: 0.55; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.animate-dc-pulse { animation: dc-pulse 1.8s ease-out infinite; }
+.animate-dc-pulse-delay { animation: dc-pulse 1.8s ease-out 0.6s infinite; }
+
+@keyframes dc-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  65% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-dc-pop { animation: dc-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+
+@keyframes dc-ray {
+  0% { transform: scale(0.4) rotate(var(--r, 0deg)); opacity: 1; }
+  100% { transform: scale(1.6) rotate(var(--r, 0deg)); opacity: 0; }
+}
+.animate-dc-ray { animation: dc-ray 0.7s ease-out both; }
