@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SpaceEmptyState } from "@/components/space-empty-state";
 import { useLogout, useMe, useRequestValidation } from "@/hooks/use-auth";
 
 export default function ValidationEnAttentePage() {
@@ -24,9 +25,7 @@ export default function ValidationEnAttentePage() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col items-center justify-center gap-6 px-6 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-warning/20">
-        <Clock className="h-7 w-7 text-warning-foreground" />
-      </div>
+      <SpaceEmptyState className="w-full" />
 
       <div>
         <h1 className="text-xl font-semibold text-foreground">
