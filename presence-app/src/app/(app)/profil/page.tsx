@@ -3,14 +3,19 @@
 import { useRouter } from "next/navigation";
 import { LogOut, Phone, School, GraduationCap, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RoleBadge } from "@/components/user-badge";
+import { AttendanceTrendChart } from "@/components/attendance-trend-chart";
 import { useLogout, useMe } from "@/hooks/use-auth";
+import { useAttendanceTrend } from "@/hooks/use-attendance-stats";
 
 export default function ProfilPage() {
   const router = useRouter();
   const { data } = useMe();
   const logout = useLogout();
   const user = data?.user;
+  const isEtudiant = user?.effective_role === "Etudiant";
+  const { data: trend, isLoading: trendLoading } = useAttendanceTrend(isEtudiant);
 
   if (!user) return null;
 
@@ -41,6 +46,12 @@ export default function ProfilPage() {
         {user.filiere && <InfoRow icon={BookOpen} label="Filière" value={user.filiere.nom} />}
         {user.niveau && <InfoRow icon={GraduationCap} label="Niveau" value={user.niveau.nom} />}
       </div>
+
+      {isEtudiant && (trendLoading ? (
+        <Skeleton className="h-[248px] w-full rounded-2xl" />
+      ) : (
+        <AttendanceTrendChart data={trend ?? []} />
+      ))}
 
       {user.has_active_promotion && (
         <div className="rounded-2xl border border-accent bg-accent/60 px-4 py-3 text-sm text-accent-foreground">
@@ -77,9 +88,9 @@ function InfoRow({
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
         <Icon className="h-4 w-4 text-muted-foreground" />
       </div>
-      <div className="flex flex-1 items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="text-sm font-medium text-foreground">{value}</span>
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+        <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
+        <span className="truncate text-sm font-medium text-foreground">{value}</span>
       </div>
     </div>
   );

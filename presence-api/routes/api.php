@@ -78,6 +78,7 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
 Route::middleware(['auth:sanctum', 'validated'])->group(function () {
     Route::get('/seances/today', [SeanceController::class, 'today']);
     Route::get('/me/attendance-stats', [AttendanceStatsController::class, 'me']);
+    Route::get('/me/attendance-trend', [AttendanceStatsController::class, 'trend']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);
     Route::post('/seances/{seance}/push', [SeanceController::class, 'push']);
