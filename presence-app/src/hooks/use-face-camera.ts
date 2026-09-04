@@ -39,6 +39,17 @@ export function useFaceCamera() {
   }, []);
 
   const start = useCallback(async () => {
+    // Idempotent : si un flux tourne déjà, inutile (et risqué) de
+    // redemander la caméra — un appel redondant peut échouer pour une
+    // raison purement matérielle transitoire (piste en cours de
+    // libération) et écraserait à tort un état "prêt" qui fonctionne
+    // réellement, alors que la vidéo continue d'afficher l'ancien flux.
+    if (streamRef.current) {
+      setStatus("ready");
+      setError(null);
+      return;
+    }
+
     const requestId = ++requestIdRef.current;
 
     if (!navigator.mediaDevices?.getUserMedia) {
