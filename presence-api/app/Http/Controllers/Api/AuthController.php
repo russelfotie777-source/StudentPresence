@@ -46,12 +46,7 @@ class AuthController extends Controller
             ], 201);
         }
 
-        $token = $user->createToken('presence-app')->plainTextToken;
-
-        return response()->json([
-            'user' => new UserResource($user->load(['salle', 'niveau', 'filiere'])),
-            'token' => $token,
-        ], 201);
+        return response()->json($this->authPayload($user), 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -70,12 +65,7 @@ class AuthController extends Controller
         // le middleware `validated`, qui les bloquera tant que validation_status
         // n'est pas "approved". Le front doit lire validation_status et
         // rediriger vers l'écran d'attente plutôt que le dashboard.
-        $token = $user->createToken('presence-app')->plainTextToken;
-
-        return response()->json([
-            'user' => new UserResource($user->load(['salle', 'niveau', 'filiere'])),
-            'token' => $token,
-        ]);
+        return response()->json($this->authPayload($user));
     }
 
     /**
@@ -99,10 +89,22 @@ class AuthController extends Controller
         return response()->json(['user' => new UserResource($user)]);
     }
 
+    /**
+     * `face_pending` reflète le jeton courant (habileté exclusive
+     * "face-pending"), pas seulement le rôle — c'est ce qui permet au
+     * frontend de savoir, y compris après un rechargement de page où seul
+     * le jeton est en mémoire, s'il doit renvoyer l'utilisateur vers l'étape
+     * faciale avant d'afficher le tableau de bord.
+     */
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $abilities = $user->currentAccessToken()?->abilities ?? [];
+
         return response()->json([
-            'user' => new UserResource($request->user()->load(['salle', 'niveau', 'filiere'])),
+            'user' => new UserResource($user->load(['salle', 'niveau', 'filiere'])),
+            'face_pending' => in_array('face-pending', $abilities, true),
+            'face_enrolled' => $user->hasFaceEnrolled(),
         ]);
     }
 
@@ -111,5 +113,30 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Déconnecté.']);
+    }
+
+    /**
+     * Émet le jeton adapté à ce compte : un Étudiant reçoit un jeton à
+     * portée limitée (habileté "face-pending" uniquement, expire vite) tant
+     * que la seconde étape faciale n'a pas eu lieu pour cette connexion —
+     * voir FaceController et le middleware EnsureFaceVerified. Les autres
+     * rôles reçoivent directement un jeton complet, comme avant.
+     *
+     * @return array<string, mixed>
+     */
+    private function authPayload(User $user): array
+    {
+        $requiresFace = $user->requiresFaceAuth();
+
+        $token = $requiresFace
+            ? $user->createToken('presence-app-pending', ['face-pending'], now()->addMinutes(15))->plainTextToken
+            : $user->createToken('presence-app')->plainTextToken;
+
+        return [
+            'user' => new UserResource($user->load(['salle', 'niveau', 'filiere'])),
+            'token' => $token,
+            'requires_face' => $requiresFace,
+            'face_enrolled' => $user->hasFaceEnrolled(),
+        ];
     }
 }
