@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch, getToken, setToken } from "@/lib/api-client";
-import type { AuthResponse, User } from "@/types/api";
+import type { AuthResponse, MeResponse, User } from "@/types/api";
 
 export interface LoginInput {
   phone: string;
@@ -23,7 +23,7 @@ export interface RegisterInput {
 export function useMe() {
   return useQuery({
     queryKey: ["me"],
-    queryFn: () => apiFetch<{ user: User }>("/api/auth/me"),
+    queryFn: () => apiFetch<MeResponse>("/api/auth/me"),
     enabled: !!getToken(),
     retry: false,
     staleTime: 60_000,
@@ -41,7 +41,11 @@ export function useLogin() {
       }),
     onSuccess: (data) => {
       if (data.token) setToken(data.token);
-      queryClient.setQueryData(["me"], { user: data.user });
+      queryClient.setQueryData(["me"], {
+        user: data.user,
+        face_pending: data.requires_face ?? false,
+        face_enrolled: data.face_enrolled ?? false,
+      } satisfies MeResponse);
     },
   });
 }
@@ -58,7 +62,11 @@ export function useRegister() {
     onSuccess: (data) => {
       if (data.token) {
         setToken(data.token);
-        queryClient.setQueryData(["me"], { user: data.user });
+        queryClient.setQueryData(["me"], {
+          user: data.user,
+          face_pending: data.requires_face ?? false,
+          face_enrolled: data.face_enrolled ?? false,
+        } satisfies MeResponse);
       }
     },
   });

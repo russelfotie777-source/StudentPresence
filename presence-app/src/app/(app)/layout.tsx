@@ -22,10 +22,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
+    if (!isLoading && data?.face_pending) {
+      router.replace("/face");
+      return;
+    }
     if (!isLoading && user && user.role !== "Etudiant" && user.validation_status !== "approved") {
       router.replace("/validation-en-attente");
     }
-  }, [isLoading, isError, user, router]);
+  }, [isLoading, isError, user, data, router]);
 
   if (isLoading || !user) {
     return (

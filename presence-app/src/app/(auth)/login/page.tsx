@@ -22,7 +22,9 @@ export default function LoginPage() {
       { phone, password },
       {
         onSuccess: (data) => {
-          if (data.user.role !== "Etudiant" && data.user.validation_status !== "approved") {
+          if (data.requires_face) {
+            router.replace("/face");
+          } else if (data.user.role !== "Etudiant" && data.user.validation_status !== "approved") {
             router.replace("/validation-en-attente");
           } else {
             router.replace("/dashboard");
