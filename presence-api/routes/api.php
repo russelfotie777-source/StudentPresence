@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\EnseignantController;
+use App\Http\Controllers\Api\FaceController;
 use App\Http\Controllers\Api\FiliereController;
 use App\Http\Controllers\Api\FormationRequestController;
 use App\Http\Controllers\Api\MatiereController;
@@ -31,6 +32,11 @@ Route::prefix('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/request-validation', [AuthController::class, 'requestValidation']);
+
+        // Second facteur (étudiants) : échange le jeton "en attente" émis par
+        // login/register contre un jeton complet, voir FaceController.
+        Route::post('/face/enroll', [FaceController::class, 'enroll']);
+        Route::post('/face/verify', [FaceController::class, 'verify'])->middleware('throttle:10,1');
     });
 });
 
@@ -45,7 +51,7 @@ Route::middleware([])->group(function () {
 });
 
 // Catalogue académique + planification — réservé au back-office admin.
-Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])->group(function () {
     Route::apiResource('niveaux', NiveauController::class)->except(['index', 'show']);
     Route::apiResource('filieres', FiliereController::class)->except(['index', 'show']);
     Route::apiResource('salles', SalleController::class)->except(['index', 'show']);
@@ -80,7 +86,9 @@ Route::middleware(['auth:sanctum', 'validated', 'role:Admin'])->group(function (
 
 // Cœur métier : présence — accessible à Étudiant/Délégué/Enseignant selon
 // l'action (chaque contrôleur vérifie le rôle effectif en interne).
-Route::middleware(['auth:sanctum', 'validated'])->group(function () {
+// face-verified bloque un Étudiant tant qu'il n'a pas terminé la seconde
+// étape (inscription/vérification faciale) pour cette connexion.
+Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(function () {
     Route::get('/seances/today', [SeanceController::class, 'today']);
     Route::get('/seances/history', [SeanceController::class, 'history']);
     Route::get('/me/attendance-stats', [AttendanceStatsController::class, 'me']);
