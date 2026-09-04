@@ -62,7 +62,9 @@ export default function RegisterPage() {
 
     register.mutate(input, {
       onSuccess: (data) => {
-        if (data.token) {
+        if (data.requires_face) {
+          router.replace("/face");
+        } else if (data.token) {
           router.replace("/dashboard");
         } else {
           router.replace("/login?inscrit=1");
