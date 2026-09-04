@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureFaceVerified;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureValidated;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureRole::class,
             'validated' => EnsureValidated::class,
+            'face-verified' => EnsureFaceVerified::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

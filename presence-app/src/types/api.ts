@@ -31,6 +31,14 @@ export interface User {
 export interface AuthResponse {
   user: User;
   token?: string;
+  requires_face?: boolean;
+  face_enrolled?: boolean;
+}
+
+export interface MeResponse {
+  user: User;
+  face_pending?: boolean;
+  face_enrolled?: boolean;
 }
 
 export interface Seance {
