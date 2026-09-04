@@ -31,7 +31,17 @@ export function loadFaceModels(): Promise<void> {
 
 export type FaceCaptureResult =
   | { ok: true; descriptor: number[] }
-  | { ok: false; reason: "no-face" | "multiple-faces" };
+  | { ok: false; reason: "no-face" | "multiple-faces" | "not-ready" };
+
+/**
+ * Seuil de confiance volontairement abaissé sous le défaut de la librairie
+ * (0.5) : en conditions réelles (éclairage imparfait, visage proche/grand
+ * dans le cadre), le défaut rate des visages pourtant bien présents. 0.3
+ * reste suffisant pour écarter le bruit — la comparaison du descripteur
+ * côté serveur (seuil de distance) reste le vrai filtre d'identité, cette
+ * étape ne fait que localiser un visage à mesurer.
+ */
+const DETECTOR_OPTIONS_SCORE_THRESHOLD = 0.3;
 
 /**
  * Détecte explicitement TOUTES les faces (pas juste la première) pour
@@ -42,10 +52,21 @@ export type FaceCaptureResult =
 export async function captureFaceDescriptor(
   video: HTMLVideoElement,
 ): Promise<FaceCaptureResult> {
+  // Le flux peut techniquement être "prêt" côté hook caméra sans qu'une
+  // première frame décodée soit encore disponible — évite de faire tourner
+  // le détecteur sur une image vide/noire (rendu silencieusement en "aucun
+  // visage détecté", trompeur pour l'utilisateur).
+  if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
+    return { ok: false, reason: "not-ready" };
+  }
+
   const faceapi = await getFaceApi();
 
   const detections = await faceapi
-    .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+    .detectAllFaces(
+      video,
+      new faceapi.TinyFaceDetectorOptions({ scoreThreshold: DETECTOR_OPTIONS_SCORE_THRESHOLD }),
+    )
     .withFaceLandmarks(true)
     .withFaceDescriptors();
 
