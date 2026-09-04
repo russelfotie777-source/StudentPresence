@@ -29,6 +29,106 @@ export function loadFaceModels(): Promise<void> {
   return modelsPromise;
 }
 
+export interface FacePoint {
+  x: number;
+  y: number;
+}
+
+export interface FaceBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface LiveFaceHint {
+  score: number;
+  box: FaceBox;
+  landmarks: FacePoint[];
+}
+
+/**
+ * Réglages du suivi EN CONTINU (pendant que la caméra tourne, avant même
+ * de cliquer) : volontairement plus léger que la capture finale
+ * (inputSize réduit) puisqu'il ne sert qu'à guider le cadrage en temps
+ * réel, pas à produire le descripteur envoyé au serveur.
+ */
+const LIVE_DETECTOR_OPTIONS = { inputSize: 224, scoreThreshold: 0.4 };
+
+/**
+ * Un seul visage suivi (le plus net) suffit pour le guide de cadrage —
+ * la vérité sur "combien de visages" est de toute façon retranchée au
+ * moment de la capture réelle via captureFaceDescriptor/detectAllFaces.
+ */
+export async function detectFaceLive(video: HTMLVideoElement): Promise<LiveFaceHint | null> {
+  if (video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0) {
+    return null;
+  }
+
+  const faceapi = await getFaceApi();
+
+  const result = await faceapi
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions(LIVE_DETECTOR_OPTIONS))
+    .withFaceLandmarks(true);
+
+  if (!result) return null;
+
+  return {
+    score: result.detection.score,
+    box: {
+      x: result.detection.box.x,
+      y: result.detection.box.y,
+      width: result.detection.box.width,
+      height: result.detection.box.height,
+    },
+    landmarks: result.landmarks.positions.map((p) => ({ x: p.x, y: p.y })),
+  };
+}
+
+export type FacePositionQuality = "none" | "poor" | "good";
+
+/**
+ * Juge si le visage suivi est bien cadré DANS LA ZONE RÉELLEMENT VISIBLE
+ * du cercle de prévisualisation (object-cover recadre la vidéo en un
+ * carré central de côté min(largeur, hauteur) — un visage hors de ce
+ * carré est hors champ à l'écran même s'il existe dans la frame brute).
+ * Sert à guider l'utilisateur AVANT qu'il ne déclenche la capture, avec
+ * les mêmes critères qui rendent la détection fiable.
+ */
+export function assessFacePosition(
+  hint: LiveFaceHint | null,
+  video: HTMLVideoElement | null,
+): { quality: FacePositionQuality; message: string } {
+  if (!hint || !video || !video.videoWidth) {
+    return { quality: "none", message: "Centrez votre visage dans le cadre." };
+  }
+
+  const visibleSize = Math.min(video.videoWidth, video.videoHeight);
+  const cropOffsetX = (video.videoWidth - visibleSize) / 2;
+  const cropOffsetY = (video.videoHeight - visibleSize) / 2;
+
+  const centerX = hint.box.x + hint.box.width / 2;
+  const centerY = hint.box.y + hint.box.height / 2;
+  const relX = (centerX - cropOffsetX) / visibleSize;
+  const relY = (centerY - cropOffsetY) / visibleSize;
+  const sizeRatio = hint.box.width / visibleSize;
+
+  if (sizeRatio >= 0.85) {
+    return { quality: "poor", message: "Éloignez-vous un peu." };
+  }
+  if (sizeRatio <= 0.3) {
+    return { quality: "poor", message: "Rapprochez-vous un peu." };
+  }
+  if (Math.abs(relX - 0.5) >= 0.18 || Math.abs(relY - 0.5) >= 0.18) {
+    return { quality: "poor", message: "Centrez votre visage dans le cadre." };
+  }
+  if (hint.score < 0.5) {
+    return { quality: "poor", message: "Cherchez un meilleur éclairage." };
+  }
+
+  return { quality: "good", message: "Parfait, prenez la photo !" };
+}
+
 export type FaceCaptureResult =
   | { ok: true; descriptor: number[] }
   | { ok: false; reason: "no-face" | "multiple-faces" | "not-ready" };
