@@ -160,6 +160,34 @@ class FaceAuthTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_verify_rejects_a_similar_but_distinct_face_under_the_tightened_threshold(): void
+    {
+        // Distance ~0.48 entre les deux descripteurs : aurait été acceptée
+        // sous l'ancien seuil (0.55, trop permissif pour des visages très
+        // ressemblants — voir le commentaire sur FaceController::MATCH_THRESHOLD,
+        // resserré après qu'une sœur ait été acceptée à la place de
+        // l'utilisatrice inscrite) mais doit être refusée sous le seuil
+        // resserré (0.42).
+        $base = array_fill(0, 128, 0.2);
+        $delta = 0.48 / sqrt(128);
+        $similar = array_map(fn ($value) => $value + $delta, $base);
+
+        $etudiant = User::factory()->etudiant()->create([
+            'password' => bcrypt('password123'),
+            'face_descriptor' => $base,
+            'face_enrolled_at' => now(),
+        ]);
+
+        $login = $this->postJson('/api/auth/login', [
+            'phone' => $etudiant->phone,
+            'password' => 'password123',
+        ]);
+
+        $this->withFreshToken($login->json('token'))
+            ->postJson('/api/auth/face/verify', ['descriptor' => $similar])
+            ->assertStatus(422);
+    }
+
     public function test_a_full_token_cannot_call_face_endpoints(): void
     {
         $etudiant = User::factory()->etudiant()->create([

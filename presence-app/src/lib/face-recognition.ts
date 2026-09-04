@@ -14,14 +14,20 @@ async function getFaceApi() {
 }
 
 /**
- * Charge les modèles TensorFlow.js (~6.7 Mo, dominés par le réseau de
+ * Charge les modèles TensorFlow.js (~7 Mo, dominés par le réseau de
  * reconnaissance) une seule fois, mise en cache par le navigateur ensuite.
+ * Deux modèles de repères faciaux sont chargés : la version "tiny" (rapide,
+ * pour le guide de cadrage en direct) ET la version complète (plus précise,
+ * pour l'alignement du visage avant d'en extraire le descripteur — voir
+ * captureFaceDescriptor). La précision de cet alignement a un effet direct
+ * sur la capacité à distinguer deux visages proches (ex: fratrie).
  */
 export function loadFaceModels(): Promise<void> {
   modelsPromise ??= getFaceApi().then((faceapi) =>
     Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
     ]).then(() => undefined),
   );
@@ -144,10 +150,36 @@ export type FaceCaptureResult =
 const DETECTOR_OPTIONS_SCORE_THRESHOLD = 0.3;
 
 /**
- * Détecte explicitement TOUTES les faces (pas juste la première) pour
- * pouvoir refuser le cas "plusieurs visages" plutôt que de choisir
- * silencieusement un candidat — évite qu'une seconde personne dans le cadre
- * ne fausse l'inscription/vérification.
+ * Un seul instantané est sensible au bruit (angle, micro-flou, reflet) —
+ * un des deux leviers pour resserrer la précision d'identité (voir aussi
+ * FaceController::MATCH_THRESHOLD côté API) est de capturer une courte
+ * rafale et de moyenner les descripteurs obtenus plutôt que de se fier à
+ * une seule image. Rapide (quelques centaines de ms au total) et invisible
+ * pour l'utilisateur, qui ne voit qu'un seul clic.
+ */
+const BURST_SAMPLES = 3;
+const BURST_INTERVAL_MS = 150;
+
+function averageDescriptors(samples: number[][]): number[] {
+  const length = samples[0].length;
+  const sum = new Array<number>(length).fill(0);
+
+  for (const sample of samples) {
+    for (let i = 0; i < length; i++) sum[i] += sample[i];
+  }
+
+  return sum.map((value) => value / samples.length);
+}
+
+/**
+ * Détecte explicitement TOUTES les faces (pas juste la première) sur
+ * chaque instantané de la rafale pour pouvoir refuser le cas "plusieurs
+ * visages" plutôt que de choisir silencieusement un candidat — évite
+ * qu'une seconde personne dans le cadre ne fausse l'inscription/
+ * vérification. Utilise le modèle de repères COMPLET (pas la version
+ * "tiny") pour un alignement plus précis avant l'extraction du
+ * descripteur — la version tiny suffit pour le guide de cadrage en
+ * direct, mais pas pour la mesure d'identité elle-même.
  */
 export async function captureFaceDescriptor(
   video: HTMLVideoElement,
@@ -161,22 +193,37 @@ export async function captureFaceDescriptor(
   }
 
   const faceapi = await getFaceApi();
+  const samples: number[][] = [];
+  let sawMultipleFaces = false;
 
-  const detections = await faceapi
-    .detectAllFaces(
-      video,
-      new faceapi.TinyFaceDetectorOptions({ scoreThreshold: DETECTOR_OPTIONS_SCORE_THRESHOLD }),
-    )
-    .withFaceLandmarks(true)
-    .withFaceDescriptors();
+  for (let i = 0; i < BURST_SAMPLES; i++) {
+    const detections = await faceapi
+      .detectAllFaces(
+        video,
+        new faceapi.TinyFaceDetectorOptions({ scoreThreshold: DETECTOR_OPTIONS_SCORE_THRESHOLD }),
+      )
+      .withFaceLandmarks(false)
+      .withFaceDescriptors();
 
-  if (detections.length === 0) {
-    return { ok: false, reason: "no-face" };
+    if (detections.length > 1) sawMultipleFaces = true;
+    if (detections.length === 1) samples.push(Array.from(detections[0].descriptor));
+
+    if (i < BURST_SAMPLES - 1) {
+      await new Promise((resolve) => setTimeout(resolve, BURST_INTERVAL_MS));
+    }
   }
 
-  if (detections.length > 1) {
+  // Une seconde personne entrée dans le cadre à un moment de la rafale est
+  // traitée comme un refus net, même si d'autres instantanés étaient propres.
+  if (sawMultipleFaces) {
     return { ok: false, reason: "multiple-faces" };
   }
 
-  return { ok: true, descriptor: Array.from(detections[0].descriptor) };
+  // Exige la majorité des instantanés pour écarter un résultat qui ne
+  // tiendrait qu'à une seule image chanceuse (mise au point, clignement...).
+  if (samples.length < Math.ceil(BURST_SAMPLES / 2)) {
+    return { ok: false, reason: "no-face" };
+  }
+
+  return { ok: true, descriptor: averageDescriptors(samples) };
 }

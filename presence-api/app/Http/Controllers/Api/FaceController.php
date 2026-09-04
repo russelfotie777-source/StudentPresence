@@ -29,9 +29,15 @@ class FaceController extends Controller
     private const DESCRIPTOR_LENGTH = 128;
 
     // Distance euclidienne maximale entre deux descripteurs pour les
-    // considérer comme le même visage — seuil usuel du modèle
-    // FaceRecognitionNet (face-api.js) pour ce type de comparaison.
-    private const MATCH_THRESHOLD = 0.55;
+    // considérer comme le même visage. Le seuil "usuel" documenté pour
+    // FaceRecognitionNet (face-api.js) est 0.55-0.6, mais un cas réel
+    // constaté (une sœur acceptée à la place de l'utilisateur inscrit) a
+    // montré qu'il est trop permissif pour des visages très ressemblants
+    // (fratrie) — resserré à 0.42. Plus le seuil descend, moins de faux
+    // acceptés, mais plus l'utilisateur légitime peut être refusé dans de
+    // mauvaises conditions (mauvais éclairage, angle) et devoir réessayer —
+    // c'est le compromis attendu ici, la sécurité prime sur le confort.
+    private const MATCH_THRESHOLD = 0.42;
 
     public function enroll(Request $request): JsonResponse
     {
