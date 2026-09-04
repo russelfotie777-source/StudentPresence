@@ -68,8 +68,10 @@ export default function FacePage() {
       if (!result.ok) {
         setCaptureError(
           result.reason === "no-face"
-            ? "Aucun visage détecté. Centrez votre visage dans le cadre."
-            : "Un seul visage doit être visible dans le cadre.",
+            ? "Aucun visage détecté. Centrez votre visage dans le cadre, avec un bon éclairage."
+            : result.reason === "multiple-faces"
+              ? "Un seul visage doit être visible dans le cadre."
+              : "La caméra n'est pas encore prête, patientez une seconde et réessayez.",
         );
         return;
       }
