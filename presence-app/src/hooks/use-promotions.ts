@@ -13,14 +13,30 @@ export interface StudentSearchResult {
   has_active_promotion: boolean;
 }
 
-export function useStudentSearch(search: string) {
+export function useStudentSearch(search: string, salleId?: number) {
   return useQuery({
-    queryKey: ["students", "search", search],
+    queryKey: ["students", "search", salleId, search],
     queryFn: () =>
       apiFetch<StudentSearchResult[]>(
-        `/api/students/search?search=${encodeURIComponent(search)}`,
+        `/api/students/search?search=${encodeURIComponent(search)}&salle_id=${salleId}`,
       ),
-    enabled: search.length > 1,
+    enabled: salleId !== undefined,
+  });
+}
+
+export interface TeacherSalle {
+  id: number;
+  nom: string;
+  filiere: string | null;
+  formation: string | null;
+}
+
+export function useTeacherSalles(enabled: boolean) {
+  return useQuery({
+    queryKey: ["teacher-salles"],
+    queryFn: () => apiFetch<TeacherSalle[]>("/api/me/salles-enseignees"),
+    enabled,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -42,7 +58,7 @@ export function useCreatePromotion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { etudiant_id: number; duree_minutes: number }) =>
+    mutationFn: (input: { etudiant_id: number; duree_minutes: number; salle_id?: number }) =>
       apiFetch("/api/promotions", { method: "POST", body: JSON.stringify(input) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promotions"] });
