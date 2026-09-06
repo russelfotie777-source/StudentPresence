@@ -61,13 +61,24 @@ class User extends Authenticatable
     }
 
     /**
-     * Seul l'étudiant est concerné par le second facteur facial : c'est le
-     * rôle qui pointe sa propre présence via GPS, donc celui où un mot de
-     * passe partagé pourrait permettre de pointer à la place d'un autre.
+     * Grades soumis au second facteur facial, réglables par l'admin depuis
+     * presence-admin (voir Parametre::FACE_AUTH_ROLES).
+     *
+     * Le motif reste le même pour tous : empêcher qu'un mot de passe partagé
+     * suffise à pointer, ou à déclarer des heures payées, à la place de
+     * quelqu'un d'autre. Le délégué est concerné au même titre que
+     * l'étudiant — c'est un étudiant promu, qui pointe aussi pour lui-même —
+     * et l'enseignant l'est parce qu'il déclare ses heures réelles, qui
+     * déterminent sa paie.
+     *
+     * On se fonde sur `role` et non sur effectiveRole() : un étudiant
+     * temporairement promu délégué doit rester soumis aux règles de son
+     * grade réel, sinon une promotion pourrait servir à contourner le
+     * facial.
      */
     public function requiresFaceAuth(): bool
     {
-        return $this->role === UserRole::Etudiant;
+        return in_array($this->role->value, Parametre::faceAuthRoles(), true);
     }
 
     public function niveau(): BelongsTo
