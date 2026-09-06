@@ -5,6 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SpaceEmptyState } from "@/components/space-empty-state";
 import { cn } from "@/lib/utils";
 import { useHistorySeances } from "@/hooks/use-seances";
+import { VoirPlus } from "@/components/voir-plus";
+import { lignes, total } from "@/lib/pagination";
 import type { Seance } from "@/types/api";
 
 const listVariants: Variants = {
@@ -37,8 +39,9 @@ function groupByDate(seances: Seance[]) {
 }
 
 export default function HistoriquePage() {
-  const { data: seances, isLoading } = useHistorySeances();
-  const groups = groupByDate(seances ?? []);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useHistorySeances();
+  const seances = lignes(data?.pages);
+  const groups = groupByDate(seances);
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,6 +88,14 @@ export default function HistoriquePage() {
           </motion.div>
         </div>
       ))}
+
+      <VoirPlus
+        affiches={seances.length}
+        total={total(data?.pages)}
+        onClick={() => fetchNextPage()}
+        isLoading={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+      />
     </div>
   );
 }

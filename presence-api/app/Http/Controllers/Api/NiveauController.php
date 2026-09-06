@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Niveau;
+use App\Services\CatalogueCache;
 use Illuminate\Http\Request;
 
 class NiveauController extends Controller
 {
     public function index()
     {
-        return Niveau::orderBy('nom')->get();
+        return CatalogueCache::souvenir('niveaux', fn () => Niveau::orderBy('nom')->get());
     }
 
     public function store(Request $request)

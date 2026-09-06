@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class SeanceController extends Controller
 {
+    private const HISTORIQUE_PAR_PAGE = 20;
+
     /**
      * Séances du jour pour l'utilisateur connecté, selon son rôle effectif
      * (tient compte d'une promotion temporaire active). Reprend les requêtes
@@ -55,6 +57,10 @@ class SeanceController extends Controller
     {
         $user = $request->user();
 
+        $data = $request->validate([
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = Seance::query()
             ->with(['salle', 'enseignant', 'courseTemplate.matiere', 'pushRequest', 'position'])
             ->where('date_seance', '<', now()->toDateString());
@@ -69,8 +75,14 @@ class SeanceController extends Controller
             default => $query->whereRaw('1 = 0'),
         };
 
+        // Paginé plutôt que tronqué à 200 : sur une année complète l'ancien
+        // plafond finissait par masquer silencieusement les séances les plus
+        // anciennes, tout en chargeant d'un coup bien plus que ce qu'un écran
+        // mobile affiche.
         return SeanceResource::collection(
-            $query->orderByDesc('date_seance')->orderByDesc('heure_debut')->limit(200)->get()
+            $query->orderByDesc('date_seance')
+                ->orderByDesc('heure_debut')
+                ->paginate($data['per_page'] ?? self::HISTORIQUE_PAR_PAGE)
         );
     }
 

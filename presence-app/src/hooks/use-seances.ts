@@ -1,9 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch, ApiError } from "@/lib/api-client";
-import type { RosterEntry, Seance } from "@/types/api";
+import { pageSuivante } from "@/lib/pagination";
+import type { Paginated, RosterEntry, Seance } from "@/types/api";
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof ApiError ? error.message : fallback;
@@ -18,9 +19,12 @@ export function useTodaySeances() {
 }
 
 export function useHistorySeances() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["seances", "history"],
-    queryFn: () => apiFetch<Seance[]>("/api/seances/history"),
+    queryFn: ({ pageParam }) =>
+      apiFetch<Paginated<Seance>>(`/api/seances/history?page=${pageParam}`),
+    initialPageParam: 1,
+    getNextPageParam: pageSuivante,
   });
 }
 

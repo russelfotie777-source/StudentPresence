@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Filiere;
+use App\Services\CatalogueCache;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -11,10 +12,15 @@ class FiliereController extends Controller
 {
     public function index(Request $request)
     {
-        return Filiere::with('niveau')
-            ->when($request->integer('niveau_id'), fn ($q, $niveauId) => $q->where('niveau_id', $niveauId))
-            ->orderBy('nom')
-            ->get();
+        $niveauId = $request->integer('niveau_id');
+
+        return CatalogueCache::souvenir(
+            "filieres:niveau:{$niveauId}",
+            fn () => Filiere::with('niveau')
+                ->when($niveauId, fn ($q) => $q->where('niveau_id', $niveauId))
+                ->orderBy('nom')
+                ->get()
+        );
     }
 
     public function store(Request $request)

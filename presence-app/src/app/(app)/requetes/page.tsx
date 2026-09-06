@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { motion, type Variants } from "motion/react";
 import { AlertCircle, Paperclip } from "lucide-react";
 import { SpaceEmptyState } from "@/components/space-empty-state";
+import { VoirPlus } from "@/components/voir-plus";
+import { lignes, total } from "@/lib/pagination";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -40,7 +42,14 @@ function RequetesContent() {
   const searchParams = useSearchParams();
   const preselectedSeanceId = searchParams.get("seance_id") ?? "";
 
-  const { data: requetes, isLoading } = useMyRequetes();
+  const {
+    data: pagesRequetes,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMyRequetes();
+  const requetes = lignes(pagesRequetes?.pages);
   const submit = useSubmitRequete();
 
   const [seanceId, setSeanceId] = useState(preselectedSeanceId);
@@ -141,7 +150,7 @@ function RequetesContent() {
       {isLoading && <p className="text-sm text-ink-500">Chargement…</p>}
 
       <motion.div variants={listVariants} initial="hidden" animate="show" className="flex flex-col gap-2.5">
-        {requetes?.map((r) => (
+        {requetes.map((r) => (
           <motion.div
             key={r.id}
             variants={itemVariants}
@@ -167,8 +176,18 @@ function RequetesContent() {
             )}
           </motion.div>
         ))}
-        {requetes?.length === 0 && <SpaceEmptyState title="Aucune requête pour l'instant" />}
+        {pagesRequetes && requetes.length === 0 && (
+          <SpaceEmptyState title="Aucune requête pour l'instant" />
+        )}
       </motion.div>
+
+      <VoirPlus
+        affiches={requetes.length}
+        total={total(pagesRequetes?.pages)}
+        onClick={() => fetchNextPage()}
+        isLoading={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+      />
     </div>
   );
 }
