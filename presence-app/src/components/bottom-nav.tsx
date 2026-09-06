@@ -20,11 +20,14 @@ const BASE_ITEMS: NavItem[] = [
   { href: "/historique", label: "Historique", icon: History },
 ];
 
-const TEACHER_ITEMS: NavItem[] = [
+const TEACHER_ONLY_ITEMS: NavItem[] = [
   { href: "/salaire", label: "Salaire", icon: Wallet },
   { href: "/requetes", label: "Requêtes", icon: MessageSquareWarning },
-  { href: "/promotion", label: "Promotion", icon: UserPlus },
 ];
+
+// Un délégué (titulaire, ou étudiant actuellement promu via effective_role)
+// peut lui aussi désigner un remplaçant temporaire — voir PromotionController.
+const PROMOTION_ITEM: NavItem = { href: "/promotion", label: "Promotion", icon: UserPlus };
 
 const PROFILE_ITEM: NavItem = { href: "/profil", label: "Profil", icon: User };
 
@@ -32,7 +35,8 @@ export function BottomNav({ role }: { role: UserRole }) {
   const pathname = usePathname();
   const items = [
     ...BASE_ITEMS,
-    ...(role === "Enseignant" ? TEACHER_ITEMS : []),
+    ...(role === "Enseignant" ? TEACHER_ONLY_ITEMS : []),
+    ...(role === "Enseignant" || role === "Delegue" ? [PROMOTION_ITEM] : []),
     PROFILE_ITEM,
   ];
 

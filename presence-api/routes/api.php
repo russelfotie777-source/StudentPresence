@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\SemaineController;
 use App\Http\Controllers\Api\SessionHistoryController;
 use App\Http\Controllers\Api\StudentSearchController;
 use App\Http\Controllers\Api\TarifHeureController;
+use App\Http\Controllers\Api\TeacherSalleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -113,6 +114,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::get('/me/formation-requests', [FormationRequestController::class, 'mine']);
 
     Route::get('/students/search', [StudentSearchController::class, 'index']);
+    Route::get('/me/salles-enseignees', [TeacherSalleController::class, 'mine']);
     Route::get('/promotions', [PromotionController::class, 'index']);
     Route::post('/promotions', [PromotionController::class, 'store']);
 });
