@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
@@ -90,6 +91,25 @@ class User extends Authenticatable
     public function seancesEnseignees(): HasMany
     {
         return $this->hasMany(Seance::class, 'enseignant_id');
+    }
+
+    /**
+     * Vrai si cet enseignant a au moins une séance dans cette salle — un
+     * enseignant n'a pas de salle_id propre (contrairement à
+     * l'étudiant/délégué), il "enseigne dans" une salle via ses séances,
+     * potentiellement plusieurs.
+     */
+    public function enseigneDansSalle(int $salleId): bool
+    {
+        return $this->seancesEnseignees()->where('salle_id', $salleId)->exists();
+    }
+
+    /**
+     * Salles distinctes où cet enseignant a au moins une séance.
+     */
+    public function salleIdsEnseignees(): Collection
+    {
+        return $this->seancesEnseignees()->distinct()->pluck('salle_id');
     }
 
     public function presences(): HasMany
