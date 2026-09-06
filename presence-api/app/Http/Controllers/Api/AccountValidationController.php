@@ -31,6 +31,7 @@ class AccountValidationController extends Controller
             ->whereIn('role', $data['role'] ?? null ? [$data['role']] : [UserRole::Delegue->value, UserRole::Enseignant->value])
             ->when($data['statut'] ?? null, fn ($q, $statut) => $q->where('validation_status', $statut))
             ->with(['salle', 'niveau', 'filiere'])
+            ->withActivePromotions()
             ->orderByDesc('created_at')
             ->get();
 
