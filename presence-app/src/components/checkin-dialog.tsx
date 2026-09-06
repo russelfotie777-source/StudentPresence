@@ -13,6 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { usePermission } from "@/hooks/use-permission";
+import { DemandePermission } from "@/components/demande-permission";
 import { useCheckIn } from "@/hooks/use-seances";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -29,11 +31,21 @@ export function CheckInDialog({
 }) {
   const geo = useGeolocation();
   const checkIn = useCheckIn(seance.id);
+  const { etat } = usePermission("position");
+
+  // Un refus constaté à l'usage fait autorité sur l'état interrogé, que
+  // Safari ne sait de toute façon pas renseigner pour la position.
+  const permission = geo.error === "permission_denied" ? "refusee" : etat;
+  const doitDemander = geo.status === "idle" && permission !== "accordee";
 
   useEffect(() => {
-    if (open) geo.locate();
+    // Localisation immédiate seulement si l'autorisation est déjà acquise.
+    // Sinon on affiche d'abord l'explication et on attend un vrai geste :
+    // la demande système ne se présente qu'une fois, elle ne doit pas être
+    // dépensée par surprise.
+    if (open && etat === "accordee") geo.locate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, etat]);
 
   function handleConfirm() {
     // On exige le statut "success" et pas seulement des coordonnées : pendant
@@ -58,6 +70,14 @@ export function CheckInDialog({
         </DialogHeader>
 
         <div className="flex flex-col items-center gap-3 py-4 text-center">
+          {(doitDemander || permission === "refusee") && !checkIn.isSuccess && (
+            <DemandePermission
+              type="position"
+              etat={permission}
+              onDemander={() => geo.locate()}
+            />
+          )}
+
           {geo.status === "loading" && (
             <>
               <div className="relative mb-2 flex h-[104px] w-[104px] items-center justify-center">
@@ -129,7 +149,12 @@ export function CheckInDialog({
           )}
         </div>
 
-        <DialogFooter className={cn("gap-2", checkIn.isSuccess && "hidden")}>
+        <DialogFooter
+          className={cn(
+            "gap-2",
+            (checkIn.isSuccess || doitDemander || permission === "refusee") && "hidden",
+          )}
+        >
           {geo.status === "error" && (
             <Button variant="outline" onClick={() => geo.locate()}>
               Réessayer

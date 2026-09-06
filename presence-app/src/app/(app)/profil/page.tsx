@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoleBadge } from "@/components/user-badge";
 import { AttendanceTrendChart } from "@/components/attendance-trend-chart";
+import { CarteAutorisations } from "@/components/carte-autorisations";
 import { useLogout, useMe } from "@/hooks/use-auth";
 import { useAttendanceTrend } from "@/hooks/use-attendance-stats";
 import { useMyFormationRequests, useSubmitFormationRequest } from "@/hooks/use-formation-requests";
@@ -67,6 +68,12 @@ export default function ProfilPage() {
           Vous avez actuellement les droits de délégué (promotion temporaire active).
         </div>
       )}
+
+      {/* La caméra ne concerne que les comptes ayant un visage enregistré :
+          depuis que le facial est réglable par grade, ce n'est plus une
+          question de rôle. L'afficher aux autres laisserait croire à une
+          autorisation manquante alors qu'elle ne leur sera jamais demandée. */}
+      <CarteAutorisations afficherCamera={data?.face_enrolled === true} />
 
       <Button
         variant="outline"
