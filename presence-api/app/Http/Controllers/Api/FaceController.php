@@ -127,7 +127,7 @@ class FaceController extends Controller
         $token = $user->createToken('presence-app')->plainTextToken;
 
         return response()->json(array_merge([
-            'user' => new UserResource($user->load(['salle', 'niveau', 'filiere'])),
+            'user' => new UserResource($user->loadForResource()),
             'token' => $token,
         ], $extra));
     }

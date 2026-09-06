@@ -102,7 +102,7 @@ class AuthController extends Controller
         $abilities = $user->currentAccessToken()?->abilities ?? [];
 
         return response()->json([
-            'user' => new UserResource($user->load(['salle', 'niveau', 'filiere'])),
+            'user' => new UserResource($user->loadForResource()),
             'face_pending' => in_array('face-pending', $abilities, true),
             'face_enrolled' => $user->hasFaceEnrolled(),
         ]);
@@ -133,7 +133,7 @@ class AuthController extends Controller
             : $user->createToken('presence-app')->plainTextToken;
 
         return [
-            'user' => new UserResource($user->load(['salle', 'niveau', 'filiere'])),
+            'user' => new UserResource($user->loadForResource()),
             'token' => $token,
             'requires_face' => $requiresFace,
             'face_enrolled' => $user->hasFaceEnrolled(),
