@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\FormationType;
 use App\Http\Controllers\Controller;
 use App\Models\Salle;
+use App\Services\CatalogueCache;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -12,11 +13,16 @@ class SalleController extends Controller
 {
     public function index(Request $request)
     {
-        return Salle::with('filiere.niveau')
-            ->when($request->integer('filiere_id'), fn ($q, $filiereId) => $q->where('filiere_id', $filiereId))
-            ->orderBy('formation')
-            ->orderBy('nom')
-            ->get();
+        $filiereId = $request->integer('filiere_id');
+
+        return CatalogueCache::souvenir(
+            "salles:filiere:{$filiereId}",
+            fn () => Salle::with('filiere.niveau')
+                ->when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
+                ->orderBy('formation')
+                ->orderBy('nom')
+                ->get()
+        );
     }
 
     public function store(Request $request)
