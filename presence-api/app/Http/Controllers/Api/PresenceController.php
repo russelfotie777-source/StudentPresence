@@ -51,7 +51,22 @@ class PresenceController extends Controller
         $data = $request->validate([
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'accuracy' => ['required', 'numeric', 'min:0'],
         ]);
+
+        // Une mesure dont l'incertitude dépasse largement le périmètre
+        // autorisé ne permet de conclure ni dans un sens ni dans l'autre : on
+        // la refuse plutôt que de la traiter comme une position fiable.
+        $maxAccuracy = config('presence.max_check_in_accuracy_meters');
+
+        if ($data['accuracy'] > $maxAccuracy) {
+            throw ValidationException::withMessages([
+                'accuracy' => [
+                    'Position trop imprécise pour être vérifiée ('.round($data['accuracy'])."m, max {$maxAccuracy}m). ".
+                    'Rapprochez-vous d\'une fenêtre et réessayez dans quelques secondes.',
+                ],
+            ]);
+        }
 
         $distance = GeoDistance::metersBetween(
             (float) $data['latitude'],
@@ -70,7 +85,15 @@ class PresenceController extends Controller
 
         $presence = $seance->presences()->updateOrCreate(
             ['etudiant_id' => $user->id],
-            ['etat' => PresenceState::Present, 'date_marquage' => now()],
+            [
+                'etat' => PresenceState::Present,
+                'date_marquage' => now(),
+                // Conservés pour l'examen d'une contestation : la position du
+                // délégué peut être réécrite ensuite, la distance calculée
+                // ici est alors la seule trace de ce qui a été vérifié.
+                'distance_metres' => (int) round($distance),
+                'precision_metres' => (int) round($data['accuracy']),
+            ],
         );
 
         return response()->json(['presence' => $presence, 'distance' => $distance]);

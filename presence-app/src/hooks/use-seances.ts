@@ -4,6 +4,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { toast } from "sonner";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { pageSuivante } from "@/lib/pagination";
+import type { Coords } from "@/hooks/use-geolocation";
 import type { Paginated, RosterEntry, Seance } from "@/types/api";
 
 function errorMessage(error: unknown, fallback: string) {
@@ -37,7 +38,7 @@ export function useSendPosition(seanceId: number) {
   const invalidate = useInvalidateToday();
 
   return useMutation({
-    mutationFn: (coords: { latitude: number; longitude: number }) =>
+    mutationFn: (coords: Coords) =>
       apiFetch(`/api/seances/${seanceId}/position`, {
         method: "POST",
         body: JSON.stringify(coords),
@@ -54,7 +55,7 @@ export function useCheckIn(seanceId: number) {
   const invalidate = useInvalidateToday();
 
   return useMutation({
-    mutationFn: (coords: { latitude: number; longitude: number }) =>
+    mutationFn: (coords: Coords) =>
       apiFetch<{ distance: number }>(`/api/seances/${seanceId}/check-in`, {
         method: "POST",
         body: JSON.stringify(coords),

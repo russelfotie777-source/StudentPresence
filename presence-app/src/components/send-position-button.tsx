@@ -43,6 +43,15 @@ export function SendPositionButton({
           ? "Localisation…"
           : "📍 Envoyer ma position"}
       </Button>
+      {/* La précision se resserre pendant que le GPS converge : l'afficher
+          explique l'attente, et prévient que ce point sert de référence à
+          toute la classe. */}
+      {geo.status === "loading" && geo.precision !== null && (
+        <p className="text-xs text-ink-500">Précision ±{geo.precision} m, affinage en cours…</p>
+      )}
+      {geo.status === "success" && geo.precision !== null && (
+        <p className="text-xs text-ink-500">Précision ±{geo.precision} m</p>
+      )}
       {geo.status === "error" && (
         <p className="max-w-xs text-xs text-destructive">{geo.errorMessage}</p>
       )}
