@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['seance_id', 'delegue_id', 'latitude', 'longitude'])]
+#[Fillable(['seance_id', 'delegue_id', 'latitude', 'longitude', 'precision_metres'])]
 class PositionSeance extends Model
 {
     use HasFactory;

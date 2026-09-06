@@ -36,7 +36,10 @@ export function CheckInDialog({
   }, [open]);
 
   function handleConfirm() {
-    if (!geo.coords) return;
+    // On exige le statut "success" et pas seulement des coordonnées : pendant
+    // la convergence, `coords` contient déjà le meilleur point provisoire, qui
+    // peut encore être très imprécis.
+    if (geo.status !== "success" || !geo.coords) return;
     checkIn.mutate(geo.coords, { onSuccess: () => onOpenChange(false) });
   }
 
@@ -71,6 +74,11 @@ export function CheckInDialog({
                 Nous vérifions votre position par rapport à celle du délégué pour la salle{" "}
                 {seance.salle}.
               </p>
+              {/* Le GPS affine sa mesure pendant quelques secondes : afficher
+                  la précision montre que l'attente sert à quelque chose. */}
+              {geo.precision !== null && (
+                <p className="text-xs text-ink-300">Précision ±{geo.precision} m, affinage…</p>
+              )}
             </>
           )}
 
@@ -80,8 +88,8 @@ export function CheckInDialog({
                 <MapPin className="h-6 w-6 text-indigo-600" />
               </div>
               <p className="text-sm text-ink-500">
-                Position obtenue. Confirmez pour valider votre présence — la distance avec le
-                délégué est vérifiée côté serveur.
+                Position obtenue à ±{geo.precision} m. Confirmez pour valider votre présence — la
+                distance avec le délégué est vérifiée côté serveur.
               </p>
             </>
           )}
@@ -129,7 +137,7 @@ export function CheckInDialog({
           )}
           <Button
             onClick={handleConfirm}
-            disabled={!geo.coords || checkIn.isPending || checkIn.isSuccess}
+            disabled={geo.status !== "success" || checkIn.isPending || checkIn.isSuccess}
             className="rounded-xl"
           >
             {checkIn.isPending ? "Envoi…" : "Confirmer ma présence"}

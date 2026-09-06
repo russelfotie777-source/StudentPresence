@@ -77,7 +77,7 @@ class AttendanceTest extends TestCase
         $etudiant = $this->etudiant();
 
         $this->actingAs($etudiant, 'sanctum')
-            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.05, 'longitude' => 9.7])
+            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.05, 'longitude' => 9.7, 'accuracy' => 15])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('position');
     }
@@ -89,12 +89,12 @@ class AttendanceTest extends TestCase
         $etudiant = $this->etudiant();
 
         $this->actingAs($delegue, 'sanctum')
-            ->postJson("/api/seances/{$seance->id}/position", ['latitude' => 4.0500, 'longitude' => 9.7000])
+            ->postJson("/api/seances/{$seance->id}/position", ['latitude' => 4.0500, 'longitude' => 9.7000, 'accuracy' => 12])
             ->assertCreated();
 
         // ~1.1km plus loin (0.01° de latitude ≈ 1.1km) — largement au-delà des 120m.
         $this->actingAs($etudiant, 'sanctum')
-            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.0600, 'longitude' => 9.7000])
+            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.0600, 'longitude' => 9.7000, 'accuracy' => 15])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('position');
 
@@ -108,12 +108,12 @@ class AttendanceTest extends TestCase
         $etudiant = $this->etudiant();
 
         $this->actingAs($delegue, 'sanctum')
-            ->postJson("/api/seances/{$seance->id}/position", ['latitude' => 4.0500, 'longitude' => 9.7000])
+            ->postJson("/api/seances/{$seance->id}/position", ['latitude' => 4.0500, 'longitude' => 9.7000, 'accuracy' => 12])
             ->assertCreated();
 
         // ~11m plus loin (0.0001° de latitude ≈ 11m) — dans le rayon de 120m.
         $this->actingAs($etudiant, 'sanctum')
-            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.0501, 'longitude' => 9.7000])
+            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.0501, 'longitude' => 9.7000, 'accuracy' => 15])
             ->assertOk();
 
         $this->assertDatabaseHas('presences_etudiants', [
@@ -179,7 +179,7 @@ class AttendanceTest extends TestCase
 
         // Séance verrouillée : le pointage étudiant doit maintenant être refusé.
         $this->actingAs($etudiantA, 'sanctum')
-            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.05, 'longitude' => 9.7])
+            ->postJson("/api/seances/{$seance->id}/check-in", ['latitude' => 4.05, 'longitude' => 9.7, 'accuracy' => 15])
             ->assertUnprocessable();
     }
 
