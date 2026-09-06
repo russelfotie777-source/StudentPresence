@@ -8,6 +8,8 @@ use App\Enums\ValidationStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -151,10 +153,50 @@ class User extends Authenticatable
      * Vrai si une promotion temporaire (Étudiant → Délégué) est active en ce moment.
      * Contrairement à l'ancienne app, ce n'est jamais figé en session/token : c'est
      * recalculé à chaque requête via effectiveRole() / le middleware EnsureRole.
+     *
+     * Répond depuis la relation quand elle est déjà chargée, sinon interroge
+     * la base. Sans ça, sérialiser une liste d'utilisateurs coûte deux
+     * requêtes par ligne (UserResource appelle hasActivePromotion() ET
+     * effectiveRole(), qui l'appelle à son tour) — voir scopeWithActivePromotions().
      */
     public function hasActivePromotion(): bool
     {
+        if ($this->relationLoaded('promotionsRecues')) {
+            return $this->promotionsRecues->contains(
+                fn (PromotionTemporaire $promotion) => $promotion->date_fin->isFuture()
+            );
+        }
+
         return $this->promotionsRecues()->where('date_fin', '>', now())->exists();
+    }
+
+    /**
+     * À appliquer dès qu'on sérialise plusieurs utilisateurs d'un coup :
+     * charge les promotions encore actives en une seule requête, ce qui rend
+     * hasActivePromotion()/effectiveRole() gratuits pour toute la collection.
+     */
+    #[Scope]
+    protected function withActivePromotions(Builder $query): void
+    {
+        $query->with([
+            'promotionsRecues' => fn (HasMany $q) => $q->where('date_fin', '>', now()),
+        ]);
+    }
+
+    /**
+     * Charge en une fois tout ce que UserResource sérialise — y compris les
+     * promotions actives, sans quoi chaque sérialisation d'un utilisateur
+     * déclenche deux requêtes supplémentaires. Utilisé sur les chemins
+     * chauds (login, /auth/me appelé à chaque chargement de page).
+     */
+    public function loadForResource(): static
+    {
+        return $this->load([
+            'salle',
+            'niveau',
+            'filiere',
+            'promotionsRecues' => fn (HasMany $q) => $q->where('date_fin', '>', now()),
+        ]);
     }
 
     /**
