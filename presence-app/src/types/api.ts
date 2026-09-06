@@ -123,3 +123,17 @@ export interface ApiValidationError {
   message: string;
   errors?: Record<string, string[]>;
 }
+
+/**
+ * Enveloppe renvoyée par les listes paginées de l'API (ressources Laravel).
+ * Consommée via useInfiniteQuery + bouton « Voir plus ».
+ */
+export interface Paginated<T> {
+  data: T[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}

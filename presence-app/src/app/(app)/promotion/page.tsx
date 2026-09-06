@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SpaceEmptyState } from "@/components/space-empty-state";
+import { VoirPlus } from "@/components/voir-plus";
+import { lignes, total } from "@/lib/pagination";
 import { useMe } from "@/hooks/use-auth";
 import {
   useActivePromotions,
@@ -44,7 +46,13 @@ export default function PromotionPage() {
   const salleId = isDelegate ? me?.user.salle?.id : pickedSalleId;
 
   const { data: teacherSalles } = useTeacherSalles(isTeacher);
-  const { data: students } = useStudentSearch(search, salleId);
+  const {
+    data: pagesEtudiants,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useStudentSearch(search, salleId);
+  const students = lignes(pagesEtudiants?.pages);
   const { data: actives } = useActivePromotions();
   const createPromotion = useCreatePromotion();
 
@@ -155,7 +163,7 @@ export default function PromotionPage() {
           )}
 
           <motion.div variants={listVariants} initial="hidden" animate="show" className="flex flex-col gap-2.5">
-            {students?.map((s) => (
+            {students.map((s) => (
               <motion.div
                 key={s.id}
                 variants={itemVariants}
@@ -188,10 +196,18 @@ export default function PromotionPage() {
                 )}
               </motion.div>
             ))}
-            {students && students.length === 0 && (
+            {pagesEtudiants && students.length === 0 && (
               <p className="py-6 text-center text-sm text-ink-300">Aucun étudiant dans cette salle.</p>
             )}
           </motion.div>
+
+          <VoirPlus
+            affiches={students.length}
+            total={total(pagesEtudiants?.pages)}
+            onClick={() => fetchNextPage()}
+            isLoading={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+          />
         </>
       )}
 

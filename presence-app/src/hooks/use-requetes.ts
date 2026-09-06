@@ -1,14 +1,18 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
-import type { RequeteEnseignant } from "@/types/api";
+import { pageSuivante } from "@/lib/pagination";
+import type { Paginated, RequeteEnseignant } from "@/types/api";
 
 export function useMyRequetes() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["requetes", "mine"],
-    queryFn: () => apiFetch<RequeteEnseignant[]>("/api/requetes/mine"),
+    queryFn: ({ pageParam }) =>
+      apiFetch<Paginated<RequeteEnseignant>>(`/api/requetes/mine?page=${pageParam}`),
+    initialPageParam: 1,
+    getNextPageParam: pageSuivante,
   });
 }
 

@@ -24,8 +24,8 @@ class StudentSearchTest extends TestCase
             ->getJson("/api/students/search?salle_id={$salle->id}&search=Awa");
 
         $response->assertOk();
-        $this->assertCount(1, $response->json());
-        $this->assertEquals('Awa Ngono', $response->json()[0]['name']);
+        $this->assertCount(1, $response->json('data'));
+        $this->assertEquals('Awa Ngono', $response->json('data')[0]['name']);
     }
 
     public function test_teacher_must_provide_salle_id(): void
@@ -62,7 +62,7 @@ class StudentSearchTest extends TestCase
             ->getJson("/api/students/search?salle_id={$salle->id}");
 
         $response->assertOk();
-        $this->assertCount(1, $response->json());
+        $this->assertCount(1, $response->json('data'));
     }
 
     public function test_delegue_can_search_their_own_salle_roster_without_a_query(): void
@@ -74,7 +74,7 @@ class StudentSearchTest extends TestCase
         $response = $this->actingAs($delegue, 'sanctum')->getJson('/api/students/search');
 
         $response->assertOk();
-        $this->assertCount(3, $response->json());
+        $this->assertCount(3, $response->json('data'));
     }
 
     /**
@@ -92,7 +92,7 @@ class StudentSearchTest extends TestCase
         $response = $this->actingAs($delegue, 'sanctum')->getJson('/api/students/search?search=');
 
         $response->assertOk();
-        $this->assertCount(3, $response->json());
+        $this->assertCount(3, $response->json('data'));
     }
 
     public function test_delegue_cannot_see_another_salle_via_a_client_supplied_salle_id(): void
@@ -107,7 +107,42 @@ class StudentSearchTest extends TestCase
             ->getJson("/api/students/search?salle_id={$autreSalle->id}");
 
         $response->assertOk();
-        $this->assertCount(1, $response->json());
+        $this->assertCount(1, $response->json('data'));
+    }
+
+    public function test_roster_is_paginated_and_second_page_returns_the_rest(): void
+    {
+        $salle = Salle::factory()->create();
+        $delegue = User::factory()->delegue($salle)->create();
+        User::factory()->etudiant($salle)->count(25)->create();
+
+        $premiere = $this->actingAs($delegue, 'sanctum')->getJson('/api/students/search');
+        $premiere->assertOk();
+        $this->assertCount(20, $premiere->json('data'));
+        $this->assertSame(25, $premiere->json('meta.total'));
+        $this->assertSame(2, $premiere->json('meta.last_page'));
+
+        $seconde = $this->actingAs($delegue, 'sanctum')->getJson('/api/students/search?page=2');
+        $this->assertCount(5, $seconde->json('data'));
+
+        // Aucun doublon entre les deux pages : le bouton « Voir plus » ne doit
+        // jamais réafficher un étudiant déjà listé.
+        $ids = array_merge(
+            array_column($premiere->json('data'), 'id'),
+            array_column($seconde->json('data'), 'id'),
+        );
+        $this->assertCount(25, array_unique($ids));
+    }
+
+    public function test_per_page_is_capped(): void
+    {
+        $salle = Salle::factory()->create();
+        $delegue = User::factory()->delegue($salle)->create();
+
+        $this->actingAs($delegue, 'sanctum')
+            ->getJson('/api/students/search?per_page=5000')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('per_page');
     }
 
     public function test_plain_student_cannot_search(): void

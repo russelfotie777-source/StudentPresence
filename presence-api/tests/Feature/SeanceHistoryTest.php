@@ -37,9 +37,9 @@ class SeanceHistoryTest extends TestCase
         $response = $this->actingAs($etudiant, 'sanctum')->getJson('/api/seances/history');
 
         $response->assertOk();
-        $this->assertCount(1, $response->json());
-        $this->assertSame($past->id, $response->json('0.id'));
-        $this->assertSame('present', $response->json('0.ma_presence'));
+        $this->assertCount(1, $response->json('data'));
+        $this->assertSame($past->id, $response->json('data.0.id'));
+        $this->assertSame('present', $response->json('data.0.ma_presence'));
     }
 
     public function test_teacher_sees_only_their_own_past_seances(): void
@@ -62,8 +62,8 @@ class SeanceHistoryTest extends TestCase
         $response = $this->actingAs($enseignant, 'sanctum')->getJson('/api/seances/history');
 
         $response->assertOk();
-        $this->assertCount(1, $response->json());
-        $this->assertSame($mine->id, $response->json('0.id'));
+        $this->assertCount(1, $response->json('data'));
+        $this->assertSame($mine->id, $response->json('data.0.id'));
     }
 
     public function test_delegue_sees_their_salle_history(): void
@@ -78,7 +78,7 @@ class SeanceHistoryTest extends TestCase
         $response = $this->actingAs($delegue, 'sanctum')->getJson('/api/seances/history');
 
         $response->assertOk();
-        $this->assertCount(1, $response->json());
+        $this->assertCount(1, $response->json('data'));
     }
 
     public function test_history_is_ordered_most_recent_first(): void
@@ -94,7 +94,7 @@ class SeanceHistoryTest extends TestCase
         $response = $this->actingAs($etudiant, 'sanctum')->getJson('/api/seances/history');
 
         $response->assertOk();
-        $this->assertSame($newer->id, $response->json('0.id'));
-        $this->assertSame($older->id, $response->json('1.id'));
+        $this->assertSame($newer->id, $response->json('data.0.id'));
+        $this->assertSame($older->id, $response->json('data.1.id'));
     }
 }
