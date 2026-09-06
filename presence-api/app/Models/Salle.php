@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FormationType;
+use App\Models\Concerns\InvalideLeCacheCatalogue;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['nom', 'filiere_id', 'formation'])]
 class Salle extends Model
 {
-    use HasFactory;
+    use HasFactory, InvalideLeCacheCatalogue;
 
     protected function casts(): array
     {
