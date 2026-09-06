@@ -46,12 +46,45 @@ class FaceAuthTest extends TestCase
             ->assertJsonPath('face_enrolled', false);
     }
 
-    public function test_non_student_login_does_not_require_face(): void
+    /**
+     * Le délégué est un étudiant promu, qui pointe aussi sa propre présence :
+     * l'exclure du facial lui retirerait la protection qu'il avait en tant
+     * qu'étudiant.
+     */
+    public function test_delegue_login_requires_face(): void
+    {
+        $delegue = User::factory()->delegue()->create(['password' => bcrypt('password123')]);
+
+        $this->postJson('/api/auth/login', [
+            'phone' => $delegue->phone,
+            'password' => 'password123',
+        ])->assertOk()->assertJsonPath('requires_face', true);
+    }
+
+    /**
+     * L'enseignant déclare ses heures réelles, qui déterminent sa paie.
+     */
+    public function test_enseignant_login_requires_face(): void
     {
         $enseignant = User::factory()->enseignant()->create(['password' => bcrypt('password123')]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $this->postJson('/api/auth/login', [
             'phone' => $enseignant->phone,
+            'password' => 'password123',
+        ])->assertOk()->assertJsonPath('requires_face', true);
+    }
+
+    /**
+     * L'Admin ne peut jamais être soumis au facial : presence-admin n'a pas
+     * d'écran de capture, et un admin bloqué ne pourrait plus lever le
+     * réglage pour personne.
+     */
+    public function test_admin_login_never_requires_face(): void
+    {
+        $admin = User::factory()->admin()->create(['password' => bcrypt('password123')]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'phone' => $admin->phone,
             'password' => 'password123',
         ]);
 
@@ -59,7 +92,7 @@ class FaceAuthTest extends TestCase
 
         // Un jeton complet dès la connexion : accès direct aux routes métier.
         $token = $response->json('token');
-        $this->withFreshToken($token)->getJson('/api/seances/today')->assertOk();
+        $this->withFreshToken($token)->getJson('/api/validations')->assertOk();
     }
 
     public function test_pending_token_cannot_access_business_routes(): void
