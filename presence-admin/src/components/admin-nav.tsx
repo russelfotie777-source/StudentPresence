@@ -11,6 +11,7 @@ import {
   ArrowLeftRight,
   Wallet,
   History,
+  ScanFace,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const SECTIONS = [
   { href: "/demandes-formation", label: "Migrations FA → FI", icon: ArrowLeftRight },
   { href: "/tarifs", label: "Tarifs horaires", icon: Wallet },
   { href: "/historique", label: "Historique des séances", icon: History },
+  { href: "/reconnaissance-faciale", label: "Reconnaissance faciale", icon: ScanFace },
 ];
 
 export function AdminNav() {
