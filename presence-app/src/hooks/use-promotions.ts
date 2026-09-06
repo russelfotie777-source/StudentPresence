@@ -1,8 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { pageSuivante } from "@/lib/pagination";
+import type { Paginated } from "@/types/api";
 
 export interface StudentSearchResult {
   id: number;
@@ -14,12 +16,14 @@ export interface StudentSearchResult {
 }
 
 export function useStudentSearch(search: string, salleId?: number) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["students", "search", salleId, search],
-    queryFn: () =>
-      apiFetch<StudentSearchResult[]>(
-        `/api/students/search?search=${encodeURIComponent(search)}&salle_id=${salleId}`,
+    queryFn: ({ pageParam }) =>
+      apiFetch<Paginated<StudentSearchResult>>(
+        `/api/students/search?search=${encodeURIComponent(search)}&salle_id=${salleId}&page=${pageParam}`,
       ),
+    initialPageParam: 1,
+    getNextPageParam: pageSuivante,
     enabled: salleId !== undefined,
   });
 }
