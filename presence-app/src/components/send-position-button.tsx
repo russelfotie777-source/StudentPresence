@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { usePermission } from "@/hooks/use-permission";
+import { PermissionRefusee } from "@/components/demande-permission";
 import { useSendPosition } from "@/hooks/use-seances";
 
 export function SendPositionButton({
@@ -15,6 +17,9 @@ export function SendPositionButton({
   const geo = useGeolocation();
   const sendPosition = useSendPosition(seanceId);
   const [sent, setSent] = useState(alreadySent);
+  const { etat } = usePermission("position");
+
+  const refusee = geo.error === "permission_denied" || etat === "refusee";
 
   useEffect(() => {
     if (geo.status === "success" && geo.coords && !sent && !sendPosition.isPending) {
@@ -29,6 +34,14 @@ export function SendPositionButton({
         📍 Position envoyée
       </Button>
     );
+  }
+
+  // Ici le clic sur le bouton vaut déjà consentement explicite : l'écran
+  // d'explication n'apporterait rien. En revanche, une fois la permission
+  // refusée, le bouton ne peut plus rien faire — il cède la place au seul
+  // chemin qui reste, les réglages du navigateur.
+  if (refusee) {
+    return <PermissionRefusee type="position" />;
   }
 
   return (
