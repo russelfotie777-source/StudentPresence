@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class RequeteController extends Controller
 {
+    private const PAR_PAGE = 20;
+
     /**
      * Dépôt d'une contestation par l'enseignant, avec preuve jointe — reprend
      * requete.php de l'ancienne app.
@@ -51,8 +53,14 @@ class RequeteController extends Controller
     {
         abort_unless($request->user()->role === UserRole::Enseignant, 403);
 
+        $data = $request->validate([
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
         return RequeteResource::collection(
-            RequeteEnseignant::where('enseignant_id', $request->user()->id)->latest('date_creation')->get()
+            RequeteEnseignant::where('enseignant_id', $request->user()->id)
+                ->latest('date_creation')
+                ->paginate($data['per_page'] ?? self::PAR_PAGE)
         );
     }
 

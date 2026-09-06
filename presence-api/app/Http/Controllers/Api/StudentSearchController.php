@@ -4,13 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Models\PromotionTemporaire;
+use App\Http\Resources\StudentSearchResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class StudentSearchController extends Controller
 {
+    private const PAR_PAGE = 20;
+
     /**
      * Recherche d'étudiants par nom, bornée à une salle — sert au
      * formulaire de promotion temporaire (enseignant ou délégué). Reprend
@@ -25,7 +27,10 @@ class StudentSearchController extends Controller
         $effectiveRole = $user->effectiveRole();
         abort_unless(in_array($effectiveRole, [UserRole::Enseignant, UserRole::Delegue], true), 403);
 
-        $rules = ['search' => ['sometimes', 'nullable', 'string', 'max:100']];
+        $rules = [
+            'search' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ];
         if ($effectiveRole === UserRole::Enseignant) {
             $rules['salle_id'] = ['required', 'integer', 'exists:salles,id'];
         }
@@ -50,22 +55,11 @@ class StudentSearchController extends Controller
             ->where('role', UserRole::Etudiant->value)
             ->where('salle_id', $salleId)
             ->with(['salle', 'filiere', 'niveau'])
+            ->withActivePromotions()
             ->when(strlen($search) > 0, fn ($q) => $q->where('name', 'like', "%{$search}%"))
             ->orderBy('name')
-            ->get();
+            ->paginate($data['per_page'] ?? self::PAR_PAGE);
 
-        $activePromotionIds = PromotionTemporaire::where('date_fin', '>', now())
-            ->whereIn('etudiant_id', $students->pluck('id'))
-            ->pluck('etudiant_id')
-            ->all();
-
-        return $students->map(fn (User $u) => [
-            'id' => $u->id,
-            'name' => $u->name,
-            'salle' => $u->salle?->nom,
-            'filiere' => $u->filiere?->nom,
-            'niveau' => $u->niveau?->nom,
-            'has_active_promotion' => in_array($u->id, $activePromotionIds, true),
-        ]);
+        return StudentSearchResource::collection($students);
     }
 }
