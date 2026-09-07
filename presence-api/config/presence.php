@@ -27,4 +27,19 @@ return [
     'max_position_accuracy_meters' => env('PRESENCE_MAX_POSITION_ACCURACY_METERS', 50),
 
     'max_check_in_accuracy_meters' => env('PRESENCE_MAX_CHECK_IN_ACCURACY_METERS', 75),
+
+    /*
+     * Durée de validité d'une session d'administration, en heures.
+     *
+     * Sanctum n'expire aucun jeton par défaut ('expiration' => null dans
+     * config/sanctum.php), et le back-office conserve le sien dans le
+     * localStorage du navigateur : sans échéance, un jeton récupéré sur un
+     * poste partagé resterait valable indéfiniment, avec les droits les plus
+     * élevés de l'application.
+     *
+     * L'échéance est posée par jeton et non globalement : la même valeur
+     * appliquée à toute l'application déconnecterait les étudiants en pleine
+     * journée de cours, pour un risque bien moindre.
+     */
+    'admin_session_hours' => env('PRESENCE_ADMIN_SESSION_HOURS', 12),
 ];

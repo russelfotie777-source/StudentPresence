@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -130,7 +131,7 @@ class AuthController extends Controller
 
         $token = $requiresFace
             ? $user->createToken('presence-app-pending', ['face-pending'], now()->addMinutes(15))->plainTextToken
-            : $user->createToken('presence-app')->plainTextToken;
+            : $user->createToken('presence-app', ['*'], self::expirationJeton($user))->plainTextToken;
 
         return [
             'user' => new UserResource($user->loadForResource()),
@@ -138,5 +139,20 @@ class AuthController extends Controller
             'requires_face' => $requiresFace,
             'face_enrolled' => $user->hasFaceEnrolled(),
         ];
+    }
+
+    /**
+     * Échéance du jeton complet : seule la session d'administration en reçoit
+     * une. Elle donne accès à l'ensemble du back-office et vit dans le
+     * localStorage d'un navigateur souvent partagé, alors qu'un étudiant
+     * déconnecté en plein cours ne pourrait plus pointer sa présence.
+     */
+    public static function expirationJeton(User $user): ?DateTimeInterface
+    {
+        if ($user->role !== UserRole::Admin) {
+            return null;
+        }
+
+        return now()->addHours((int) config('presence.admin_session_hours'));
     }
 }
