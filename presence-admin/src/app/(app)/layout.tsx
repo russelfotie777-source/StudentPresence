@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminNav } from "@/components/admin-nav";
@@ -10,6 +10,7 @@ import { getToken } from "@/lib/api-client";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data, isLoading, isError } = useMe();
   const logout = useLogout();
   const user = data?.user;
@@ -21,13 +22,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       // connecté et n'a rien à se faire expliquer. Les deux chemins de
       // redirection doivent porter la même raison, sinon celui qui gagne la
       // course efface le message de l'autre.
-      router.replace(isError ? "/login?session=expiree" : "/login");
+      const params = new URLSearchParams();
+      if (isError) {
+        params.set("session", "expiree");
+      }
+      if (pathname && pathname !== "/dashboard") {
+        params.set("retour", pathname);
+      }
+
+      const requete = params.toString();
+      router.replace(requete ? `/login?${requete}` : "/login");
       return;
     }
     if (!isLoading && user && user.role !== "Admin") {
       router.replace("/login");
     }
-  }, [isLoading, isError, user, router]);
+  }, [isLoading, isError, user, router, pathname]);
 
   if (isLoading || !user) {
     return (
