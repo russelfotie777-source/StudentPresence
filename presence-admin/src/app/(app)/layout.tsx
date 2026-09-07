@@ -16,7 +16,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!getToken() || isError) {
-      router.replace("/login");
+      // `isError` signifie que le jeton présent a été rejeté : la session a
+      // expiré. Sans jeton du tout, l'utilisateur n'était simplement pas
+      // connecté et n'a rien à se faire expliquer. Les deux chemins de
+      // redirection doivent porter la même raison, sinon celui qui gagne la
+      // course efface le message de l'autre.
+      router.replace(isError ? "/login?session=expiree" : "/login");
       return;
     }
     if (!isLoading && user && user.role !== "Admin") {
