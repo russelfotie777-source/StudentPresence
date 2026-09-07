@@ -44,6 +44,26 @@ export async function apiFetch<T>(
 
   const data = await res.json().catch(() => null);
 
+  // La session d'administration expire désormais (voir
+  // AuthController::expirationJeton). Sans ce traitement, un admin resté
+  // ouvert toute la journée verrait un « Unauthenticated. » en anglais au
+  // moment d'enregistrer, sans comprendre qu'il doit simplement se
+  // reconnecter — et son jeton périmé resterait stocké.
+  if (res.status === 401) {
+    // On se contente d'effacer le jeton périmé : la redirection est du
+    // ressort de l'interface, elle est centralisée dans query-provider.
+    setToken(null);
+
+    throw new ApiError("Votre session a expiré. Reconnectez-vous.", 401);
+  }
+
+  if (res.status === 429) {
+    throw new ApiError(
+      "Trop de tentatives en peu de temps. Patientez une minute avant de réessayer.",
+      429,
+    );
+  }
+
   if (!res.ok) {
     throw new ApiError(
       data?.message ?? "Une erreur est survenue.",
