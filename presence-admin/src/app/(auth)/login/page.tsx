@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +25,26 @@ function LoginForm() {
   // sans cette explication, l'admin se retrouverait sur l'écran de connexion
   // sans savoir pourquoi il a été éjecté.
   const sessionExpiree = searchParams.get("session") === "expiree";
+  // Page réellement demandée avant l'éjection : y revenir évite de faire
+  // renaviguer l'admin à la main après chaque expiration de session.
+  const retour = searchParams.get("retour");
   const login = useLogin();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [motDePasseVisible, setMotDePasseVisible] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    login.mutate({ phone, password }, { onSuccess: () => router.replace("/dashboard") });
+    login.mutate(
+      { phone, password },
+      {
+        // Une destination doit rester interne : une valeur venue de l'URL ne
+        // doit pas pouvoir servir à rediriger vers un site tiers après une
+        // connexion réussie.
+        onSuccess: () =>
+          router.replace(retour?.startsWith("/") && !retour.startsWith("//") ? retour : "/dashboard"),
+      },
+    );
   }
 
   return (
@@ -57,6 +71,9 @@ function LoginForm() {
             <Input
               id="phone"
               type="tel"
+              name="username"
+              autoComplete="username"
+              autoFocus
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -64,13 +81,26 @@ function LoginForm() {
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="password">Mot de passe</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={motDePasseVisible ? "text" : "password"}
+                name="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setMotDePasseVisible((v) => !v)}
+                className="absolute right-0 top-0 flex h-full w-10 items-center justify-center text-muted-foreground"
+                aria-label={motDePasseVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {motDePasseVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           <Button type="submit" disabled={login.isPending}>
             {login.isPending ? "Connexion…" : "Se connecter"}
