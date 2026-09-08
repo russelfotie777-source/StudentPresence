@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import type { DemandeFormation, RequestStatus } from "@/types/api";
 
 export function useFormationRequests(statut?: RequestStatus) {
@@ -20,7 +21,13 @@ export function useApproveFormationRequest() {
         method: "POST",
         body: JSON.stringify({ salle_id }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["formation-requests"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["formation-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Étudiant basculé en FM et rattaché à sa nouvelle salle.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof ApiError ? error.message : "L'approbation a échoué."),
   });
 }
 
@@ -32,6 +39,12 @@ export function useRejectFormationRequest() {
         method: "POST",
         body: JSON.stringify({ commentaire }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["formation-requests"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["formation-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Demande rejetée.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof ApiError ? error.message : "Le rejet a échoué."),
   });
 }
