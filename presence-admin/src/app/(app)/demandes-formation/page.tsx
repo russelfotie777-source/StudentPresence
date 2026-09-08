@@ -198,7 +198,15 @@ function CarteDemande({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Select value={salleChoisie} onValueChange={(v) => onSalle(v ?? "")}>
               <SelectTrigger className="h-9 w-full rounded-lg sm:w-72">
-                <SelectValue placeholder="Salle FI d'accueil…" />
+                {/* Sans fonction de rendu, le déclencheur affiche l'id brut de
+                    la salle choisie au lieu de son nom — comportement par
+                    défaut du composant, pas un choix. */}
+                <SelectValue placeholder="Salle FI d'accueil…">
+                  {() => {
+                    const choisie = cibles.find((c) => String(c.id) === salleChoisie);
+                    return choisie ? libelleSalle(choisie) : "Salle FI d'accueil…";
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {cibles.map((s) => (

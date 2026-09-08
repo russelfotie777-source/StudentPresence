@@ -63,7 +63,12 @@ export default function HistoriquePage() {
         <div className="flex items-center gap-2">
           <Select value={salleId} onValueChange={(v) => setSalleId(v ?? TOUTES)}>
             <SelectTrigger className="h-10 w-full rounded-xl sm:w-72">
-              <SelectValue placeholder="Toutes les salles" />
+              {/* Sans fonction de rendu, le déclencheur affiche l'id brut de la
+                  salle sélectionnée au lieu de son nom — comportement par
+                  défaut du composant, pas un choix. */}
+              <SelectValue placeholder="Toutes les salles">
+                {() => (salleId === TOUTES ? "Toutes les salles" : salleActive && libelleSalle(salleActive))}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {/* Sans cette entrée, un filtre posé ne pouvait plus être retiré :
