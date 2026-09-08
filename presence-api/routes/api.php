@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountValidationController;
 use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EnseignantController;
 use App\Http\Controllers\Api\FaceAuthSettingController;
 use App\Http\Controllers\Api\FaceController;
@@ -69,6 +70,8 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
 
     Route::get('/tarifs-heures', [TarifHeureController::class, 'index']);
     Route::put('/tarifs-heures/{niveau}', [TarifHeureController::class, 'update']);
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::get('/parametres/face-auth', [FaceAuthSettingController::class, 'show']);
     Route::put('/parametres/face-auth', [FaceAuthSettingController::class, 'update']);
