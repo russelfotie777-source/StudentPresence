@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import type { RequestStatus, RequeteEnseignant } from "@/types/api";
 
 export function useAdminRequetes(statut?: RequestStatus) {
@@ -14,6 +15,7 @@ export function useAdminRequetes(statut?: RequestStatus) {
 
 export function useProcessRequete() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       id,
@@ -28,6 +30,19 @@ export function useProcessRequete() {
         method: "POST",
         body: JSON.stringify({ action, commentaire }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["requetes"] }),
+    onSuccess: (_data, { action }) => {
+      queryClient.invalidateQueries({ queryKey: ["requetes"] });
+      // La vue d'ensemble compte les requêtes en attente : sans ça elle
+      // continuerait d'en annoncer une déjà traitée.
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+
+      toast.success(
+        action === "acceptee"
+          ? "Requête acceptée — la séance est marquée présente et devient payable."
+          : "Requête rejetée.",
+      );
+    },
+    onError: (error) =>
+      toast.error(error instanceof ApiError ? error.message : "Le traitement a échoué."),
   });
 }
