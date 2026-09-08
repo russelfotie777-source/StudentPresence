@@ -30,7 +30,7 @@ export default function HistoriquePage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-zinc-900">Historique des séances</h1>
+        <h1 className="text-xl font-semibold text-foreground">Historique des séances</h1>
         <Select value={salleId} onValueChange={(v) => setSalleId(v ?? "")}>
           <SelectTrigger className="w-56">
             <SelectValue placeholder="Toutes les salles" />
@@ -46,7 +46,7 @@ export default function HistoriquePage() {
       </div>
 
       {data && (
-        <div className="flex gap-4 text-sm text-zinc-600">
+        <div className="flex gap-4 text-sm text-muted-foreground">
           <span>Total : <strong>{data.stats.total}</strong></span>
           <span className="text-green-700">Présent : <strong>{data.stats.present}</strong></span>
           <span className="text-red-700">Absent : <strong>{data.stats.absent}</strong></span>
@@ -55,7 +55,7 @@ export default function HistoriquePage() {
 
       <Card>
         <CardContent className="py-4">
-          {isLoading && <p className="text-sm text-zinc-500">Chargement…</p>}
+          {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
           {data && (
             <Table>
               <TableHeader>

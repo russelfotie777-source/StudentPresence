@@ -22,7 +22,7 @@ const JOURS: Weekday[] = ["LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI", "SA
 export default function EmploisDuTempsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-zinc-900">Emplois du temps</h1>
+      <h1 className="text-xl font-semibold text-foreground">Emplois du temps</h1>
       <SemainesSection />
       <CourseTemplatesSection />
     </div>
@@ -78,7 +78,7 @@ function SemainesSection() {
             </Badge>
           ))}
           {semaines?.length === 0 && (
-            <p className="text-sm text-zinc-400">Aucune semaine créée pour l&apos;instant.</p>
+            <p className="text-sm text-muted-foreground">Aucune semaine créée pour l&apos;instant.</p>
           )}
         </div>
       </CardContent>
@@ -193,7 +193,7 @@ function CourseTemplatesSection() {
                 <p className="font-medium">
                   {t.matiere?.nom} — {t.enseignant?.name} — {t.salle?.nom}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   {t.jour} {t.heure_debut}–{t.heure_fin} · {t.date_debut} → {t.date_fin}
                 </p>
                 {results[t.id] && <p className="text-xs text-primary">{results[t.id]}</p>}

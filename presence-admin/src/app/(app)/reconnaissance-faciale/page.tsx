@@ -57,8 +57,8 @@ export default function ReconnaissanceFacialePage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">Reconnaissance faciale</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-xl font-semibold text-foreground">Reconnaissance faciale</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Choisissez les grades qui doivent confirmer leur visage après le mot de passe.
         </p>
       </div>
@@ -74,7 +74,7 @@ export default function ReconnaissanceFacialePage() {
         </AlertDescription>
       </Alert>
 
-      {isLoading && <p className="text-sm text-zinc-500">Chargement…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {data?.roles_reglables.map((role) => {
@@ -92,11 +92,11 @@ export default function ReconnaissanceFacialePage() {
                     className="mt-0.5"
                   />
                   <span id={`role-${role}-label`}>
-                    <span className="flex items-center gap-1.5 font-medium text-zinc-900">
+                    <span className="flex items-center gap-1.5 font-medium text-foreground">
                       {role}
                       {actif && <ShieldCheck className="size-4 text-emerald-600" />}
                     </span>
-                    <span className="mt-0.5 block text-xs text-zinc-500">
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
                       {DESCRIPTIONS[role] ?? ""}
                     </span>
                   </span>
