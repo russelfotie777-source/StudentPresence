@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-zinc-900">Vue d&apos;ensemble</h1>
+      <h1 className="text-xl font-semibold text-foreground">Vue d&apos;ensemble</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
@@ -63,7 +63,7 @@ function StatCard({ label, value, href }: { label: string; value: number; href: 
       <Card className="transition-colors hover:border-primary/50">
         <CardContent className="py-5">
           <p className="text-3xl font-bold text-primary">{value}</p>
-          <p className="text-sm text-zinc-500">{label}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
         </CardContent>
       </Card>
     </Link>

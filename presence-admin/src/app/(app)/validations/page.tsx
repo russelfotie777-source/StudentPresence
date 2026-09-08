@@ -11,7 +11,7 @@ export default function ValidationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-zinc-900">Validations en attente</h1>
+      <h1 className="text-xl font-semibold text-foreground">Validations en attente</h1>
 
       <Section title="Délégués" users={delegues} loading={loadingDelegues} />
       <Section title="Enseignants" users={enseignants} loading={loadingEnseignants} />
@@ -34,10 +34,10 @@ function Section({
   return (
     <Card>
       <CardContent className="py-4">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-700">{title}</h2>
-        {loading && <p className="text-sm text-zinc-500">Chargement…</p>}
+        <h2 className="mb-3 text-sm font-semibold text-foreground">{title}</h2>
+        {loading && <p className="text-sm text-muted-foreground">Chargement…</p>}
         {users && users.length === 0 && (
-          <p className="text-sm text-zinc-400">Rien en attente.</p>
+          <p className="text-sm text-muted-foreground">Rien en attente.</p>
         )}
         {users && users.length > 0 && (
           <Table>
