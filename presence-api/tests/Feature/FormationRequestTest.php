@@ -73,6 +73,26 @@ class FormationRequestTest extends TestCase
         $this->assertCount(1, $response->json());
     }
 
+    /**
+     * L'admin choisit une salle FI cible parmi celles de l'établissement.
+     * Sans le niveau et la filière du demandeur, il arbitre à l'aveugle entre
+     * des salles dont les noms se répètent d'une filière à l'autre.
+     */
+    public function test_listing_exposes_the_student_niveau_and_filiere(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $salle = Salle::factory()->create(['formation' => FormationType::FA]);
+        $etudiant = User::factory()->etudiant($salle)->create(['formation' => FormationType::FA]);
+        DemandeFormation::create(['etudiant_id' => $etudiant->id, 'statut' => 'en_attente', 'date_creation' => now()]);
+
+        $response = $this->actingAs($admin, 'sanctum')->getJson('/api/formation-requests');
+
+        $response->assertOk();
+        $this->assertSame($etudiant->niveau->nom, $response->json('0.etudiant.niveau'));
+        $this->assertSame($etudiant->niveau_id, $response->json('0.etudiant.niveau_id'));
+        $this->assertSame($etudiant->filiere->nom, $response->json('0.etudiant.filiere'));
+    }
+
     public function test_admin_can_approve_and_it_reassigns_the_student(): void
     {
         $admin = User::factory()->admin()->create();

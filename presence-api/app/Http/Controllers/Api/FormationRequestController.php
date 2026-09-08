@@ -55,7 +55,7 @@ class FormationRequestController extends Controller
         abort_unless($request->user()->role === UserRole::Etudiant, 403);
 
         return DemandeFormationResource::collection(
-            DemandeFormation::with('salleCible')
+            DemandeFormation::with(['salleCible', 'etudiant.niveau', 'etudiant.filiere'])
                 ->where('etudiant_id', $request->user()->id)
                 ->latest('date_creation')
                 ->get()
@@ -70,7 +70,7 @@ class FormationRequestController extends Controller
         $data = $request->validate(['statut' => ['sometimes', 'in:en_attente,acceptee,rejetee']]);
 
         return DemandeFormationResource::collection(
-            DemandeFormation::with(['etudiant.salle', 'salleCible'])
+            DemandeFormation::with(['etudiant.salle', 'etudiant.niveau', 'etudiant.filiere', 'salleCible'])
                 ->when($data['statut'] ?? null, fn ($q, $statut) => $q->where('statut', $statut))
                 ->latest('date_creation')
                 ->get()
