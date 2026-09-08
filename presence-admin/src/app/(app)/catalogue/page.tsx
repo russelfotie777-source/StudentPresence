@@ -21,7 +21,7 @@ export default function CataloguePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-zinc-900">Catalogue académique</h1>
+      <h1 className="text-xl font-semibold text-foreground">Catalogue académique</h1>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList>

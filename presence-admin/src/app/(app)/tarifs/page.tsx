@@ -21,9 +21,9 @@ export default function TarifsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-zinc-900">Tarifs horaires par niveau</h1>
+      <h1 className="text-xl font-semibold text-foreground">Tarifs horaires par niveau</h1>
 
-      {isLoading && <p className="text-sm text-zinc-500">Chargement…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {niveaux?.map((n) => (

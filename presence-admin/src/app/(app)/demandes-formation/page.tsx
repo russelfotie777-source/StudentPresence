@@ -35,8 +35,8 @@ export default function DemandesFormationPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">Demandes de migration FA → FI</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-xl font-semibold text-foreground">Demandes de migration FA → FI</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Un étudiant en Formation Alternance (FA) qui demande à suivre l&apos;emploi du temps
           Formation Initiale (FI). L&apos;approbation le bascule en FM et le rattache à la salle FI
           choisie ci-dessous.
@@ -51,7 +51,7 @@ export default function DemandesFormationPage() {
         </TabsList>
       </Tabs>
 
-      {isLoading && <p className="text-sm text-zinc-500">Chargement…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
 
       <div className="flex flex-col gap-3">
         {demandes?.map((d) => (
@@ -62,10 +62,10 @@ export default function DemandesFormationPage() {
                   <p className="font-medium">
                     {d.etudiant?.name} — {d.etudiant?.phone}
                   </p>
-                  <p className="text-sm text-zinc-500">Salle FA actuelle : {d.etudiant?.salle}</p>
-                  {d.motif && <p className="mt-1 text-sm text-zinc-600">« {d.motif} »</p>}
+                  <p className="text-sm text-muted-foreground">Salle FA actuelle : {d.etudiant?.salle}</p>
+                  {d.motif && <p className="mt-1 text-sm text-muted-foreground">« {d.motif} »</p>}
                   {d.salle_cible && (
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Basculé vers : <span className="font-medium">{d.salle_cible.nom}</span>
                     </p>
                   )}
@@ -120,13 +120,13 @@ export default function DemandesFormationPage() {
                 </div>
               )}
               {d.commentaire_admin && (
-                <p className="text-xs italic text-zinc-500">Note : {d.commentaire_admin}</p>
+                <p className="text-xs italic text-muted-foreground">Note : {d.commentaire_admin}</p>
               )}
             </CardContent>
           </Card>
         ))}
         {demandes?.length === 0 && (
-          <p className="text-sm text-zinc-400">Aucune demande dans cette catégorie.</p>
+          <p className="text-sm text-muted-foreground">Aucune demande dans cette catégorie.</p>
         )}
       </div>
     </div>
