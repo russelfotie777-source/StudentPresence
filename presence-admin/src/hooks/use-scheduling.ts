@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { makeCrudHooks } from "./use-crud";
+import type { Semaine } from "./use-catalog";
 import type { Weekday } from "@/types/api";
 
 export interface CourseTemplate {
@@ -28,7 +29,7 @@ export function useGenerateSemester() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: { date_debut: string; nombre_semaines: number }) =>
-      apiFetch("/api/semaines/generate-semester", {
+      apiFetch<Semaine[]>("/api/semaines/generate-semester", {
         method: "POST",
         body: JSON.stringify(input),
       }),

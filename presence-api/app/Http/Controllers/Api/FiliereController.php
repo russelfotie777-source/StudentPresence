@@ -20,6 +20,7 @@ class FiliereController extends Controller
                 ->when($niveauId, fn ($q) => $q->where('niveau_id', $niveauId))
                 ->orderBy('nom')
                 ->get()
+                ->toArray()
         );
     }
 
