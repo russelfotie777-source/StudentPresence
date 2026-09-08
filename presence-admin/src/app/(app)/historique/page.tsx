@@ -14,9 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
-import { salleHooks, type Salle } from "@/hooks/use-catalog";
+import { salleHooks } from "@/hooks/use-catalog";
 import type { Seance } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { libelleSalle } from "@/lib/catalogue";
 
 interface PageHistorique {
   data: Seance[];
@@ -219,11 +220,6 @@ function LigneSeance({ seance: s }: { seance: Seance }) {
   );
 }
 
-function libelleSalle(s: Salle): string {
-  const contexte = [s.filiere?.nom, s.filiere?.niveau?.nom].filter(Boolean).join(" · ");
-
-  return contexte ? `${s.nom} — ${contexte}` : s.nom;
-}
 
 function dateLisible(date: string | null): string {
   if (!date) {

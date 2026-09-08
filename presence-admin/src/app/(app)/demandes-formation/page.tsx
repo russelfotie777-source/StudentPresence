@@ -23,6 +23,7 @@ import {
 import { salleHooks, type Salle } from "@/hooks/use-catalog";
 import type { DemandeFormation, RequestStatus } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { libelleSalle } from "@/lib/catalogue";
 
 const STATUTS: Record<RequestStatus, { label: string; classe: string }> = {
   en_attente: { label: "En attente", classe: "bg-warning/20 text-warning-foreground" },
@@ -307,11 +308,6 @@ function ciblesPossibles(salles: Salle[], niveauId: number | null): Salle[] {
   return duNiveau.length > 0 ? duNiveau : fi;
 }
 
-function libelleSalle(s: Salle): string {
-  const contexte = [s.filiere?.nom, s.filiere?.niveau?.nom].filter(Boolean).join(" · ");
-
-  return contexte ? `${s.nom} — ${contexte}` : s.nom;
-}
 
 function dateCourte(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", {
