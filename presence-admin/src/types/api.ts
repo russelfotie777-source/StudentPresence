@@ -81,7 +81,15 @@ export interface RequeteEnseignant {
 
 export interface DemandeFormation {
   id: number;
-  etudiant?: { id: number; name: string; phone: string; salle: string | null };
+  etudiant?: {
+    id: number;
+    name: string;
+    phone: string;
+    salle: string | null;
+    niveau: string | null;
+    niveau_id: number | null;
+    filiere: string | null;
+  };
   salle_cible?: { id: number; nom: string } | null;
   motif: string | null;
   statut: RequestStatus;
