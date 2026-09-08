@@ -23,7 +23,7 @@ export default function AdminRequetesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-zinc-900">Requêtes enseignants</h1>
+      <h1 className="text-xl font-semibold text-foreground">Requêtes enseignants</h1>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as RequestStatus)}>
         <TabsList>
@@ -33,7 +33,7 @@ export default function AdminRequetesPage() {
         </TabsList>
       </Tabs>
 
-      {isLoading && <p className="text-sm text-zinc-500">Chargement…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
 
       <div className="flex flex-col gap-3">
         {requetes?.map((r) => (
@@ -44,7 +44,7 @@ export default function AdminRequetesPage() {
                   <p className="font-medium">
                     {r.enseignant} — {r.matiere} ({r.salle})
                   </p>
-                  <p className="text-sm text-zinc-500">{r.description}</p>
+                  <p className="text-sm text-muted-foreground">{r.description}</p>
                   {r.preuve_url && (
                     <a
                       href={r.preuve_url}
@@ -93,13 +93,13 @@ export default function AdminRequetesPage() {
                 </div>
               )}
               {r.commentaire_admin && (
-                <p className="text-xs italic text-zinc-500">Note : {r.commentaire_admin}</p>
+                <p className="text-xs italic text-muted-foreground">Note : {r.commentaire_admin}</p>
               )}
             </CardContent>
           </Card>
         ))}
         {requetes?.length === 0 && (
-          <p className="text-sm text-zinc-400">Aucune requête dans cette catégorie.</p>
+          <p className="text-sm text-muted-foreground">Aucune requête dans cette catégorie.</p>
         )}
       </div>
     </div>
