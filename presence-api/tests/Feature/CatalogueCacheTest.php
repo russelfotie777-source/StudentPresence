@@ -6,6 +6,7 @@ use App\Models\Filiere;
 use App\Models\Niveau;
 use App\Models\Salle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -77,6 +78,40 @@ class CatalogueCacheTest extends TestCase
 
         $this->getJson("/api/salles?filiere_id={$filiereB->id}")
             ->assertOk()->assertJsonCount(1)->assertJsonPath('0.nom', 'B12');
+    }
+
+    /**
+     * Garde-fou du bug qui a réellement cassé la production : les entrées
+     * étaient mises en cache sous forme de collections Eloquent. Avec le store
+     * `array` des tests, les objets restent en mémoire et tout fonctionne ;
+     * avec un store qui sérialise (database en production), la relecture
+     * rendait des __PHP_Incomplete_Class et l'endpoint répondait 500 dès le
+     * deuxième appel. Ce test force un store sérialisant, seul moyen de voir
+     * la panne.
+     */
+    public function test_catalogue_survives_a_serializing_cache_store(): void
+    {
+        config(['cache.default' => 'database']);
+        Cache::store('database')->clear();
+
+        $niveau = Niveau::factory()->create(['nom' => 'L3']);
+        $filiere = Filiere::factory()->create(['niveau_id' => $niveau->id]);
+        Salle::factory()->create(['filiere_id' => $filiere->id, 'nom' => 'A23']);
+
+        foreach (['/api/niveaux', '/api/filieres', '/api/salles'] as $route) {
+            $premier = $this->getJson($route)->assertOk();
+            // Le deuxième appel est celui qui relit le cache : c'est lui qui
+            // échouait.
+            $second = $this->getJson($route)->assertOk();
+
+            $this->assertSame(
+                $premier->json(),
+                $second->json(),
+                "La réponse de {$route} doit être identique une fois servie depuis le cache.",
+            );
+        }
+
+        $this->getJson('/api/salles')->assertOk()->assertJsonPath('0.filiere.niveau.nom', 'L3');
     }
 
     private function countQueries(callable $callback): int

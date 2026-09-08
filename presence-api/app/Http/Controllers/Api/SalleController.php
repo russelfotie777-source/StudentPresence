@@ -22,6 +22,7 @@ class SalleController extends Controller
                 ->orderBy('formation')
                 ->orderBy('nom')
                 ->get()
+                ->toArray()
         );
     }
 
