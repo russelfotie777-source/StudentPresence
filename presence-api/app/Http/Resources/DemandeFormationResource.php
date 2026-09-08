@@ -19,6 +19,13 @@ class DemandeFormationResource extends JsonResource
                 'name' => $this->etudiant->name,
                 'phone' => $this->etudiant->phone,
                 'salle' => $this->etudiant->salle?->nom,
+                // Niveau et filière servent à restreindre les salles FI
+                // proposées à l'admin : sans eux, il choisit une cible parmi
+                // toutes les salles de l'établissement, dont les noms se
+                // répètent d'une filière à l'autre.
+                'niveau' => $this->etudiant->niveau?->nom,
+                'niveau_id' => $this->etudiant->niveau_id,
+                'filiere' => $this->etudiant->filiere?->nom,
             ]),
             'salle_cible' => $this->whenLoaded('salleCible', fn () => $this->salleCible ? [
                 'id' => $this->salleCible->id,
