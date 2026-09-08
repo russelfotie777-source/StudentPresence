@@ -11,7 +11,7 @@ class NiveauController extends Controller
 {
     public function index()
     {
-        return CatalogueCache::souvenir('niveaux', fn () => Niveau::orderBy('nom')->get());
+        return CatalogueCache::souvenir('niveaux', fn () => Niveau::orderBy('nom')->get()->toArray());
     }
 
     public function store(Request $request)

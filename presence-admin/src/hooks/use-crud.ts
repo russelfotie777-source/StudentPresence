@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 
 /**
  * Fabrique de hooks CRUD génériques pour les entités du catalogue admin
@@ -17,29 +18,68 @@ export function makeCrudHooks<T extends { id: number }>(endpoint: string, queryK
     });
   }
 
-  function useCreate() {
+  /**
+   * Le catalogue alimente presque tous les autres écrans : une salle créée
+   * doit apparaître aussitôt dans les migrations, l'historique ou la vue
+   * d'ensemble, sans recharger la page.
+   */
+  function useInvalider() {
     const queryClient = useQueryClient();
+
+    return () => {
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    };
+  }
+
+  function message(error: unknown, repli: string) {
+    return error instanceof ApiError ? error.message : repli;
+  }
+
+  function useCreate() {
+    const invalider = useInvalider();
+
     return useMutation({
       mutationFn: (data: Record<string, unknown>) =>
         apiFetch<T>(`/api/${endpoint}`, { method: "POST", body: JSON.stringify(data) }),
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: [queryKey] }),
+      onSuccess: () => {
+        invalider();
+        toast.success("Créé.");
+      },
+      onError: (error) => toast.error(message(error, "La création a échoué.")),
     });
   }
 
   function useUpdate() {
-    const queryClient = useQueryClient();
+    const invalider = useInvalider();
+
     return useMutation({
       mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
         apiFetch<T>(`/api/${endpoint}/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: [queryKey] }),
+      onSuccess: () => {
+        invalider();
+        toast.success("Modifié.");
+      },
+      onError: (error) => toast.error(message(error, "La modification a échoué.")),
     });
   }
 
   function useRemove() {
-    const queryClient = useQueryClient();
+    const invalider = useInvalider();
+
     return useMutation({
       mutationFn: (id: number) => apiFetch(`/api/${endpoint}/${id}`, { method: "DELETE" }),
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: [queryKey] }),
+      onSuccess: () => {
+        invalider();
+        toast.success("Supprimé.");
+      },
+      // Une suppression peut être refusée par la base — une salle rattachée à
+      // des séances, par exemple. Sans ce retour, le clic restait sans effet
+      // visible et sans explication.
+      onError: (error) =>
+        toast.error(
+          message(error, "Suppression impossible : cet élément est encore utilisé ailleurs."),
+        ),
     });
   }
 

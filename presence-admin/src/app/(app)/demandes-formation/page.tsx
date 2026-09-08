@@ -23,6 +23,7 @@ import {
 import { salleHooks, type Salle } from "@/hooks/use-catalog";
 import type { DemandeFormation, RequestStatus } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { libelleSalle } from "@/lib/catalogue";
 
 const STATUTS: Record<RequestStatus, { label: string; classe: string }> = {
   en_attente: { label: "En attente", classe: "bg-warning/20 text-warning-foreground" },
@@ -198,7 +199,15 @@ function CarteDemande({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Select value={salleChoisie} onValueChange={(v) => onSalle(v ?? "")}>
               <SelectTrigger className="h-9 w-full rounded-lg sm:w-72">
-                <SelectValue placeholder="Salle FI d'accueil…" />
+                {/* Sans fonction de rendu, le déclencheur affiche l'id brut de
+                    la salle choisie au lieu de son nom — comportement par
+                    défaut du composant, pas un choix. */}
+                <SelectValue placeholder="Salle FI d'accueil…">
+                  {() => {
+                    const choisie = cibles.find((c) => String(c.id) === salleChoisie);
+                    return choisie ? libelleSalle(choisie) : "Salle FI d'accueil…";
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {cibles.map((s) => (
@@ -299,11 +308,6 @@ function ciblesPossibles(salles: Salle[], niveauId: number | null): Salle[] {
   return duNiveau.length > 0 ? duNiveau : fi;
 }
 
-function libelleSalle(s: Salle): string {
-  const contexte = [s.filiere?.nom, s.filiere?.niveau?.nom].filter(Boolean).join(" · ");
-
-  return contexte ? `${s.nom} — ${contexte}` : s.nom;
-}
 
 function dateCourte(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", {
