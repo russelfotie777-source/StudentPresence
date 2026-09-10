@@ -33,6 +33,12 @@ class PresenceController extends Controller
         if ($seance->salle_id !== $user->salle_id) {
             abort(403, "Cette séance n'appartient pas à votre salle.");
         }
+        
+       if (! $seance->isActive) {
+            throw ValidationException::withMessages([
+                'seance' => ["Cette séance n'est pas active actuellement (fenêtre de pointage fermée)."],
+            ]);
+        }
 
         if ($seance->presences_locked) {
             throw ValidationException::withMessages([
