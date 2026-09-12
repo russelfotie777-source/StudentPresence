@@ -44,6 +44,19 @@ export async function apiFetch<T>(
 
   const data = await res.json().catch(() => null);
 
+  // Le pointage, l'envoi de position et la connexion sont désormais limités
+  // en débit. Laravel répond alors « Too Many Attempts. » en anglais : on le
+  // traduit, et on dit combien de temps patienter quand le serveur l'indique.
+  if (res.status === 429) {
+    const secondes = Number(res.headers.get("Retry-After"));
+    const attente =
+      Number.isFinite(secondes) && secondes > 0
+        ? `Réessayez dans ${secondes >= 60 ? "une minute" : `${secondes} s`}.`
+        : "Patientez un instant avant de réessayer.";
+
+    throw new ApiError(`Trop de tentatives. ${attente}`, 429);
+  }
+
   if (!res.ok) {
     throw new ApiError(
       data?.message ?? "Une erreur est survenue.",
