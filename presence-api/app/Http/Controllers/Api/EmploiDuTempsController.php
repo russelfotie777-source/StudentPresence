@@ -10,6 +10,7 @@ use App\Models\Semaine;
 use App\Services\DetecteurConflits;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -109,7 +110,16 @@ class EmploiDuTempsController extends Controller
     {
         $this->assertModifiable($seance);
 
-        $seance->delete();
+        DB::transaction(function () use ($seance) {
+            $template = $seance->courseTemplate;
+            $seance->delete();
+
+            // Un cours ponctuel n'existe que pour porter sa séance : l'annuler
+            // ne doit pas laisser un cours vide dans la liste.
+            if ($template && $template->date_debut->equalTo($template->date_fin) && ! $template->seances()->exists()) {
+                $template->delete();
+            }
+        });
 
         return response()->noContent();
     }
