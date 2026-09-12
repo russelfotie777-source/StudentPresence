@@ -28,8 +28,11 @@ use App\Http\Controllers\Api\TeacherSalleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    // Limiteurs nommés (voir AppServiceProvider) : la connexion est comptée
+    // par compte visé et par adresse, pas par adresse seule — tout le campus
+    // sort par la même IP publique.
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:inscription');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:connexion');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -105,9 +108,9 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);
     Route::post('/seances/{seance}/push', [SeanceController::class, 'push']);
 
-    Route::post('/seances/{seance}/position', [PositionController::class, 'store']);
+    Route::post('/seances/{seance}/position', [PositionController::class, 'store'])->middleware('throttle:20,1');
 
-    Route::post('/seances/{seance}/check-in', [PresenceController::class, 'checkIn']);
+    Route::post('/seances/{seance}/check-in', [PresenceController::class, 'checkIn'])->middleware('throttle:20,1');
     Route::get('/seances/{seance}/roster', [PresenceController::class, 'roster']);
     Route::post('/seances/{seance}/confirm-roster', [PresenceController::class, 'confirmRoster']);
     Route::get('/seances/{seance}/presence-list.pdf', [PdfController::class, 'presenceList']);

@@ -34,6 +34,15 @@ class PresenceController extends Controller
             abort(403, "Cette séance n'appartient pas à votre salle.");
         }
 
+        // Même fenêtre ±15 min que le marquage du délégué (Seance::isActive) :
+        // sans ce garde-fou, un étudiant pouvait se pointer sur n'importe
+        // quelle séance passée de sa salle tant qu'elle n'était pas verrouillée.
+        if (! $seance->is_active) {
+            throw ValidationException::withMessages([
+                'seance' => ["Cette séance n'est pas active actuellement (fenêtre de pointage fermée)."],
+            ]);
+        }
+
         if ($seance->presences_locked) {
             throw ValidationException::withMessages([
                 'seance' => ['Les présences de cette séance ont déjà été validées par le délégué.'],
