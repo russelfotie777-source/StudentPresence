@@ -289,4 +289,20 @@ class EmploiDuTempsTest extends TestCase
         $this->assertModelExists($passee);
         $this->assertNull($passee->fresh()->course_template_id);
     }
+
+    // --- semaines -------------------------------------------------------------
+
+    public function test_weeks_carry_their_session_count_and_cannot_be_deleted_while_used(): void
+    {
+        $this->seance();
+
+        $this->actingAs($this->admin, 'sanctum');
+
+        $liste = $this->getJson('/api/semaines')->assertOk();
+        $this->assertSame(1, $liste->json('0.seances_count'));
+        $this->assertSame(0, $liste->json('1.seances_count'));
+
+        $this->deleteJson("/api/semaines/{$this->s1->id}")->assertUnprocessable();
+        $this->deleteJson("/api/semaines/{$this->s2->id}")->assertNoContent();
+    }
 }

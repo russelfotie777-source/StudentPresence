@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Semaine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SemaineController extends Controller
 {
     public function index()
     {
-        return Semaine::orderBy('numero')->get();
+        // Le nombre de séances permet au back-office de dire ce qu'une
+        // suppression emporterait — et de la refuser, voir destroy().
+        return Semaine::withCount('seances')->orderBy('numero')->get();
     }
 
     public function store(Request $request)
@@ -43,8 +46,19 @@ class SemaineController extends Controller
         return $semaine;
     }
 
+    /**
+     * Une semaine qui porte des séances ne se supprime pas : ses séances
+     * perdraient leur rattachement (semaine_id à null) et disparaîtraient
+     * de la grille tout en restant visibles des étudiants à leur date.
+     */
     public function destroy(Semaine $semaine)
     {
+        if ($semaine->seances()->exists()) {
+            throw ValidationException::withMessages([
+                'semaine' => ['Cette semaine contient des séances : annulez-les d\'abord.'],
+            ]);
+        }
+
         $semaine->delete();
 
         return response()->noContent();
