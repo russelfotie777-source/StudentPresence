@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, History, Wallet, MessageSquareWarning, UserPlus, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNotifications } from "@/hooks/use-notifications";
 import type { UserRole } from "@/types/api";
 
 interface NavItem {
@@ -33,6 +34,10 @@ const PROFILE_ITEM: NavItem = { href: "/profil", label: "Profil", icon: User };
 
 export function BottomNav({ role }: { role: UserRole }) {
   const pathname = usePathname();
+  // Pastille sur Profil : c'est là que vivent les notifications, et une
+  // restriction de compte doit être vue même sans ouvrir cet écran.
+  const { data: notifications } = useNotifications();
+  const nonLues = notifications?.non_lues ?? 0;
   const items = [
     ...BASE_ITEMS,
     ...(role === "Enseignant" ? TEACHER_ONLY_ITEMS : []),
@@ -61,13 +66,23 @@ export function BottomNav({ role }: { role: UserRole }) {
                 active && "bg-indigo-50",
               )}
             >
-              <Icon
-                className={cn(
-                  "h-[21px] w-[21px] transition-colors",
-                  active ? "text-indigo-600" : "text-ink-300",
+              <span className="relative">
+                <Icon
+                  className={cn(
+                    "h-[21px] w-[21px] transition-colors",
+                    active ? "text-indigo-600" : "text-ink-300",
+                  )}
+                  strokeWidth={active ? 2.3 : 1.9}
+                />
+                {item.href === PROFILE_ITEM.href && nonLues > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9.5px] font-bold text-white tabular-nums ring-2 ring-card"
+                    aria-label={`${nonLues} notification(s) non lue(s)`}
+                  >
+                    {nonLues > 9 ? "9+" : nonLues}
+                  </span>
                 )}
-                strokeWidth={active ? 2.3 : 1.9}
-              />
+              </span>
               <span className={active ? "font-bold text-indigo-600" : "text-ink-300"}>
                 {item.label}
               </span>
