@@ -272,6 +272,17 @@ class EmploiDuTempsTest extends TestCase
         $this->actingAs($this->admin, 'sanctum')->deleteJson("/api/seances/{$seance->id}")->assertNoContent();
 
         $this->assertModelMissing($seance);
+        $this->assertModelExists($seance->courseTemplate, 'Le cours récurrent reste : ses autres semaines ne sont pas concernées.');
+    }
+
+    public function test_cancelling_a_one_off_session_removes_its_course_too(): void
+    {
+        $ponctuel = CourseTemplate::factory()->create(['salle_id' => $this->salle->id, 'date_debut' => '2026-09-17', 'date_fin' => '2026-09-17']);
+        $seance = $this->seance(['course_template_id' => $ponctuel->id]);
+
+        $this->actingAs($this->admin, 'sanctum')->deleteJson("/api/seances/{$seance->id}")->assertNoContent();
+
+        $this->assertModelMissing($ponctuel);
     }
 
     public function test_deleting_a_course_removes_its_upcoming_sessions_but_keeps_held_ones(): void
@@ -304,5 +315,22 @@ class EmploiDuTempsTest extends TestCase
 
         $this->deleteJson("/api/semaines/{$this->s1->id}")->assertUnprocessable();
         $this->deleteJson("/api/semaines/{$this->s2->id}")->assertNoContent();
+    }
+
+    public function test_weeks_cannot_overlap(): void
+    {
+        $this->actingAs($this->admin, 'sanctum');
+
+        $this->postJson('/api/semaines', ['numero' => 9, 'date_debut' => '2026-09-16', 'date_fin' => '2026-09-22'])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.date_debut.0', fn (string $m) => str_contains($m, 'S1, S2'));
+
+        $this->postJson('/api/semaines/generate-semester', ['date_debut' => '2026-09-21', 'nombre_semaines' => 2])
+            ->assertUnprocessable();
+
+        $this->postJson('/api/semaines/generate-semester', ['date_debut' => '2026-09-28', 'nombre_semaines' => 2])
+            ->assertCreated();
+
+        $this->assertDatabaseCount('semaines', 4);
     }
 }
