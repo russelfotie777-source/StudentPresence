@@ -60,6 +60,17 @@ class AuthController extends Controller
             ]);
         }
 
+        // Vérifié après le mot de passe, pas avant : un compte bloqué ne doit
+        // pas devenir un moyen de deviner quels identifiants existent.
+        if ($user->estBloque()) {
+            throw ValidationException::withMessages([
+                'phone' => [
+                    'Votre compte a été bloqué par l\'administration.'
+                    .($user->motif_statut ? " Motif : {$user->motif_statut}" : ''),
+                ],
+            ]);
+        }
+
         // Le token est toujours émis, y compris pour un compte Délégué/Enseignant
         // "none"/"pending" — il sert alors uniquement à consulter son statut et
         // soumettre sa validation. Les routes métier protégées exigent en plus

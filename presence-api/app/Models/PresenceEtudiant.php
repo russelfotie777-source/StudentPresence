@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['seance_id', 'etudiant_id', 'etat', 'date_marquage', 'distance_metres', 'precision_metres'])]
+#[Fillable(['seance_id', 'etudiant_id', 'etat', 'date_marquage', 'distance_metres', 'precision_metres', 'forcee_par_id'])]
 class PresenceEtudiant extends Model
 {
     use HasFactory;
