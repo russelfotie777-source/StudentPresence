@@ -26,13 +26,25 @@ class SeanceController extends Controller
     public function today(Request $request)
     {
         $user = $request->user();
-        $today = Weekday::fromCarbon(now());
-        $semaine = Semaine::current();
+        // « Aujourd'hui » = la date du jour à Douala (fuseau de l'application),
+        // jamais celle du téléphone. On filtre sur la date réelle de la
+        // séance : l'ancien filtre « même jour de semaine + semaine
+        // courante » se repliait sur la semaine la plus proche hors semestre
+        // et affichait alors des séances d'une autre semaine.
+        $maintenant = now();
+        $jour = Weekday::fromCarbon($maintenant);
+        $semaine = Semaine::couvrant($maintenant);
 
         $query = Seance::query()
             ->with(['salle', 'enseignant', 'courseTemplate.matiere', 'pushRequest', 'position'])
-            ->where('jour', $today->value)
-            ->when($semaine, fn ($q) => $q->where(fn ($q2) => $q2->where('semaine_id', $semaine->id)->orWhereNull('semaine_id')));
+            ->where(fn ($q) => $q
+                ->whereDate('date_seance', $maintenant->toDateString())
+                // Séances sans date (saisies à la main dans l'ancienne app) :
+                // repérées par leur jour dans la semaine qui couvre aujourd'hui.
+                ->orWhere(fn ($q2) => $q2
+                    ->whereNull('date_seance')
+                    ->where('jour', $jour->value)
+                    ->where('semaine_id', $semaine?->id ?? -1)));
 
         $role = $user->effectiveRole();
 

@@ -14,6 +14,15 @@ class SeanceResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            // Identifiants bruts pour les écrans qui modifient une séance
+            // (grille admin) — les libellés seuls ne suffisent pas à
+            // pré-remplir un formulaire.
+            'salle_id' => $this->salle_id,
+            'enseignant_id' => $this->enseignant_id,
+            'course_template_id' => $this->course_template_id,
+            'semaine_id' => $this->semaine_id,
+            'matiere_id' => $this->whenLoaded('courseTemplate', fn () => $this->courseTemplate?->matiere_id),
+            'presences_count' => $this->whenCounted('presences'),
             'salle' => $this->whenLoaded('salle', fn () => $this->salle->nom),
             'enseignant' => $this->whenLoaded('enseignant', fn () => $this->enseignant->name),
             'matiere' => $this->whenLoaded('courseTemplate', fn () => $this->courseTemplate?->matiere?->nom),
