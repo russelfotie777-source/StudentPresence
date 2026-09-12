@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 
 /**
  * @param  Collection<int, Seance>  $created
- * @param  Collection<int, array{semaine_id: int, reason: string}>  $skipped
+ * @param  Collection<int, array{semaine_id: int, numero: int, date: string, reason: string}>  $skipped
  */
 readonly class SeanceGenerationResult
 {
