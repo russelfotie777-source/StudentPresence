@@ -31,8 +31,10 @@ export interface Matiere {
 export interface Semaine {
   id: number;
   numero: number;
+  /** Dates pures « AAAA-MM-JJ », à lire avec dateLocale() — jamais via new Date(iso). */
   date_debut: string;
   date_fin: string;
+  seances_count?: number;
 }
 
 export const niveauHooks = makeCrudHooks<Niveau>("niveaux", "niveaux");
