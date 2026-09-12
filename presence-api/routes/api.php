@@ -101,6 +101,9 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::post('/etudiants/{etudiant}/retablir', [EtudiantController::class, 'retablir']);
     Route::delete('/etudiants/{etudiant}', [EtudiantController::class, 'destroy']);
 
+    // Liste de présence hebdomadaire officielle d'une salle.
+    Route::get('/salles/{salle}/liste-presence.pdf', [PdfController::class, 'listeHebdomadaire']);
+
     // Présence forcée par l'admin : passe outre fenêtre, verrou et GPS.
     Route::post('/seances/{seance}/presences/{etudiant}', [PresenceController::class, 'forcer']);
 });
