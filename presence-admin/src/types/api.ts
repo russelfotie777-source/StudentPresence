@@ -35,6 +35,13 @@ export interface AuthResponse {
 
 export interface Seance {
   id: number;
+  salle_id: number;
+  enseignant_id: number;
+  course_template_id: number | null;
+  semaine_id: number | null;
+  matiere_id?: number | null;
+  /** Nombre de présences enregistrées — seulement sur la grille admin. */
+  presences_count?: number;
   salle: string;
   enseignant: string;
   groupe: string;
