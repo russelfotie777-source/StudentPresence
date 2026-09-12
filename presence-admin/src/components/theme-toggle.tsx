@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,13 @@ export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   // Le thème résolu dépend de prefers-color-scheme côté client : le rendre
   // avant l'hydratation créerait un flash entre le rendu serveur et client.
-  const [monte, setMonte] = useState(false);
-  useEffect(() => setMonte(true), []);
+  // useSyncExternalStore rend `false` côté serveur et `true` côté client sans
+  // passer par un setState dans un effet.
+  const monte = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   if (!monte) {
     return <div className="size-8" aria-hidden />;
