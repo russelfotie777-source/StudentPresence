@@ -6,12 +6,14 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EnseignantController;
+use App\Http\Controllers\Api\EtudiantController;
 use App\Http\Controllers\Api\FaceAuthSettingController;
 use App\Http\Controllers\Api\FaceController;
 use App\Http\Controllers\Api\FiliereController;
 use App\Http\Controllers\Api\FormationRequestController;
 use App\Http\Controllers\Api\MatiereController;
 use App\Http\Controllers\Api\NiveauController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\PdfController;
 use App\Http\Controllers\Api\PositionController;
@@ -90,6 +92,17 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::get('/payroll/teachers/{teacher}', [PayrollController::class, 'forTeacher']);
 
     Route::get('/historique-seances', [SessionHistoryController::class, 'index']);
+
+    // Gestion des comptes étudiants (délégués compris : ce sont des étudiants).
+    Route::get('/etudiants', [EtudiantController::class, 'index']);
+    Route::put('/etudiants/{etudiant}/salle', [EtudiantController::class, 'changerSalle']);
+    Route::post('/etudiants/{etudiant}/restreindre', [EtudiantController::class, 'restreindre']);
+    Route::post('/etudiants/{etudiant}/bloquer', [EtudiantController::class, 'bloquer']);
+    Route::post('/etudiants/{etudiant}/retablir', [EtudiantController::class, 'retablir']);
+    Route::delete('/etudiants/{etudiant}', [EtudiantController::class, 'destroy']);
+
+    // Présence forcée par l'admin : passe outre fenêtre, verrou et GPS.
+    Route::post('/seances/{seance}/presences/{etudiant}', [PresenceController::class, 'forcer']);
 });
 
 // Cœur métier : présence — accessible à Étudiant/Délégué/Enseignant selon
@@ -101,6 +114,8 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::get('/seances/history', [SeanceController::class, 'history']);
     Route::get('/me/attendance-stats', [AttendanceStatsController::class, 'me']);
     Route::get('/me/attendance-trend', [AttendanceStatsController::class, 'trend']);
+    Route::get('/me/notifications', [NotificationController::class, 'index']);
+    Route::post('/me/notifications/{id}/lue', [NotificationController::class, 'marquerLue']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);
     Route::post('/seances/{seance}/push', [SeanceController::class, 'push']);

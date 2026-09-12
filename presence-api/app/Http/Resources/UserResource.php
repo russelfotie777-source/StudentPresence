@@ -19,6 +19,9 @@ class UserResource extends JsonResource
             'role' => $this->role->value,
             'effective_role' => $this->effectiveRole()->value,
             'validation_status' => $this->validation_status->value,
+            'statut_compte' => $this->statut_compte->value,
+            'motif_statut' => $this->motif_statut,
+            'statut_modifie_le' => $this->statut_modifie_le?->toIso8601String(),
             'formation' => $this->formation?->value,
             'salle' => $this->whenLoaded('salle', fn () => [
                 'id' => $this->salle->id,
