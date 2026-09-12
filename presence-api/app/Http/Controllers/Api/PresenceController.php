@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\FormationType;
 use App\Enums\PresenceState;
 use App\Enums\PushStatus;
 use App\Enums\UserRole;
@@ -234,15 +233,11 @@ class PresenceController extends Controller
      */
     private function rosterQuery(Seance $seance, User $delegue)
     {
-        $formations = $seance->salle->formation === FormationType::FI
-            ? [FormationType::FI->value, FormationType::FM->value]
-            : [FormationType::FA->value];
-
         return User::query()
             ->where('role', UserRole::Etudiant->value)
             ->where('salle_id', $seance->salle_id)
             ->where('niveau_id', $delegue->niveau_id)
-            ->whereIn('formation', $formations);
+            ->whereIn('formation', $seance->salle->formationsAccueillies());
     }
 
     private function authorizeDelegue(Request $request, Seance $seance): User
