@@ -28,8 +28,11 @@ use App\Http\Controllers\Api\TeacherSalleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    // Limiteurs nommés (voir AppServiceProvider) : la connexion est comptée
+    // par compte visé et par adresse, pas par adresse seule — tout le campus
+    // sort par la même IP publique.
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:inscription');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:connexion');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
