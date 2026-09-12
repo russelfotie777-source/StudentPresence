@@ -74,3 +74,29 @@ export async function apiFetch<T>(
 
   return data as T;
 }
+
+/**
+ * Télécharge un fichier servi par l'API. Un simple lien ne suffit pas : la
+ * requête doit porter le jeton, et le navigateur n'ajoute pas d'en-tête
+ * Authorization à une navigation.
+ */
+export async function telechargerFichier(path: string, nomParDefaut: string): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: { Accept: "application/pdf", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new ApiError(data?.message ?? "Le téléchargement a échoué.", res.status, data?.errors);
+  }
+
+  const nom =
+    res.headers.get("Content-Disposition")?.match(/filename="?([^";]+)"?/)?.[1] ?? nomParDefaut;
+  const url = URL.createObjectURL(await res.blob());
+  const lien = document.createElement("a");
+  lien.href = url;
+  lien.download = nom;
+  lien.click();
+  URL.revokeObjectURL(url);
+}
