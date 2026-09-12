@@ -30,7 +30,10 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    // Sans cette exposition, le navigateur ne peut pas lire Retry-After sur
+    // une réponse 429 cross-origin, et les apps ne peuvent afficher qu'un
+    // « patientez un instant » au lieu du délai réel.
+    'exposed_headers' => ['Retry-After'],
 
     'max_age' => 0,
 
