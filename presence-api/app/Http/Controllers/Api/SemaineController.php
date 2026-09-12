@@ -25,6 +25,8 @@ class SemaineController extends Controller
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
         ]);
 
+        $this->refuserChevauchement($data['date_debut'], $data['date_fin']);
+
         return response()->json(Semaine::create($data), 201);
     }
 
@@ -40,6 +42,8 @@ class SemaineController extends Controller
             'date_debut' => ['required', 'date'],
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
         ]);
+
+        $this->refuserChevauchement($data['date_debut'], $data['date_fin'], $semaine->id);
 
         $semaine->update($data);
 
@@ -80,6 +84,11 @@ class SemaineController extends Controller
         $startingNumero = (int) Semaine::max('numero') + 1;
         $lundi = Carbon::parse($data['date_debut'])->startOfWeek(Carbon::MONDAY);
 
+        $this->refuserChevauchement(
+            $lundi->toDateString(),
+            $lundi->clone()->addWeeks($data['nombre_semaines'] - 1)->addDays(6)->toDateString(),
+        );
+
         $created = collect(range(0, $data['nombre_semaines'] - 1))->map(function (int $i) use ($lundi, $startingNumero) {
             $debut = $lundi->clone()->addWeeks($i);
 
@@ -91,5 +100,26 @@ class SemaineController extends Controller
         });
 
         return response()->json($created, 201);
+    }
+
+    /**
+     * Deux semaines ne peuvent pas couvrir les mêmes jours : une séance
+     * générée sur l'une entrerait en conflit avec elle-même sur l'autre, et
+     * la grille ne saurait plus laquelle afficher.
+     */
+    private function refuserChevauchement(string $debut, string $fin, ?int $ignorerId = null): void
+    {
+        $chevauchees = Semaine::query()
+            ->where('date_debut', '<=', $fin)
+            ->where('date_fin', '>=', $debut)
+            ->when($ignorerId, fn ($q, $id) => $q->whereKeyNot($id))
+            ->orderBy('numero')
+            ->pluck('numero');
+
+        if ($chevauchees->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'date_debut' => ['Ces dates chevauchent des semaines existantes (S'.$chevauchees->implode(', S').').'],
+            ]);
+        }
     }
 }
