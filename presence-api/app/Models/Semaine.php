@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,8 +16,11 @@ class Semaine extends Model
     protected function casts(): array
     {
         return [
-            'date_debut' => 'date',
-            'date_fin' => 'date',
+            // Sérialisées en date pure : un horodatage ISO (minuit à Douala =
+            // 23:00Z la veille) se retrouvait décalé d'un jour selon le fuseau
+            // du navigateur qui l'affichait.
+            'date_debut' => 'date:Y-m-d',
+            'date_fin' => 'date:Y-m-d',
         ];
     }
 
@@ -31,6 +35,20 @@ class Semaine extends Model
      * (dashboard.php/dashEtudiant.php), qui dupliquait cette logique dans
      * chaque fichier.
      */
+    /**
+     * La semaine qui couvre strictement une date, sans repli sur la plus
+     * proche : hors semestre, il n'y a tout simplement pas de semaine.
+     */
+    public static function couvrant(CarbonInterface|string $date): ?self
+    {
+        $jour = $date instanceof CarbonInterface ? $date->toDateString() : $date;
+
+        return static::query()
+            ->where('date_debut', '<=', $jour)
+            ->where('date_fin', '>=', $jour)
+            ->first();
+    }
+
     public static function current(): ?self
     {
         $today = now()->toDateString();

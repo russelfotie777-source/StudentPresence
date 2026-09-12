@@ -15,10 +15,12 @@ use App\Models\Semaine;
  */
 class SeanceGenerator
 {
+    public function __construct(private DetecteurConflits $conflits) {}
+
     public function generate(CourseTemplate $template): SeanceGenerationResult
     {
         $weekday = $template->jour instanceof Weekday ? $template->jour : Weekday::from($template->jour);
-        $dayOffset = array_search($weekday, Weekday::cases(), true);
+        $dayOffset = $weekday->iso() - 1;
 
         $semaines = Semaine::query()
             ->where('date_fin', '>=', $template->date_debut)
@@ -42,15 +44,34 @@ class SeanceGenerator
                 ->exists();
 
             if ($exists) {
-                $skipped->push(['semaine_id' => $semaine->id, 'reason' => 'Séance déjà générée pour cette semaine.']);
+                $skipped->push([
+                    'semaine_id' => $semaine->id,
+                    'numero' => $semaine->numero,
+                    'date' => $dateSeance->toDateString(),
+                    'reason' => 'Séance déjà générée pour cette semaine.',
+                ]);
 
                 continue;
             }
 
-            $conflict = $this->findConflict($template, $semaine);
+            $conflict = $this->conflits->pour([
+                'salle_id' => $template->salle_id,
+                'groupe' => $template->groupe,
+                'enseignant_id' => $template->enseignant_id,
+                'date_seance' => $dateSeance->toDateString(),
+                'semaine_id' => $semaine->id,
+                'jour' => $weekday->value,
+                'heure_debut' => $template->heure_debut,
+                'heure_fin' => $template->heure_fin,
+            ]);
 
             if ($conflict) {
-                $skipped->push(['semaine_id' => $semaine->id, 'reason' => $conflict]);
+                $skipped->push([
+                    'semaine_id' => $semaine->id,
+                    'numero' => $semaine->numero,
+                    'date' => $dateSeance->toDateString(),
+                    'reason' => $conflict,
+                ]);
 
                 continue;
             }
@@ -69,40 +90,5 @@ class SeanceGenerator
         }
 
         return new SeanceGenerationResult($created, $skipped);
-    }
-
-    /**
-     * Étend la vérification de conflit de l'ancienne app (salle+semaine+jour+
-     * groupe) pour couvrir aussi le double-booking d'un même enseignant sur
-     * deux salles au même horaire — un trou de sécurité réel de add_seance.php.
-     */
-    private function findConflict(CourseTemplate $template, Semaine $semaine): ?string
-    {
-        $overlaps = fn ($query) => $query
-            ->where('semaine_id', $semaine->id)
-            ->where('jour', $template->jour instanceof Weekday ? $template->jour->value : $template->jour)
-            ->where('heure_debut', '<', $template->heure_fin)
-            ->where('heure_fin', '>', $template->heure_debut);
-
-        $salleConflict = Seance::query()
-            ->where('salle_id', $template->salle_id)
-            ->where('groupe', $template->groupe)
-            ->tap($overlaps)
-            ->exists();
-
-        if ($salleConflict) {
-            return "Conflit de salle pour le groupe {$template->groupe} sur ce créneau.";
-        }
-
-        $enseignantConflict = Seance::query()
-            ->where('enseignant_id', $template->enseignant_id)
-            ->tap($overlaps)
-            ->exists();
-
-        if ($enseignantConflict) {
-            return "L'enseignant a déjà une séance sur ce créneau (autre salle).";
-        }
-
-        return null;
     }
 }

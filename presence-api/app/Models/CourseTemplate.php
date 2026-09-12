@@ -14,12 +14,17 @@ class CourseTemplate extends Model
 {
     use HasFactory;
 
+    // Eloquent ne relit pas les valeurs par défaut de la base après un
+    // insert : sans ceci, un cours créé sans groupe engendrerait des séances
+    // au groupe null.
+    protected $attributes = ['groupe' => 'G1'];
+
     protected function casts(): array
     {
         return [
             'jour' => Weekday::class,
-            'date_debut' => 'date',
-            'date_fin' => 'date',
+            'date_debut' => 'date:Y-m-d',
+            'date_fin' => 'date:Y-m-d',
             'actif' => 'boolean',
         ];
     }
