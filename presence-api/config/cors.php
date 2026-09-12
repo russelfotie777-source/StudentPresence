@@ -30,7 +30,9 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    // Sans cette exposition, le navigateur ne lit pas le nom de fichier d'un
+    // PDF téléchargé en cross-origin et retombe sur un nom générique.
+    'exposed_headers' => ['Content-Disposition'],
 
     'max_age' => 0,
 
