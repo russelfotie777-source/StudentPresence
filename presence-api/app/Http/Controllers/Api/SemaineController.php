@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Semaine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SemaineController extends Controller
 {
     public function index()
     {
-        return Semaine::orderBy('numero')->get();
+        // Le nombre de séances permet au back-office de dire ce qu'une
+        // suppression emporterait — et de la refuser, voir destroy().
+        return Semaine::withCount('seances')->orderBy('numero')->get();
     }
 
     public function store(Request $request)
@@ -21,6 +24,8 @@ class SemaineController extends Controller
             'date_debut' => ['required', 'date'],
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
         ]);
+
+        $this->refuserChevauchement($data['date_debut'], $data['date_fin']);
 
         return response()->json(Semaine::create($data), 201);
     }
@@ -38,13 +43,26 @@ class SemaineController extends Controller
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
         ]);
 
+        $this->refuserChevauchement($data['date_debut'], $data['date_fin'], $semaine->id);
+
         $semaine->update($data);
 
         return $semaine;
     }
 
+    /**
+     * Une semaine qui porte des séances ne se supprime pas : ses séances
+     * perdraient leur rattachement (semaine_id à null) et disparaîtraient
+     * de la grille tout en restant visibles des étudiants à leur date.
+     */
     public function destroy(Semaine $semaine)
     {
+        if ($semaine->seances()->exists()) {
+            throw ValidationException::withMessages([
+                'semaine' => ['Cette semaine contient des séances : annulez-les d\'abord.'],
+            ]);
+        }
+
         $semaine->delete();
 
         return response()->noContent();
@@ -66,6 +84,11 @@ class SemaineController extends Controller
         $startingNumero = (int) Semaine::max('numero') + 1;
         $lundi = Carbon::parse($data['date_debut'])->startOfWeek(Carbon::MONDAY);
 
+        $this->refuserChevauchement(
+            $lundi->toDateString(),
+            $lundi->clone()->addWeeks($data['nombre_semaines'] - 1)->addDays(6)->toDateString(),
+        );
+
         $created = collect(range(0, $data['nombre_semaines'] - 1))->map(function (int $i) use ($lundi, $startingNumero) {
             $debut = $lundi->clone()->addWeeks($i);
 
@@ -77,5 +100,26 @@ class SemaineController extends Controller
         });
 
         return response()->json($created, 201);
+    }
+
+    /**
+     * Deux semaines ne peuvent pas couvrir les mêmes jours : une séance
+     * générée sur l'une entrerait en conflit avec elle-même sur l'autre, et
+     * la grille ne saurait plus laquelle afficher.
+     */
+    private function refuserChevauchement(string $debut, string $fin, ?int $ignorerId = null): void
+    {
+        $chevauchees = Semaine::query()
+            ->where('date_debut', '<=', $fin)
+            ->where('date_fin', '>=', $debut)
+            ->when($ignorerId, fn ($q, $id) => $q->whereKeyNot($id))
+            ->orderBy('numero')
+            ->pluck('numero');
+
+        if ($chevauchees->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'date_debut' => ['Ces dates chevauchent des semaines existantes (S'.$chevauchees->implode(', S').').'],
+            ]);
+        }
     }
 }

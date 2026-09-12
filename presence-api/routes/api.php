@@ -5,11 +5,13 @@ use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\EmploiDuTempsController;
 use App\Http\Controllers\Api\EnseignantController;
 use App\Http\Controllers\Api\FaceAuthSettingController;
 use App\Http\Controllers\Api\FaceController;
 use App\Http\Controllers\Api\FiliereController;
 use App\Http\Controllers\Api\FormationRequestController;
+use App\Http\Controllers\Api\HeureController;
 use App\Http\Controllers\Api\MatiereController;
 use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\PayrollController;
@@ -51,6 +53,10 @@ Route::prefix('auth')->group(function () {
 // ancienne app, sans authentification). Uniquement index/show — la
 // création/modification reste réservée à l'admin ci-dessous.
 Route::middleware([])->group(function () {
+    // Heure de référence (Douala) : les fronts s'alignent dessus plutôt que
+    // sur l'horloge de l'appareil, voir HeureController.
+    Route::get('/heure', HeureController::class);
+
     Route::apiResource('niveaux', NiveauController::class)->only(['index', 'show']);
     Route::apiResource('filieres', FiliereController::class)->only(['index', 'show']);
     Route::apiResource('salles', SalleController::class)->only(['index', 'show']);
@@ -68,6 +74,10 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
 
     Route::apiResource('course-templates', CourseTemplateController::class);
     Route::post('/course-templates/{courseTemplate}/generate', [CourseTemplateController::class, 'generate']);
+
+    Route::get('/emploi-du-temps', [EmploiDuTempsController::class, 'index']);
+    Route::put('/seances/{seance}', [EmploiDuTempsController::class, 'update']);
+    Route::delete('/seances/{seance}', [EmploiDuTempsController::class, 'destroy']);
 
     Route::get('/enseignants', [EnseignantController::class, 'index']);
 

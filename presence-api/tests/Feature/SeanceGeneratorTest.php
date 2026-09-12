@@ -40,7 +40,7 @@ class SeanceGeneratorTest extends TestCase
             'date_fin' => '2026-01-31', // couvre les semaines 1 à 4
         ]);
 
-        $result = (new SeanceGenerator)->generate($template);
+        $result = app(SeanceGenerator::class)->generate($template);
 
         $this->assertCount(4, $result->created);
         $this->assertCount(0, $result->skipped);
@@ -61,7 +61,7 @@ class SeanceGeneratorTest extends TestCase
             'date_fin' => '2026-01-18',
         ]);
 
-        $generator = new SeanceGenerator;
+        $generator = app(SeanceGenerator::class);
         $first = $generator->generate($template);
         $second = $generator->generate($template);
 
@@ -101,7 +101,7 @@ class SeanceGeneratorTest extends TestCase
             'date_fin' => '2026-01-11',
         ]);
 
-        $result = (new SeanceGenerator)->generate($template);
+        $result = app(SeanceGenerator::class)->generate($template);
 
         $this->assertCount(0, $result->created);
         $this->assertCount(1, $result->skipped);
@@ -136,7 +136,7 @@ class SeanceGeneratorTest extends TestCase
             'date_fin' => '2026-01-11',
         ]);
 
-        $result = (new SeanceGenerator)->generate($template);
+        $result = app(SeanceGenerator::class)->generate($template);
 
         $this->assertCount(0, $result->created);
         $this->assertStringContainsString('déjà une séance', $result->skipped->first()['reason']);
