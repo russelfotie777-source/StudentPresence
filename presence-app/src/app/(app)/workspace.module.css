@@ -1,0 +1,107 @@
+.workspace {
+  --background: #ffffff;
+  --foreground: #182723;
+  --card: #ffffff;
+  --card-foreground: #182723;
+  --ink-900: #182723;
+  --ink-700: #354c46;
+  --ink-500: #62746e;
+  --ink-300: #6d7c76;
+  --muted-foreground: #62746e;
+  --surface-0: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f5;
+  --line: #e1e9e7;
+  --primary: #087953;
+  --primary-foreground: #ffffff;
+  background: var(--background);
+  color: var(--foreground);
+}
+.workspace :global(.app-main) {
+  padding-top: 24px;
+}
+.workspace:global(.is-history) :global(.app-main) {
+  max-width: 1200px;
+  width: 100%;
+}
+.workspace :global(.app-nav) {
+  background: var(--card);
+  box-shadow: 0 -6px 24px #183d2905;
+}
+.workspace :global(.nav-item) {
+  background: transparent;
+  gap: 4px;
+  min-height: 53px;
+}
+.workspace :global(.nav-item > span:first-child) {
+  width: 36px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.workspace :global(.nav-item-active > span:first-child) {
+  background: #e5f4ed;
+}
+.workspace :global(.nav-label) {
+  font-size: 10px;
+}
+.workspace :global(.nav-item-active .nav-label) {
+  color: var(--primary);
+}
+.workspace :global(.nav-item:focus-visible) {
+  outline-offset: -2px;
+}
+:global(.dark) .workspace {
+  --background: #141c18;
+  --foreground: #edf3ef;
+  --card: #1c2520;
+  --card-foreground: #edf3ef;
+  --ink-900: #edf3ef;
+  --ink-700: #c4d1ca;
+  --ink-500: #a1b1a8;
+  --ink-300: #92a299;
+  --muted-foreground: #a1b1a8;
+  --surface-0: #141c18;
+  --surface-1: #1c2520;
+  --surface-2: #27352d;
+  --line: #344239;
+  --primary: #82ceae;
+  --primary-foreground: #14271d;
+}
+:global(.dark) .workspace :global(.nav-item-active > span:first-child) {
+  background: #274536;
+}
+@media (min-width: 1024px) {
+  .workspace :global(.app-nav) {
+    background: var(--surface-0);
+    box-shadow: none;
+    padding-top: 34px;
+  }
+  .workspace :global(.nav-brand) {
+    margin-bottom: 54px;
+  }
+  .workspace :global(.nav-item) {
+    gap: 8px;
+    padding-left: 8px;
+    min-height: 48px;
+  }
+  .workspace :global(.nav-label) {
+    font-size: 12px;
+  }
+  .workspace :global(.nav-item-active) {
+    background: var(--surface-2);
+  }
+  .workspace :global(.nav-item-active > span:first-child) {
+    background: transparent;
+  }
+  .workspace :global(.app-main) {
+    padding-top: 34px;
+  }
+}
+@media (max-width: 359px) {
+  .workspace :global(.nav-label) {
+    font-size: 9px;
+  }
+}
