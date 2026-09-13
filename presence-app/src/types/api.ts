@@ -66,6 +66,10 @@ export interface Seance {
   push?: { etudiants_presents: number; status: PushStatus } | null;
   ma_presence?: PresenceState | null;
   position_envoyee?: boolean;
+  geolocation?: {
+    max_position_accuracy_meters: number;
+    max_check_in_accuracy_meters: number;
+  };
 }
 
 export interface RosterEntry {
