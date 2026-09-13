@@ -50,7 +50,7 @@ interface Props {
   etudiant: EtudiantFeuille;
   feuille: FeuillePresence;
   symboles: Symboles;
-  onAction: (type: Exclude<ActionEtudiant["type"], "presence">) => void;
+  onAction: (type: ActionEtudiant["type"]) => void;
   onFermer: () => void;
 }
 

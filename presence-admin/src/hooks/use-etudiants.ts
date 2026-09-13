@@ -1,9 +1,9 @@
 "use client";
 
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch, ApiError, telechargerFichier } from "@/lib/api-client";
-import type { PresenceState, Seance, StatutCompte, User } from "@/types/api";
+import type { PresenceState, StatutCompte, User } from "@/types/api";
 
 interface PageEtudiants {
   data: User[];
@@ -102,17 +102,6 @@ export function useForcerPresence() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e) => toast.error(message(e, "L'enregistrement a échoué.")),
-  });
-}
-
-/** Séances récentes d'une salle, pour choisir celle sur laquelle forcer une présence. */
-export function useSeancesDeSalle(salleId: number | undefined) {
-  return useQuery({
-    queryKey: ["historique-seances", "salle", salleId],
-    queryFn: () =>
-      apiFetch<{ data: Seance[] }>(`/api/historique-seances?salle_id=${salleId}&per_page=12`),
-    enabled: salleId !== undefined,
-    select: (r) => r.data,
   });
 }
 
