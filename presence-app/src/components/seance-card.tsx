@@ -1,131 +1,76 @@
 "use client";
 
-import { motion } from "motion/react";
-import { Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { GrainOverlay } from "@/components/grain-overlay";
+import { Check, Clock3, MapPin, Radio, UserRound } from "lucide-react";
 import type { Seance } from "@/types/api";
-
-function EtatDot({ etat }: { etat: string | null }) {
-  if (!etat) return <span className="h-1.5 w-1.5 rounded-full bg-line" />;
-  return (
-    <span
-      className={cn(
-        "h-1.5 w-1.5 rounded-full",
-        etat === "present" ? "bg-emerald-500" : "bg-rose-500",
-      )}
-    />
-  );
-}
 
 export function SeanceCard({
   seance,
   children,
+  featured = false,
 }: {
   seance: Seance;
   children?: React.ReactNode;
+  featured?: boolean;
 }) {
-  if (seance.is_active) {
-    return (
-      <div className="flex flex-col gap-3">
-        {/* Carte-billet : le signature moment du système */}
-        <motion.div
-          className="relative flex overflow-visible rounded-[22px] bg-gradient-to-br from-indigo-500 to-indigo-600"
-          animate={{
-            boxShadow: [
-              "0 20px 40px -14px rgba(79,70,229,.5)",
-              "0 22px 48px -12px rgba(79,70,229,.7)",
-              "0 20px 40px -14px rgba(79,70,229,.5)",
-            ],
-          }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <GrainOverlay className="rounded-[22px]" />
-
-          <div className="relative min-w-0 flex-1 p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="relative flex h-1.5 w-1.5 rounded-full bg-white">
-                <span className="absolute inset-[-3px] animate-dc-pulse rounded-full bg-white" />
-              </span>
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-white/85">
-                En direct
-              </span>
-            </div>
-            <p className="truncate font-display text-[15px] font-bold text-white">
-              {seance.matiere ?? "Séance"}
-            </p>
-            <p className="truncate text-xs text-white/75">
-              {seance.salle} &middot; {seance.enseignant}
-            </p>
-          </div>
-
-          <div className="relative w-0 shrink-0">
-            <div className="absolute inset-y-1.5 -left-px border-l-2 border-dashed border-white/40" />
-            <div className="absolute -top-2 -left-2 h-4 w-4 rounded-full bg-background" />
-            <div className="absolute -bottom-2 -left-2 h-4 w-4 rounded-full bg-background" />
-          </div>
-
-          <div className="relative flex w-10 shrink-0 items-center justify-center">
-            <span
-              className="whitespace-nowrap text-[10px] font-bold tracking-wider text-white/80"
-              style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-            >
-              {seance.heure_debut.slice(0, 5)}
-            </span>
-          </div>
-        </motion.div>
-
-        <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-ink-500">
-          <span className="flex items-center gap-1.5">
-            <EtatDot etat={seance.etat_delegue} /> Délégué
-          </span>
-          <span className="flex items-center gap-1.5">
-            <EtatDot etat={seance.etat_prof} /> Enseignant
-          </span>
-          {seance.presences_locked && (
-            <span className="ml-auto flex items-center gap-1">
-              <Lock className="h-3 w-3" /> Verrouillée
-            </span>
-          )}
-        </div>
-
-        {children && <div className="flex flex-wrap gap-2">{children}</div>}
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-card p-4 shadow-sm">
-      <div className="flex items-start gap-3">
-        <div className="flex w-[52px] shrink-0 flex-col items-center rounded-xl bg-surface-2 py-2 text-center">
-          <span className="font-display text-[15px] font-bold leading-none text-ink-900">
-            {seance.heure_debut.slice(0, 5)}
+    <article
+      className={`session ${featured ? "session-featured" : "session-row"} ${seance.is_active ? "session-live" : ""}`}
+    >
+      {featured ? (
+        <div className="session-topline">
+          <span className="session-label">
+            {seance.is_active ? (
+              <>
+                <Radio size={14} /> EN COURS
+              </>
+            ) : (
+              <>
+                <Clock3 size={14} /> PROCHAINE SÉANCE
+              </>
+            )}
           </span>
-          <span className="mt-1 text-[10px] text-ink-300">{seance.heure_fin.slice(0, 5)}</span>
+          <span className="session-code">GROUPE {seance.groupe}</span>
         </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-ink-900">{seance.matiere ?? "Séance"}</p>
-          <p className="truncate text-sm text-ink-500">{seance.salle}</p>
-          <p className="truncate text-xs text-ink-300">{seance.enseignant}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 border-t border-line pt-3 text-xs text-ink-500">
-        <span className="flex items-center gap-1.5">
-          <EtatDot etat={seance.etat_delegue} /> Délégué
-        </span>
-        <span className="flex items-center gap-1.5">
-          <EtatDot etat={seance.etat_prof} /> Enseignant
-        </span>
-        {seance.presences_locked && (
-          <span className="ml-auto flex items-center gap-1 text-ink-300">
-            <Lock className="h-3 w-3" /> Verrouillée
+      ) : (
+        <div className="session-time">
+          <strong>{seance.heure_debut.slice(0, 5)}</strong>
+          <span>{seance.heure_fin.slice(0, 5)}</span>
+          <span className={`timeline-dot ${seance.is_past ? "done" : ""}`}>
+            {seance.is_past && <Check size={10} />}
           </span>
+        </div>
+      )}
+      <div className="session-content">
+        <h3>{seance.matiere ?? "Séance de cours"}</h3>
+        <div className="session-details">
+          <span>
+            <MapPin size={14} />
+            {seance.salle}
+          </span>
+          <span>
+            <UserRound size={14} />
+            {seance.enseignant}
+          </span>
+        </div>
+        {featured && (
+          <div className="session-hours">
+            <Clock3 size={16} />
+            <span>
+              {seance.heure_debut.slice(0, 5)}{" "}
+              <span className="time-separator">→</span>{" "}
+              {seance.heure_fin.slice(0, 5)}
+            </span>
+            <span className="session-presence">
+              {seance.etat_prof === "present"
+                ? "Enseignant présent"
+                : seance.etat_prof === "absent"
+                  ? "Enseignant absent"
+                  : "En attente de l’enseignant"}
+            </span>
+          </div>
         )}
+        {children && <div className="session-actions">{children}</div>}
       </div>
-
-      {children && <div className="flex flex-wrap gap-2">{children}</div>}
-    </div>
+    </article>
   );
 }

@@ -1,0 +1,596 @@
+.page {
+  --login-ink: #20382e;
+  --login-muted: #64766c;
+  color: var(--login-ink);
+  background: #f0f3ef;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  position: relative;
+  isolation: isolate;
+}
+.header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+  height: 100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 48px;
+  gap: 20px;
+}
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  font-weight: 800;
+}
+.wordmark > span {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  width: 32px;
+  background: #20382e;
+  color: #fff;
+  border-radius: 7px;
+}
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+}
+.headerRight > span {
+  color: var(--login-muted);
+}
+.headerRight > a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 650;
+  padding: 12px 0;
+  border-bottom: 1px solid #abbcb0;
+}
+.header a:hover {
+  color: #13714e;
+}
+.visual {
+  min-height: 780px;
+  height: 100svh;
+  max-height: 1200px;
+  position: relative;
+  overflow: hidden;
+}
+.visualEyebrow {
+  position: absolute;
+  top: 137px;
+  left: 48px;
+  z-index: 1;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.visualEyebrow > span {
+  width: 5px;
+  height: 5px;
+  background: #b7654a;
+}
+.scene {
+  position: absolute;
+  inset: 120px 0 195px;
+}
+.scene :global(.login-sculpture) {
+  position: absolute;
+  inset: 0;
+  touch-action: pan-y;
+}
+.scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #18745a;
+}
+.fallback svg {
+  width: 150px;
+  height: 150px;
+}
+.scene:has([data-ready="true"]) .fallback {
+  display: none;
+}
+.visualCopy {
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  bottom: 103px;
+}
+.visualTitle {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.visualTitle h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 83px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.visualTitle h1 > span {
+  color: #18745a;
+}
+.edition {
+  font-size: 9px;
+  line-height: 1.8;
+  padding-left: 20px;
+  border-left: 1px solid #bdcbbf;
+}
+.visualCopy > p {
+  font-size: 12px;
+  color: var(--login-muted);
+  margin-top: 13px;
+}
+.visualBottom {
+  position: absolute;
+  bottom: 26px;
+  left: 48px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.visualIndex {
+  display: inline-flex;
+  gap: 14px;
+  font-size: 9px;
+  color: var(--login-muted);
+}
+.visualIndex > span {
+  color: #adbab0;
+}
+.visualBottom button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c8d3cb;
+  border-radius: 50%;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.2s;
+}
+.visualBottom button:hover {
+  background: #dfe8df;
+}
+.formSection {
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 130px 56px 100px;
+  position: relative;
+}
+.formInner {
+  max-width: 350px;
+  width: 100%;
+  margin: auto;
+}
+.formSymbol {
+  display: grid;
+  place-items: center;
+  width: 47px;
+  height: 47px;
+  border: 1px solid #dee7df;
+  border-radius: 50%;
+  color: #18745a;
+  margin-bottom: 28px;
+}
+.formEyebrow {
+  font-size: 9px;
+  color: var(--login-muted);
+  font-weight: 600;
+  margin-bottom: 13px;
+}
+.formInner h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 1.12;
+}
+.formInner h2 > span {
+  color: #18745a;
+}
+.formIntro {
+  color: var(--login-muted);
+  font-size: 12px;
+  margin-top: 16px;
+  line-height: 1.7;
+}
+.formInner form {
+  margin-top: 32px;
+}
+.field {
+  margin-bottom: 22px;
+}
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 9px;
+}
+.inputWrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d8e1da;
+  border-radius: 6px;
+  background: #fafcf9;
+  height: 54px;
+  padding: 0 15px;
+  gap: 12px;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s,
+    background 0.2s;
+}
+.inputWrap:focus-within {
+  background: #fff;
+  border-color: #18745a;
+  box-shadow: 0 0 0 3px #18745a13;
+}
+.inputWrap > svg {
+  flex: none;
+  color: #829186;
+}
+.inputWrap input {
+  width: 100%;
+  min-width: 0;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  height: 100%;
+  color: var(--login-ink);
+}
+.inputWrap input::placeholder {
+  color: #859387;
+  font-size: 12px;
+}
+.inputWrap input:focus-visible {
+  outline: none;
+}
+.inputWrap button {
+  flex: none;
+  width: 34px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #718577;
+  cursor: pointer;
+  margin-right: -8px;
+}
+.submit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 54px;
+  background: #203d32;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0 19px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+  margin-top: 7px;
+}
+.submit:hover:not(:disabled) {
+  background: #176347;
+  box-shadow: 0 8px 20px #203d3218;
+}
+.submit:active:not(:disabled) {
+  transform: scale(0.985);
+}
+.submit > svg {
+  transition: transform 0.2s;
+}
+.submit:hover > svg:not(.spinner) {
+  transform: translateX(4px);
+}
+.submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+.security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--login-muted);
+  font-size: 10px;
+  margin-top: 17px;
+}
+.signup {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 7px 14px;
+  margin-top: 32px;
+  padding-top: 23px;
+  border-top: 1px solid #e5eae5;
+  font-size: 11px;
+}
+.signup > span {
+  color: var(--login-muted);
+}
+.signup > a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 650;
+}
+.signup > a:hover {
+  color: #18745a;
+}
+.institution {
+  position: absolute;
+  bottom: 28px;
+  left: 56px;
+  right: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 450px;
+  margin: auto;
+}
+.institution img {
+  object-fit: contain;
+}
+.institution > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.institution strong {
+  font-size: 10px;
+  font-weight: 600;
+}
+.institution > div > span {
+  font-size: 9px;
+  color: var(--login-muted);
+}
+.institutionMark {
+  margin-left: auto;
+  color: #91a496;
+  font-size: 19px;
+  font-weight: 600;
+  font-family: var(--font-display), sans-serif;
+}
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #a54138;
+  background: #fff2ef;
+  border-left: 2px solid #ce6a54;
+  padding: 12px;
+  margin-bottom: 20px;
+  overflow-wrap: anywhere;
+}
+.error > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.capsLock {
+  font-size: 11px;
+  color: #9b593b;
+  margin-top: 7px;
+}
+.spinner {
+  animation: login-spin 0.9s linear infinite;
+}
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (min-width: 1600px) {
+  .header {
+    padding-inline: 70px;
+  }
+  .visualCopy {
+    left: 70px;
+  }
+  .visualEyebrow {
+    left: 70px;
+  }
+  .visualTitle h1 {
+    font-size: 100px;
+  }
+  .formInner {
+    max-width: 390px;
+  }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .header {
+    padding: 0 30px;
+  }
+  .visualCopy {
+    left: 30px;
+    right: 25px;
+  }
+  .visualTitle h1 {
+    font-size: 62px;
+  }
+  .edition {
+    display: none;
+  }
+  .visualEyebrow {
+    left: 30px;
+  }
+  .formSection {
+    padding-inline: 35px;
+  }
+  .institution {
+    left: 35px;
+    right: 35px;
+  }
+  .formInner h2 {
+    font-size: 36px;
+  }
+}
+@media (max-width: 760px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .header {
+    height: 76px;
+    padding: 0 24px;
+  }
+  .wordmark {
+    font-size: 20px;
+    gap: 8px;
+  }
+  .wordmark > span {
+    width: 29px;
+    height: 29px;
+  }
+  .headerRight > span {
+    display: none;
+  }
+  .headerRight {
+    font-size: 11px;
+  }
+  .visual {
+    height: 330px;
+    min-height: 0;
+  }
+  .visualEyebrow {
+    display: none;
+  }
+  .scene {
+    inset: 68px -3px 73px;
+  }
+  .visualCopy {
+    left: 24px;
+    bottom: 21px;
+    right: 24px;
+  }
+  .visualTitle h1 {
+    font-size: 37px;
+  }
+  .edition,
+  .visualCopy > p,
+  .visualIndex {
+    display: none;
+  }
+  .visualBottom {
+    left: auto;
+    right: 24px;
+    bottom: 21px;
+  }
+  .visualBottom button {
+    width: 34px;
+    height: 34px;
+  }
+  .formSection {
+    padding: 30px 24px 25px;
+  }
+  .formInner {
+    max-width: 440px;
+  }
+  .formSymbol {
+    display: none;
+  }
+  .formEyebrow {
+    font-size: 8px;
+    margin-bottom: 9px;
+  }
+  .formInner h2 {
+    font-size: 29px;
+  }
+  .formInner h2 br {
+    display: none;
+  }
+  .formInner h2 br::after {
+    content: " ";
+  }
+  .formIntro {
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .formInner form {
+    margin-top: 23px;
+  }
+  .inputWrap input {
+    font-size: 16px;
+  }
+  .inputWrap {
+    height: 52px;
+  }
+  .field {
+    margin-bottom: 17px;
+  }
+  .submit {
+    height: 52px;
+  }
+  .signup {
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+  .institution {
+    position: static;
+    width: 100%;
+    max-width: 440px;
+    margin: 35px auto 0;
+    padding-top: 20px;
+    border-top: 1px solid #e5eae5;
+  }
+}
+@media (max-width: 360px) {
+  .header {
+    padding-inline: 20px;
+  }
+  .headerRight {
+    font-size: 10px;
+  }
+  .formSection {
+    padding-inline: 20px;
+  }
+  .formInner h2 {
+    font-size: 26px;
+  }
+  .visual {
+    height: 295px;
+  }
+  .scene {
+    top: 72px;
+    bottom: 46px;
+  }
+  .visualEyebrow {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .visualBottom button {
+    display: none;
+  }
+  .page *,
+  .page *::before,
+  .page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

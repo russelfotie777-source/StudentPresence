@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, History, Wallet, MessageSquareWarning, UserPlus, User } from "lucide-react";
+import {
+  Home,
+  History,
+  Wallet,
+  MessageSquareWarning,
+  UserPlus,
+  User,
+  CheckCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
 import type { UserRole } from "@/types/api";
@@ -28,7 +36,11 @@ const TEACHER_ONLY_ITEMS: NavItem[] = [
 
 // Un délégué (titulaire, ou étudiant actuellement promu via effective_role)
 // peut lui aussi désigner un remplaçant temporaire — voir PromotionController.
-const PROMOTION_ITEM: NavItem = { href: "/promotion", label: "Promotion", icon: UserPlus };
+const PROMOTION_ITEM: NavItem = {
+  href: "/promotion",
+  label: "Promotion",
+  icon: UserPlus,
+};
 
 const PROFILE_ITEM: NavItem = { href: "/profil", label: "Profil", icon: User };
 
@@ -46,31 +58,35 @@ export function BottomNav({ role }: { role: UserRole }) {
   ];
 
   return (
-    <nav
-      className="fixed inset-x-4 bottom-5 z-40 mx-auto max-w-lg [margin-bottom:env(safe-area-inset-bottom)]"
-      aria-label="Navigation principale"
-    >
+    <nav className="app-nav" aria-label="Navigation principale">
+      <Link href="/dashboard" className="nav-brand presence-brand">
+        <span className="brand-mark">
+          <CheckCheck size={22} />
+        </span>
+        présence<span className="brand-period">.</span>
+      </Link>
+      <p className="nav-caption">VOTRE ESPACE</p>
       <div
-        className="grid rounded-[28px] border border-line/90 bg-card/85 p-2.5 shadow-[0_16px_32px_-14px_rgba(20,18,31,.22),inset_0_1px_0_rgba(255,255,255,.9)] backdrop-blur-xl"
-        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        className="nav-items"
+        style={{ "--nav-count": items.length } as React.CSSProperties}
       >
         {items.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active =
+            pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                "flex flex-col items-center gap-1 rounded-2xl py-2 text-[10.5px] font-medium transition-colors",
-                active && "bg-indigo-50",
-              )}
+              aria-current={active ? "page" : undefined}
+              title={item.label}
+              className={cn("nav-item", active && "nav-item-active")}
             >
               <span className="relative">
                 <Icon
                   className={cn(
                     "h-[21px] w-[21px] transition-colors",
-                    active ? "text-indigo-600" : "text-ink-300",
+                    active ? "text-primary" : "text-muted-foreground",
                   )}
                   strokeWidth={active ? 2.3 : 1.9}
                 />
@@ -83,12 +99,15 @@ export function BottomNav({ role }: { role: UserRole }) {
                   </span>
                 )}
               </span>
-              <span className={active ? "font-bold text-indigo-600" : "text-ink-300"}>
-                {item.label}
-              </span>
+              <span className="nav-label">{item.label}</span>
             </Link>
           );
         })}
+      </div>
+      <div className="nav-footnote">
+        <span className="metric-marker" /> IUT de Douala
+        <br />
+        <span>Année universitaire 2026</span>
       </div>
     </nav>
   );
