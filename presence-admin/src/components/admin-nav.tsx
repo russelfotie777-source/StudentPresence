@@ -12,6 +12,7 @@ import {
   ArrowLeftRight,
   Wallet,
   History,
+  Users,
   ScanFace,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ const SECTIONS: NavSection[] = [
   {
     titre: "Suivi",
     items: [
+      { href: "/etudiants", label: "Étudiants", icon: Users },
       { href: "/validations", label: "Validations", icon: BadgeCheck },
       { href: "/requetes", label: "Requêtes enseignants", icon: MessageSquareWarning },
       { href: "/demandes-formation", label: "Migrations FA → FI", icon: ArrowLeftRight },

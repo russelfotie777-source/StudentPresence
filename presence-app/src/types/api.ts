@@ -4,6 +4,7 @@ export type FormationType = "FI" | "FA" | "FM";
 export type PresenceState = "present" | "absent";
 export type PushStatus = "pending" | "approved" | "rejected";
 export type RequestStatus = "en_attente" | "acceptee" | "rejetee";
+export type StatutCompte = "actif" | "restreint" | "bloque";
 export type Weekday =
   | "LUNDI"
   | "MARDI"
@@ -20,6 +21,9 @@ export interface User {
   role: UserRole;
   effective_role: UserRole;
   validation_status: ValidationStatus;
+  statut_compte: StatutCompte;
+  motif_statut: string | null;
+  statut_modifie_le: string | null;
   formation: FormationType | null;
   salle: { id: number; nom: string } | null;
   niveau: { id: number; nom: string } | null;
@@ -136,4 +140,15 @@ export interface Paginated<T> {
     per_page: number;
     total: number;
   };
+}
+
+export interface Notification {
+  id: string;
+  type: string;
+  statut?: StatutCompte;
+  titre: string;
+  message: string;
+  motif?: string | null;
+  lue: boolean;
+  date: string;
 }

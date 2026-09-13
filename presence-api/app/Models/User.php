@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FormationType;
+use App\Enums\StatutCompte;
 use App\Enums\UserRole;
 use App\Enums\ValidationStatus;
 use Database\Factories\UserFactory;
@@ -18,7 +19,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
+#[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'statut_compte', 'motif_statut', 'statut_modifie_le', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
 // face_descriptor est une donnée biométrique : jamais renvoyée par l'API,
 // même par accident (ex. un ->toArray() ajouté négligemment plus tard).
 #[Hidden(['password', 'remember_token', 'face_descriptor'])]
@@ -31,10 +32,13 @@ class User extends Authenticatable
      * Sans ça, un User fraîchement créé sans `quota` explicite (ex.
      * AuthController::register) expose `quota: null` en mémoire tant que le
      * modèle n'a pas été rechargé depuis la base — Eloquent ne relit pas les
-     * valeurs par défaut des colonnes après un insert.
+     * valeurs par défaut des colonnes après un insert. Même piège pour
+     * statut_compte : null y serait lu comme "pas actif", donc pointage
+     * refusé à tout compte tout juste créé.
      */
     protected $attributes = [
         'quota' => 0,
+        'statut_compte' => 'actif',
     ];
 
     protected function casts(): array
@@ -44,6 +48,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'validation_status' => ValidationStatus::class,
+            'statut_compte' => StatutCompte::class,
+            'statut_modifie_le' => 'datetime',
             'formation' => FormationType::class,
             'face_descriptor' => 'array',
             'face_enrolled_at' => 'datetime',
@@ -158,6 +164,20 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    public function estBloque(): bool
+    {
+        return $this->statut_compte === StatutCompte::Bloque;
+    }
+
+    /**
+     * Vrai si le compte ne peut plus pointer — restreint ou bloqué. Un
+     * compte bloqué ne devrait plus avoir de jeton, mais on ne s'y fie pas.
+     */
+    public function pointageInterdit(): bool
+    {
+        return $this->statut_compte !== StatutCompte::Actif;
     }
 
     /**

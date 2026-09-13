@@ -13,6 +13,7 @@ import { PushDialog } from "@/components/push-dialog";
 import { SendPositionButton } from "@/components/send-position-button";
 import { AttendanceRing } from "@/components/attendance-ring";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BanniereRestriction } from "@/components/banniere-restriction";
 import { useMe } from "@/hooks/use-auth";
 import { useAttendanceStats } from "@/hooks/use-attendance-stats";
 import { useMarkDelegue, useMarkProf, useTodaySeances } from "@/hooks/use-seances";
@@ -83,6 +84,8 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
+      {me?.user && <BanniereRestriction user={me.user} />}
+
       {isLoading && (
         <div className="flex flex-col gap-3">
           {[...Array(3)].map((_, i) => (
@@ -119,7 +122,11 @@ export default function DashboardPage() {
           <motion.div key={seance.id} variants={itemVariants}>
             <SeanceCard seance={seance}>
               {role === "Etudiant" && (
-                <StudentActions seance={seance} onCheckIn={() => setCheckInSeance(seance)} />
+                <StudentActions
+                  seance={seance}
+                  restreint={me?.user.statut_compte === "restreint"}
+                  onCheckIn={() => setCheckInSeance(seance)}
+                />
               )}
               {role === "Delegue" && (
                 <DelegateActions
@@ -162,9 +169,11 @@ export default function DashboardPage() {
 
 function StudentActions({
   seance,
+  restreint,
   onCheckIn,
 }: {
   seance: Seance;
+  restreint: boolean;
   onCheckIn: () => void;
 }) {
   if (seance.presences_locked || seance.ma_presence === "present") {
@@ -183,6 +192,16 @@ function StudentActions({
     return (
       <span className="text-sm text-muted-foreground">
         Pointage disponible pendant la séance
+      </span>
+    );
+  }
+
+  // Compte restreint par l'administration : l'API refuserait de toute
+  // façon, autant ne pas proposer un bouton qui mène à une erreur.
+  if (restreint) {
+    return (
+      <span className="text-sm font-medium text-warning-foreground">
+        Pointage refusé — compte restreint
       </span>
     );
   }
