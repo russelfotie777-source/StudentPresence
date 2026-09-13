@@ -33,9 +33,40 @@ class Parametre extends Model
         UserRole::Enseignant->value,
     ];
 
+    /**
+     * Façon de noter présence/absence sur les listes de présence générées :
+     * `coche` (✓ / ✗ rouge) ou `valeur` (+1 / −1). Choix de l'admin.
+     */
+    public const SYMBOLES_PRESENCE = 'liste_presence.symboles';
+
+    public const SYMBOLES_PRESENCE_CHOIX = ['coche', 'valeur'];
+
+    public const SYMBOLES_PRESENCE_DEFAUT = 'coche';
+
     protected function casts(): array
     {
         return ['valeur' => 'array'];
+    }
+
+    public static function symbolesPresence(): string
+    {
+        $valeur = Cache::rememberForever(
+            self::cacheKey(self::SYMBOLES_PRESENCE),
+            fn () => self::where('cle', self::SYMBOLES_PRESENCE)->value('valeur') ?? self::SYMBOLES_PRESENCE_DEFAUT
+        );
+
+        // La colonne est castée en tableau : une chaîne y est stockée comme ["coche"].
+        $valeur = is_array($valeur) ? ($valeur[0] ?? null) : $valeur;
+
+        return in_array($valeur, self::SYMBOLES_PRESENCE_CHOIX, true) ? $valeur : self::SYMBOLES_PRESENCE_DEFAUT;
+    }
+
+    public static function setSymbolesPresence(string $symboles): string
+    {
+        self::updateOrCreate(['cle' => self::SYMBOLES_PRESENCE], ['valeur' => [$symboles]]);
+        Cache::forget(self::cacheKey(self::SYMBOLES_PRESENCE));
+
+        return self::symbolesPresence();
     }
 
     /**
