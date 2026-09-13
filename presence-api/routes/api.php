@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\PdfController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\PromotionController;
+use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\RequeteController;
 use App\Http\Controllers\Api\SalleController;
 use App\Http\Controllers\Api\SeanceController;
@@ -60,6 +61,7 @@ Route::middleware([])->group(function () {
     // Heure de référence (Douala) : les fronts s'alignent dessus plutôt que
     // sur l'horloge de l'appareil, voir HeureController.
     Route::get('/heure', HeureController::class);
+    Route::get('/push/cle-publique', [PushSubscriptionController::class, 'clePublique']);
 
     Route::apiResource('niveaux', NiveauController::class)->only(['index', 'show']);
     Route::apiResource('filieres', FiliereController::class)->only(['index', 'show']);
@@ -136,6 +138,8 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::get('/me/attendance-stats', [AttendanceStatsController::class, 'me']);
     Route::get('/me/attendance-trend', [AttendanceStatsController::class, 'trend']);
     Route::get('/me/notifications', [NotificationController::class, 'index']);
+    Route::post('/me/push-subscriptions', [PushSubscriptionController::class, 'store']);
+    Route::delete('/me/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
     Route::post('/me/notifications/{id}/lue', [NotificationController::class, 'marquerLue']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);

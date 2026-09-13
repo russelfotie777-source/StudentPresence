@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Seance;
+use App\Services\RappelsPointage;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -15,7 +16,7 @@ class PositionController extends Controller
      * pour le pointage des étudiants (voir PresenceController::checkIn).
      * Upsert par seance_id, comme position.php dans l'ancienne app.
      */
-    public function store(Request $request, Seance $seance)
+    public function store(Request $request, Seance $seance, RappelsPointage $rappels)
     {
         $user = $request->user();
 
@@ -50,6 +51,10 @@ class PositionController extends Controller
             'precision_metres' => (int) round($data['accuracy']),
             'date_creation' => now(),
         ]);
+
+        // La position ouvre le pointage à toute la classe : c'est le moment de
+        // prévenir ceux qui ne sont pas encore pointés (une seule fois).
+        $rappels->annoncerOuverture($seance->fresh(['salle', 'courseTemplate.matiere']));
 
         return response()->json($position, 201);
     }
