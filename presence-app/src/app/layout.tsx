@@ -18,8 +18,9 @@ const body = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Présence",
-  description: "Pointage de présence en ligne",
+  title: "Ziris",
+  description: "Ziris, votre espace de présence et de vie sur le campus.",
+  icons: { icon: "/ziris.svg" },
   manifest: "/manifest.webmanifest",
 };
 

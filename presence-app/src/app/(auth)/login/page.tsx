@@ -23,6 +23,7 @@ import {
 import { useLogin } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api-client";
 import styles from "./login.module.css";
+import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 
 const LoginSculpture = dynamic(
   () =>
@@ -80,12 +81,12 @@ export default function LoginPage() {
           <Link
             href="/"
             className={styles.wordmark}
-            aria-label="Présence, accueil"
+            aria-label="Ziris, accueil"
           >
             <span>
-              <CheckCheck size={21} />
+              <ZirisMark size={23} />
             </span>
-            présence.
+            <ZirisWordmark />
           </Link>
           <div className={styles.headerRight}>
             <span>Nouveau ici ?</span>
@@ -95,13 +96,13 @@ export default function LoginPage() {
           </div>
         </header>
 
-        <section className={styles.visual} aria-label="Présence">
+        <section className={styles.visual} aria-label="Ziris">
           <div className={styles.visualEyebrow}>
             <span /> LE LIEN AVEC VOTRE CAMPUS
           </div>
           <div className={styles.scene}>
             <div className={styles.fallback} aria-hidden="true">
-              <CheckCheck strokeWidth={1.3} />
+              <CheckCheck size={150} strokeWidth={1.3} />
             </div>
             <LoginSculpture
               paused={paused || !!reducedMotion || focused || busy}
@@ -115,7 +116,7 @@ export default function LoginPage() {
           >
             <div className={styles.visualTitle}>
               <h1>
-                présence<span>.</span>
+                <ZirisWordmark />
               </h1>
               <span className={styles.edition}>
                 CHAQUE
@@ -287,7 +288,7 @@ export default function LoginPage() {
               <strong>IUT de Douala</strong>
               <span>Institut Universitaire de Technologie</span>
             </div>
-            <span className={styles.institutionMark}>P.</span>
+            <span className={styles.institutionMark}><ZirisMark size={23} /></span>
           </footer>
         </section>
       </main>
