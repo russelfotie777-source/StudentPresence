@@ -16,7 +16,12 @@ import {
   RefreshCw,
   Users,
   X,
+  ArrowRight,
+  CalendarCheck2,
+  GraduationCap,
 } from "lucide-react";
+import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
+import styles from "./dashboard.module.css";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SeanceCard } from "@/components/seance-card";
@@ -29,6 +34,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useMe } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useAttendanceStats } from "@/hooks/use-attendance-stats";
+import { FUSEAU, useHeureDouala } from "@/hooks/use-heure";
 import {
   useMarkDelegue,
   useMarkProf,
@@ -54,13 +60,21 @@ export default function DashboardPage() {
     isFetching,
   } = useTodaySeances();
   const role = me?.user.effective_role;
-  const { data: stats } = useAttendanceStats(role === "Etudiant");
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    isError: statsError,
+    refetch: refetchStats,
+    isFetching: statsFetching,
+  } = useAttendanceStats(role === "Etudiant");
   const { data: notifications } = useNotifications();
   const [filter, setFilter] = useState<"all" | "remaining">("all");
   const [checkInSeance, setCheckInSeance] = useState<Seance | null>(null);
   const [rosterSeance, setRosterSeance] = useState<Seance | null>(null);
   const [pushSeance, setPushSeance] = useState<Seance | null>(null);
-  const today = new Date();
+  // La date affichée est celle de Douala, servie par l'API : c'est elle qui
+  // décide des séances « d'aujourd'hui », pas l'horloge du téléphone.
+  const { maintenant: today } = useHeureDouala();
   const active = seances?.find((s) => s.is_active);
   const focus = active ?? seances?.find((s) => !s.is_past && !s.is_active);
   const remaining = seances?.filter((s) => !s.is_past).length ?? 0;
@@ -96,18 +110,21 @@ export default function DashboardPage() {
     return null;
   }
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${styles.dashboard}`}>
       <header className="dashboard-topbar">
         <Link
           href="/dashboard"
           className="presence-brand"
-          aria-label="Présence, accueil"
+          aria-label="Ziris, accueil"
         >
           <span className="brand-mark">
-            <CheckCheck size={22} />
+            <ZirisMark size={22} />
           </span>
-          présence<span className="brand-period">.</span>
+          <ZirisWordmark />
         </Link>
+        <span className={styles.topbarContext}>
+          MON CAMPUS <span>/</span> ACCUEIL
+        </span>
         <div className="topbar-tools">
           <ThemeToggle />
           <Link
@@ -129,29 +146,47 @@ export default function DashboardPage() {
         className="welcome-section"
       >
         <div className="welcome-copy">
-          <p className="eyebrow">VOTRE ESPACE · {roleLabel}</p>
+          <p className={`eyebrow ${styles.role}`}>
+            <span /> {roleLabel}
+            {me?.user.salle?.nom && (
+              <span className={styles.classLabel}> · {me.user.salle.nom}</span>
+            )}
+          </p>
           <h1>
-            Bonjour, {me?.user.name.split(" ")[0]}
+            Bonjour, {me?.user.name.trim().split(/\s+/)[0]}
             <span className="brand-period">.</span>
           </h1>
           <p className="welcome-subtitle">
             {isLoading
               ? "Votre journée se prépare."
               : active
-                ? "Votre prochain geste compte."
+                ? "Votre séance a commencé."
                 : remaining
-                  ? "Une nouvelle journée à construire."
+                  ? "Votre prochaine séance vous attend."
                   : "Votre journée, à votre rythme."}
           </p>
         </div>
-        <div className="date-stamp">
-          <CalendarDays size={17} />
-          <span>
-            {today.toLocaleDateString("fr-FR", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
+        <div className={`date-stamp ${styles.date}`} title={`Heure de ${FUSEAU.split("/")[1]}`}>
+          <span className={styles.dateNumber}>
+            {today
+              ? today.toLocaleDateString("fr-FR", { timeZone: FUSEAU, day: "2-digit" })
+              : "--"}
+          </span>
+          <span className={styles.dateWords}>
+            <strong>
+              {today
+                ? today.toLocaleDateString("fr-FR", { timeZone: FUSEAU, weekday: "long" })
+                : "\u00a0"}
+            </strong>
+            <span>
+              {today
+                ? today.toLocaleDateString("fr-FR", {
+                    timeZone: FUSEAU,
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "\u00a0"}
+            </span>
           </span>
         </div>
       </motion.section>
@@ -159,9 +194,13 @@ export default function DashboardPage() {
       <div className="dashboard-columns">
         <div className="schedule-column">
           <div className="section-heading">
-            <h2>Votre journée</h2>
+            <h2>Aujourd’hui</h2>
             <span className="quiet-count">
-              {isLoading ? "…" : `${seances?.length ?? 0} séances`}
+              {isLoading
+                ? "…"
+                : isError
+                  ? "Indisponible"
+                  : `${seances?.length ?? 0} séance${seances?.length === 1 ? "" : "s"}`}
             </span>
           </div>
           {isLoading && (
@@ -199,16 +238,26 @@ export default function DashboardPage() {
             </motion.div>
           )}
           {!isLoading && !isError && seances?.length === 0 && (
-            <div className="dashboard-empty">
-              <CalendarDays size={32} />
-              <h3>Une journée sans cours</h3>
-              <p>Aucune séance n’est programmée aujourd’hui.</p>
-              <Link href="/historique">
-                Consulter mon historique <ArrowUpRight size={16} />
-              </Link>
+            <div className={styles.freeDay}>
+              <span className={styles.freeDayIcon}>
+                <CalendarCheck2 size={25} strokeWidth={1.5} />
+              </span>
+              <div>
+                <h3>Une journée sans cours.</h3>
+                <p>Aucune séance programmée aujourd’hui.</p>
+                <Link href="/historique">
+                  Retrouver mes dernières séances <ArrowRight size={14} />
+                </Link>
+              </div>
             </div>
           )}
-          {!!seances?.length && (
+          {!isLoading && !isError && !!seances?.length && !focus && (
+            <div className={styles.dayComplete}>
+              <CheckCheck size={20} />
+              <span>Votre journée de cours est terminée.</span>
+            </div>
+          )}
+          {!isError && !!seances?.length && (
             <>
               <div className="agenda-heading">
                 <h3>Au programme</h3>
@@ -258,53 +307,90 @@ export default function DashboardPage() {
                 {role === "Etudiant" ? "Votre assiduité" : "En un regard"}
               </h2>
               <span className="eyebrow">
-                {role === "Etudiant" ? "GLOBAL" : "AUJOURD’HUI"}
+                {role === "Etudiant" ? "BILAN GLOBAL" : "AUJOURD’HUI"}
               </span>
             </div>
-            <div className="attendance-visual">
-              <AttendanceSculpture
-                percent={
-                  role === "Etudiant"
-                    ? (stats?.taux ?? null)
-                    : seances?.length
-                      ? Math.round(
-                          (seances.filter((s) => s.is_past).length /
-                            seances.length) *
-                            100,
-                        )
-                      : null
-                }
-              />
-              <div className="attendance-value">
-                <strong>
-                  {role === "Etudiant" ? (stats?.taux ?? "—") : remaining}
-                  {role === "Etudiant" && stats?.taux != null && <span>%</span>}
-                </strong>
-                <span>
-                  {role === "Etudiant" ? "de présence" : "séances restantes"}
-                </span>
+            {statsError && role === "Etudiant" ? (
+              <div className={styles.statsError} role="alert">
+                <p>Votre bilan est indisponible.</p>
+                <button onClick={() => refetchStats()} disabled={statsFetching}>
+                  <RefreshCw size={14} /> Réessayer
+                </button>
               </div>
-            </div>
-            <div className="attendance-summary">
-              <span className="metric-marker" />
-              <p>
-                {role === "Etudiant" ? (
-                  stats ? (
-                    <>
-                      <strong>{stats.presences}</strong> présences sur{" "}
-                      <strong>{stats.total_seances}</strong> séances
-                    </>
-                  ) : (
-                    "Aucune statistique disponible"
-                  )
-                ) : (
-                  <>
-                    <strong>{seances?.length ?? 0}</strong> séances programmées
-                    aujourd’hui
-                  </>
-                )}
-              </p>
-            </div>
+            ) : (
+              <>
+                <div className={styles.attendanceOverview}>
+                  <div className="attendance-visual">
+                    <AttendanceSculpture
+                      percent={
+                        role === "Etudiant"
+                          ? (stats?.taux ?? null)
+                          : !isError && seances?.length
+                            ? Math.round(
+                                (seances.filter((s) => s.is_past).length /
+                                  seances.length) *
+                                  100,
+                              )
+                            : null
+                      }
+                    />
+                    <div className="attendance-value">
+                      <strong>
+                        {role === "Etudiant"
+                          ? statsLoading
+                            ? "…"
+                            : (stats?.taux ?? "—")
+                          : isLoading || isError
+                            ? "—"
+                            : remaining}
+                        {role === "Etudiant" && stats?.taux != null && (
+                          <span>%</span>
+                        )}
+                      </strong>
+                      <span>
+                        {role === "Etudiant"
+                          ? "de présence"
+                          : "séances restantes"}
+                      </span>
+                    </div>
+                  </div>
+                  <dl className={styles.attendanceFigures}>
+                    <div>
+                      <dt>
+                        <span className={styles.presentDot} />
+                        {role === "Etudiant" ? "Présences" : "Terminées"}
+                      </dt>
+                      <dd>
+                        {role === "Etudiant"
+                          ? statsLoading
+                            ? "…"
+                            : (stats?.presences ?? "—")
+                          : isLoading || isError
+                            ? "—"
+                            : (seances?.filter((s) => s.is_past).length ?? 0)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>
+                        <span className={styles.totalDot} />
+                        {role === "Etudiant"
+                          ? "Séances au total"
+                          : "Programmées"}
+                      </dt>
+                      <dd>
+                        {role === "Etudiant"
+                          ? statsLoading
+                            ? "…"
+                            : (stats?.total_seances ?? "—")
+                          : isLoading || isError
+                            ? "—"
+                            : (seances?.length ?? 0)}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </>
+            )}
             <Link href="/historique" className="text-link">
               Voir mon historique <ArrowUpRight size={17} />
             </Link>
@@ -318,7 +404,7 @@ export default function DashboardPage() {
                 height={42}
               />
               <div>
-                <p className="eyebrow">MON ÉTABLISSEMENT</p>
+                <p className="eyebrow">VOTRE CAMPUS</p>
                 <h3>IUT de Douala</h3>
               </div>
             </div>
@@ -337,13 +423,17 @@ export default function DashboardPage() {
               </div>
             </dl>
             <Link href="/profil" className="text-link">
-              Mon profil <ArrowUpRight size={17} />
+              <span className={styles.profileLink}>
+                <GraduationCap size={16} /> Mon profil
+              </span>
+              <ArrowUpRight size={17} />
             </Link>
           </section>
         </aside>
       </div>
       <footer className="dashboard-footer">
-        <CheckCheck size={14} /> Présence · Chaque séance compte.
+        <ZirisWordmark />
+        <span>Chaque séance compte.</span>
       </footer>
       {checkInSeance && (
         <CheckInDialog
