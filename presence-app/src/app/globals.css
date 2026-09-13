@@ -1119,3 +1119,14 @@ a {
     padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
   }
 }
+.ziris-wordmark {
+  display: inline-block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+.ziris-iris {
+  color: #07956b;
+}

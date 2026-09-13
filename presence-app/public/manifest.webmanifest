@@ -1,10 +1,10 @@
 {
-  "name": "Présence",
-  "short_name": "Présence",
+  "name": "Ziris",
+  "short_name": "Ziris",
   "description": "Pointage de présence en ligne",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
-  "icons": []
+  "theme_color": "#087953",
+  "icons": [{ "src": "/ziris.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
 }
