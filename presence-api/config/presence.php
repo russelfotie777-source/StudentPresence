@@ -57,4 +57,21 @@ return [
         'tel' => env('PRESENCE_TEL', '(237) 233 40 24 82'),
         'email' => env('PRESENCE_EMAIL', 'infos.iut@univ-douala.com'),
     ],
+
+    /*
+     * Rappels de pointage (notification dans l'app + push si des clés VAPID
+     * sont configurées). Envoyés par `php artisan presence:rappels`, lancé
+     * chaque minute par le planificateur (voir routes/console.php).
+     *
+     * - delegue_avant_debut_minutes : combien de minutes avant le début on
+     *   rappelle au délégué d'envoyer la position de la salle. 15 = à
+     *   l'ouverture de la fenêtre de pointage (Seance::isActive).
+     * - derniere_chance_avant_fermeture_minutes : combien de minutes avant
+     *   la fermeture du pointage (fin + 15 min) on relance ceux qui n'ont
+     *   pas pointé. 15 = à l'heure de fin prévue de la séance.
+     */
+    'rappels' => [
+        'delegue_avant_debut_minutes' => env('PRESENCE_RAPPEL_DELEGUE_MINUTES', 15),
+        'derniere_chance_avant_fermeture_minutes' => env('PRESENCE_RAPPEL_DERNIERE_CHANCE_MINUTES', 15),
+    ],
 ];
