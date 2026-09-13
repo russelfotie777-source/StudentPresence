@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\PresenceState;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\Parametre;
 use App\Models\Salle;
 use App\Models\Seance;
 use App\Models\Semaine;
@@ -12,6 +13,7 @@ use App\Services\ListeHebdomadaire;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PdfController extends Controller
 {
@@ -60,10 +62,12 @@ class PdfController extends Controller
             'semaine_id' => ['required', 'integer', 'exists:semaines,id'],
             'semestre' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:6'],
             'annee' => ['sometimes', 'nullable', 'regex:/^\d{4}-\d{4}$/'],
+            // Sans valeur : le réglage enregistré par l'admin (Parametre::symbolesPresence).
+            'symboles' => ['sometimes', 'nullable', Rule::in(Parametre::SYMBOLES_PRESENCE_CHOIX)],
         ]);
 
         $semaine = Semaine::findOrFail($data['semaine_id']);
-        $donnees = $liste->pour($salle, $semaine, $data['semestre'] ?? null, $data['annee'] ?? null);
+        $donnees = $liste->pour($salle, $semaine, $data['semestre'] ?? null, $data['annee'] ?? null, $data['symboles'] ?? null);
 
         $pdf = Pdf::loadView('pdf.liste-hebdomadaire', $donnees)->setPaper('a4', 'landscape');
 
