@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -9,7 +10,6 @@ import {
   MessageSquareWarning,
   UserPlus,
   User,
-  CheckCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -61,9 +61,9 @@ export function BottomNav({ role }: { role: UserRole }) {
     <nav className="app-nav" aria-label="Navigation principale">
       <Link href="/dashboard" className="nav-brand presence-brand">
         <span className="brand-mark">
-          <CheckCheck size={22} />
+          <ZirisMark size={22} />
         </span>
-        présence<span className="brand-period">.</span>
+        <ZirisWordmark />
       </Link>
       <p className="nav-caption">VOTRE ESPACE</p>
       <div

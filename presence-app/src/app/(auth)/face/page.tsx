@@ -1,9 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Camera, Loader2, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { motion, MotionConfig, useReducedMotion } from "motion/react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Camera,
+  Check,
+  CheckCheck,
+  LoaderCircle,
+  LockKeyhole,
+  LogOut,
+  Pause,
+  Play,
+  RefreshCw,
+  ScanFace,
+  ShieldCheck,
+} from "lucide-react";
+import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 import { useLogout, useMe } from "@/hooks/use-auth";
 import { useEnrollFace, useVerifyFace } from "@/hooks/use-face-auth";
 import { useFaceCamera } from "@/hooks/use-face-camera";
@@ -14,229 +30,572 @@ import {
   loadFaceModels,
   type FacePositionQuality,
 } from "@/lib/face-recognition";
-import { getToken } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
+import { ApiError, getToken } from "@/lib/api-client";
+import type { IdentityLensStatus } from "@/components/identity-lens";
+import styles from "./face.module.css";
 
-const RING_COLOR: Record<FacePositionQuality, string> = {
-  none: "rgba(99,102,241,.15)",
-  poor: "rgba(245,158,11,.4)",
-  good: "rgba(52,211,153,.55)",
-};
+const IdentityLens = dynamic(
+  () =>
+    import("@/components/identity-lens").then((module) => module.IdentityLens),
+  { ssr: false },
+);
 
-/**
- * Seconde étape de connexion (Étudiants uniquement) : inscription du
- * visage à la toute première connexion, vérification aux suivantes. Le
- * jeton "en attente" émis par /api/auth/login|register n'ouvre l'accès à
- * aucune route métier tant que cette étape n'a pas réussi — voir
- * EnsureFaceVerified côté API.
- */
+const subscribeToHydration = () => () => {};
+
 export default function FacePage() {
   const router = useRouter();
   const { data, isLoading, isError } = useMe();
-  const { videoRef, status: cameraStatus, errorMessage: cameraErrorMessage, start: startCamera } =
-    useFaceCamera();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const {
+    videoRef,
+    status: cameraStatus,
+    errorMessage: cameraError,
+    start: startCamera,
+    stop: stopCamera,
+  } = useFaceCamera();
   const enroll = useEnrollFace();
   const verify = useVerifyFace();
   const logout = useLogout();
-
+  const prefersReducedMotion = useReducedMotion();
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
+  const reducedMotion = hydrated && prefersReducedMotion;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const captureInFlight = useRef(false);
+  const generation = useRef(0);
   const [modelsReady, setModelsReady] = useState(false);
+  const [modelError, setModelError] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [position, setPosition] = useState<{ quality: FacePositionQuality; message: string }>({
+  const [busy, setBusy] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [position, setPosition] = useState<{
+    quality: FacePositionQuality;
+    message: string;
+  }>({
     quality: "none",
-    message: "Centrez votre visage dans le cadre.",
+    message: "Placez votre visage au centre de l’objectif.",
   });
 
   const isFirstTime = !data?.face_enrolled;
-  const mutation = isFirstTime ? enroll : verify;
-
   const cameraReady = cameraStatus === "ready";
-  const showRetry = cameraStatus === "error";
-  const busy = isDetecting || mutation.isPending;
-  const canCapture = cameraReady && modelsReady && !busy;
-  const trackingActive = cameraReady && modelsReady && !busy;
-
+  const trackingActive =
+    !!data?.face_pending && cameraReady && modelsReady && !busy && !verified;
   const liveHint = useLiveFaceTracking(videoRef, trackingActive);
+  const errorMessage =
+    captureError ??
+    cameraError ??
+    (modelError
+      ? "Le moteur de vérification n’a pas pu charger. Vérifiez votre connexion et réessayez."
+      : null);
+  const canCapture =
+    cameraReady && modelsReady && !busy && !verified && !logout.isPending;
+  const retry = cameraStatus === "error" || modelError;
+  const lensStatus: IdentityLensStatus = verified
+    ? "success"
+    : busy
+      ? "verifying"
+      : errorMessage
+        ? "error"
+        : !cameraReady || !modelsReady
+          ? "loading"
+          : position.quality === "good"
+            ? "ready"
+            : position.quality === "poor"
+              ? "adjust"
+              : "idle";
+  const statusLabel = verified
+    ? "Identité confirmée"
+    : busy
+      ? "Vérification en cours"
+      : errorMessage
+        ? "Une nouvelle tentative est nécessaire"
+        : !cameraReady
+          ? "Connexion à la caméra"
+          : !modelsReady
+            ? "Préparation de la vérification"
+            : position.quality === "good"
+              ? "Cadrage prêt"
+              : position.quality === "poor"
+                ? "Ajustez votre position"
+                : "À vous de jouer";
 
   useEffect(() => {
-    if (!getToken()) {
+    if (!getToken() || isError) {
       router.replace("/login");
       return;
     }
-    if (isError) {
-      router.replace("/login");
-      return;
-    }
-    // Jeton déjà complet (étape déjà passée) : rien à faire ici.
-    if (!isLoading && data && !data.face_pending) {
+    // `me` is refreshed before the mutation resolves; keep confirmation visible.
+    if (
+      !isLoading &&
+      data &&
+      !data.face_pending &&
+      !captureInFlight.current &&
+      !verified
+    ) {
       router.replace("/dashboard");
     }
-  }, [isLoading, isError, data, router]);
+  }, [isLoading, isError, data, router, verified]);
 
   useEffect(() => {
-    loadFaceModels().then(() => setModelsReady(true));
-    startCamera();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let active = true;
+    const mountedGeneration = generation.current;
+    loadFaceModels()
+      .then(() => {
+        if (active) setModelsReady(true);
+      })
+      .catch(() => {
+        if (active) setModelError(true);
+      });
+    return () => {
+      active = false;
+      generation.current = mountedGeneration + 1;
+    };
   }, []);
 
-  // Le jugement de cadrage lit videoRef.current (dimensions natives de la
-  // vidéo) : fait dans un effet, jamais pendant le rendu, pour rester dans
-  // les clous de la règle react-hooks/refs.
+  useEffect(() => {
+    if (data?.face_pending) startCamera();
+  }, [data?.face_pending, startCamera]);
+
+  useEffect(() => {
+    if (!verified) return;
+    const timer = setTimeout(
+      () => router.replace("/dashboard"),
+      reducedMotion ? 300 : 1300,
+    );
+    return () => clearTimeout(timer);
+  }, [verified, reducedMotion, router]);
+
   useEffect(() => {
     setPosition(assessFacePosition(liveHint, videoRef.current));
   }, [liveHint, videoRef]);
 
-  // Dessine les points de repère (landmarks) du visage suivi en direct sur
-  // un calque canvas superposé à la vidéo — juste un rendu visuel, jamais
-  // envoyé nulle part (le vecteur réel n'est calculé qu'à la capture).
+  // Align real detection brackets with the mirrored, object-cover video.
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
     if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const size = canvas.clientWidth || 224;
-    if (canvas.width !== size * dpr) canvas.width = size * dpr;
-    if (canvas.height !== size * dpr) canvas.height = size * dpr;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (!liveHint || !video || !video.videoWidth) return;
-
-    const scale = Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
-    const offsetX = (canvas.width - video.videoWidth * scale) / 2;
-    const offsetY = (canvas.height - video.videoHeight * scale) / 2;
-
-    ctx.fillStyle = position.quality === "good" ? "rgba(52,211,153,.95)" : "rgba(165,180,252,.9)";
-    for (const point of liveHint.landmarks) {
-      const x = point.x * scale + offsetX;
-      const y = point.y * scale + offsetY;
-      ctx.beginPath();
-      ctx.arc(x, y, 2 * dpr, 0, Math.PI * 2);
-      ctx.fill();
+    function draw() {
+      if (!canvas) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = canvas.clientWidth * dpr;
+      canvas.height = canvas.clientHeight * dpr;
+      const ctx = canvas.getContext("2d");
+      if (!ctx || !liveHint || !video?.videoWidth) return;
+      const scale = Math.max(
+        canvas.width / video.videoWidth,
+        canvas.height / video.videoHeight,
+      );
+      const x =
+        liveHint.box.x * scale + (canvas.width - video.videoWidth * scale) / 2;
+      const y =
+        liveHint.box.y * scale +
+        (canvas.height - video.videoHeight * scale) / 2;
+      const w = liveHint.box.width * scale;
+      const h = liveHint.box.height * scale;
+      const edge = Math.min(w / 5, 13 * dpr);
+      ctx.strokeStyle = position.quality === "good" ? "#8ff7d0" : "#ffffff";
+      ctx.lineWidth = 1.1 * dpr;
+      ctx.shadowColor = "#183b32";
+      ctx.shadowBlur = 3 * dpr;
+      for (const [cx, cy, dx, dy] of [
+        [x, y, 1, 1],
+        [x + w, y, -1, 1],
+        [x, y + h, 1, -1],
+        [x + w, y + h, -1, -1],
+      ]) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + dy * edge);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx + dx * edge, cy);
+        ctx.stroke();
+      }
     }
+    draw();
+    const resize = new ResizeObserver(draw);
+    resize.observe(canvas);
+    return () => resize.disconnect();
   }, [liveHint, position.quality, videoRef]);
 
   async function handleCapture() {
     const video = videoRef.current;
-    if (!video) return;
-
+    if (!video || !canCapture || captureInFlight.current) return;
+    const attempt = generation.current;
+    captureInFlight.current = true;
     setCaptureError(null);
-    setIsDetecting(true);
-
+    setBusy(true);
     try {
       const result = await captureFaceDescriptor(video);
-
+      if (attempt !== generation.current) return;
       if (!result.ok) {
         setCaptureError(
           result.reason === "no-face"
-            ? "Aucun visage détecté. Centrez votre visage dans le cadre, avec un bon éclairage."
+            ? "Aucun visage détecté. Placez-vous face à la caméra, dans un endroit éclairé."
             : result.reason === "multiple-faces"
-              ? "Un seul visage doit être visible dans le cadre."
-              : "La caméra n'est pas encore prête, patientez une seconde et réessayez.",
+              ? "Un seul visage doit être visible dans l’objectif."
+              : "La caméra n’est pas encore prête. Patientez un instant et réessayez.",
         );
         return;
       }
-
-      mutation.mutate(
-        { descriptor: result.descriptor },
-        { onSuccess: () => router.replace("/dashboard") },
+      await (isFirstTime ? enroll : verify).mutateAsync({
+        descriptor: result.descriptor,
+      });
+      if (attempt !== generation.current) return;
+      stopCamera();
+      setVerified(true);
+    } catch (error) {
+      if (attempt !== generation.current) return;
+      setCaptureError(
+        error instanceof ApiError
+          ? error.status === 429
+            ? "Trop de tentatives. Patientez une minute avant de réessayer."
+            : (error.errors?.descriptor?.[0] ?? error.message)
+          : "La vérification n’a pas abouti. Vérifiez votre connexion et réessayez.",
       );
     } finally {
-      setIsDetecting(false);
+      captureInFlight.current = false;
+      if (attempt === generation.current) setBusy(false);
     }
   }
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex flex-1 items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
-      </div>
-    );
+  useEffect(() => {
+    if (captureError) errorRef.current?.focus();
+  }, [captureError]);
+
+  function handleRetry() {
+    setCaptureError(null);
+    if (modelError) window.location.reload();
+    else startCamera();
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 text-center">
-      <div>
-        <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">
-          {isFirstTime ? "Inscription faciale" : "Vérification faciale"}
-        </h2>
-        <p className="mt-1.5 text-[15px] text-ink-500">
-          {isFirstTime
-            ? "Dernière étape : enregistrez votre visage pour sécuriser votre compte."
-            : "Confirmez votre identité pour accéder à votre espace."}
-        </p>
-      </div>
-
-      <div
-        className="relative flex aspect-square w-56 items-center justify-center overflow-hidden rounded-full bg-ink-900/5 transition-shadow duration-300"
-        style={{ boxShadow: `0 0 0 4px ${busy ? "rgba(99,102,241,.4)" : RING_COLOR[position.quality]}` }}
+    <MotionConfig reducedMotion="user">
+      <main
+        className={styles.page}
+        data-status={lensStatus}
+        data-motion={paused || reducedMotion ? "paused" : "active"}
       >
-        <div className="absolute inset-0 scale-x-[-1]">
-          <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />
-          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
-        </div>
-        {(!cameraReady || !modelsReady) && !showRetry && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+        <header className={styles.header}>
+          <div className={styles.brand} aria-label="Ziris">
+            <span>
+              <ZirisMark size={22} />
+            </span>
+            <ZirisWordmark />
+            <span className={styles.identityLabel}>IDENTITY</span>
           </div>
-        )}
-      </div>
-
-      {captureError || cameraErrorMessage ? (
-        <div className="flex items-start gap-2 rounded-xl bg-destructive/10 px-3.5 py-3 text-left text-sm text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{captureError ?? cameraErrorMessage}</span>
+          <div className={styles.headerRight}>
+            <LockKeyhole size={13} />
+            <span>Espace personnel</span>
+          </div>
+        </header>
+        <div className={styles.content}>
+          <motion.section
+            className={styles.intro}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65 }}
+          >
+            <ol className={styles.steps} aria-label="Étapes de connexion">
+              <li>
+                <Check size={12} /> Connexion
+              </li>
+              <li aria-current="step">
+                <span>02</span> Identité
+              </li>
+            </ol>
+            <h1>
+              {verified ? (
+                <>
+                  Identité
+                  <br />
+                  <em>confirmée.</em>
+                </>
+              ) : (
+                <>
+                  {isFirstTime ? "Votre première" : "Un regard."}
+                  <br />
+                  <em>{isFirstTime ? "empreinte." : "Et vous voilà."}</em>
+                </>
+              )}
+            </h1>
+            <p className={styles.description}>
+              {verified
+                ? "Votre espace est prêt. Nous vous y emmenons."
+                : isFirstTime
+                  ? "Enregistrez votre visage pour retrouver votre espace Ziris en toute sécurité."
+                  : "Confirmez votre identité pour retrouver votre espace Ziris."}
+            </p>
+            <div className={styles.desktopIdentity}>
+              <span className={styles.identityGlyph}>
+                <ScanFace size={22} strokeWidth={1.25} />
+              </span>
+              <div>
+                <span>VÉRIFICATION FACIALE</span>
+                <strong>
+                  {isFirstTime && !verified
+                    ? "Première connexion"
+                    : "Votre accès personnel"}
+                </strong>
+              </div>
+            </div>
+            <div className={styles.assurance}>
+              <ShieldCheck size={17} />
+              <div>
+                <strong>Votre visage reste le vôtre.</strong>
+                <p>
+                  Aucune photo n’est transmise. Seule une empreinte numérique du
+                  visage est utilisée pour vérifier votre identité.
+                </p>
+              </div>
+            </div>
+          </motion.section>
+          <section
+            className={styles.experience}
+            aria-label={
+              isFirstTime ? "Inscription faciale" : "Vérification faciale"
+            }
+          >
+            <motion.div
+              className={styles.stage}
+              initial={{ opacity: 0, scale: 0.93 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.9, delay: 0.1 }}
+            >
+              <div className={styles.stageLabel}>
+                <span className={styles.liveDot} />{" "}
+                {verified
+                  ? "CONFIRMÉ"
+                  : cameraReady
+                    ? "CAMÉRA ACTIVE"
+                    : "CAMÉRA"}
+              </div>
+              <span className={styles.stageIndex} aria-hidden="true">
+                Z / 02
+              </span>
+              <div className={styles.fallbackLens} aria-hidden="true" />
+              <div className={styles.viewport}>
+                <div className={styles.videoLayer}>
+                  <video
+                    ref={videoRef}
+                    muted
+                    playsInline
+                    aria-label="Aperçu de votre caméra"
+                  />
+                  <canvas ref={canvasRef} aria-hidden="true" />
+                </div>
+                {(!cameraReady || !modelsReady || isLoading || !data) &&
+                  !verified && (
+                    <div className={styles.cameraPlaceholder}>
+                      {retry ? (
+                        <ScanFace size={44} strokeWidth={1} />
+                      ) : (
+                        <LoaderCircle
+                          size={25}
+                          strokeWidth={1.5}
+                          className={styles.spinner}
+                        />
+                      )}
+                      <span>
+                        {isLoading || !data
+                          ? "Chargement du compte"
+                          : cameraStatus === "error"
+                            ? "Caméra indisponible"
+                            : modelError
+                              ? "Analyse indisponible"
+                              : !cameraReady
+                                ? "Ouverture de la caméra"
+                                : "Préparation de l’analyse"}
+                      </span>
+                    </div>
+                  )}
+                {busy && <div className={styles.scanLine} aria-hidden="true" />}
+                {verified && (
+                  <motion.div
+                    className={styles.success}
+                    initial={{ opacity: 0, scale: 0.88 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <CheckCheck size={64} strokeWidth={1.5} />
+                    <span>Identité confirmée</span>
+                  </motion.div>
+                )}
+              </div>
+              <IdentityLens
+                status={lensStatus}
+                paused={paused || !!reducedMotion}
+              />
+              <div className={styles.opticsLabel} aria-hidden="true">
+                <span>ZIRIS</span>
+                <span>IDENTITY / 02</span>
+              </div>
+              <button
+                className={styles.motionToggle}
+                type="button"
+                onClick={() => setPaused((value) => !value)}
+                disabled={!!reducedMotion}
+                aria-pressed={paused || !!reducedMotion}
+                aria-label={
+                  paused
+                    ? "Reprendre les animations"
+                    : "Mettre les animations en pause"
+                }
+                title={
+                  reducedMotion
+                    ? "Animations réduites selon vos préférences"
+                    : paused
+                      ? "Reprendre les animations"
+                      : "Mettre les animations en pause"
+                }
+              >
+                {paused || reducedMotion ? (
+                  <Play size={13} />
+                ) : (
+                  <Pause size={13} />
+                )}
+              </button>
+            </motion.div>
+            <div className={styles.controls}>
+              <div
+                className={styles.telemetry}
+                aria-label="État de la vérification"
+              >
+                <div>
+                  <span>01 · CAMÉRA</span>
+                  <strong>
+                    {verified
+                      ? "Terminée"
+                      : cameraStatus === "error"
+                        ? "Indisponible"
+                        : cameraReady
+                          ? "Connectée"
+                          : "Connexion…"}
+                  </strong>
+                </div>
+                <div>
+                  <span>02 · CADRAGE</span>
+                  <strong>
+                    {verified
+                      ? "Confirmé"
+                      : busy
+                        ? "Analyse…"
+                        : position.quality === "good"
+                          ? "Prêt"
+                          : "À ajuster"}
+                  </strong>
+                </div>
+                <div>
+                  <span>03 · IDENTITÉ</span>
+                  <strong>
+                    {verified
+                      ? "Vérifiée"
+                      : busy
+                        ? "Vérification…"
+                        : "À confirmer"}
+                  </strong>
+                </div>
+              </div>
+              <div
+                className={styles.feedback}
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {errorMessage ? (
+                  <div
+                    ref={errorRef}
+                    tabIndex={-1}
+                    role="alert"
+                    className={styles.error}
+                  >
+                    <AlertCircle size={17} />
+                    <span>{errorMessage}</span>
+                  </div>
+                ) : (
+                  <>
+                    <strong>{statusLabel}</strong>
+                    <p>
+                      {verified
+                        ? "Bienvenue dans votre espace Ziris."
+                        : busy
+                          ? "Gardez votre visage dans le cadre."
+                          : trackingActive
+                            ? position.message
+                            : "Cela peut prendre quelques instants."}
+                    </p>
+                  </>
+                )}
+              </div>
+              <button
+                className={styles.captureButton}
+                type="button"
+                onClick={
+                  verified
+                    ? () => router.replace("/dashboard")
+                    : retry
+                      ? handleRetry
+                      : handleCapture
+                }
+                disabled={
+                  !verified &&
+                  (busy || logout.isPending || (!retry && !canCapture))
+                }
+              >
+                <span className={styles.buttonIcon}>
+                  {verified ? (
+                    <Check size={19} />
+                  ) : busy ? (
+                    <LoaderCircle size={18} className={styles.spinner} />
+                  ) : retry ? (
+                    <RefreshCw size={18} />
+                  ) : (
+                    <Camera size={19} />
+                  )}
+                </span>
+                <span>
+                  {verified
+                    ? "Accéder à mon espace"
+                    : busy
+                      ? "Vérification en cours…"
+                      : retry
+                        ? "Réessayer"
+                        : !canCapture
+                          ? "Préparation…"
+                          : isFirstTime
+                            ? "Enregistrer mon visage"
+                            : "Confirmer mon identité"}
+                </span>
+                <ArrowRight size={18} className={styles.buttonArrow} />
+              </button>
+              <p className={styles.privacy}>
+                <ShieldCheck size={12} /> Aucune photo transmise.
+              </p>
+            </div>
+          </section>
         </div>
-      ) : trackingActive ? (
-        <p
-          className={cn(
-            "text-sm font-medium transition-colors",
-            position.quality === "good"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : position.quality === "poor"
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-ink-400",
-          )}
-        >
-          {position.message}
-        </p>
-      ) : null}
-
-      <Button
-        onClick={showRetry ? startCamera : handleCapture}
-        disabled={busy || (!showRetry && !canCapture)}
-        className="h-12 w-full max-w-xs rounded-xl text-base font-medium shadow-sm"
-      >
-        {busy ? (
-          "Analyse en cours…"
-        ) : showRetry ? (
-          "Réessayer"
-        ) : !modelsReady || !cameraReady ? (
-          "Chargement…"
-        ) : (
-          <>
-            <Camera className="h-4 w-4" /> Prendre la photo
-          </>
-        )}
-      </Button>
-
-      <p className="flex items-center gap-1.5 text-xs text-ink-400">
-        <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-        Traité entièrement sur votre appareil, jamais envoyé sous forme d&apos;image.
-      </p>
-
-      <button
-        type="button"
-        onClick={() => logout.mutate(undefined, { onSettled: () => router.replace("/login") })}
-        className="text-sm text-ink-400 underline-offset-2 hover:underline"
-      >
-        Ce n&apos;est pas vous ? Se déconnecter
-      </button>
-    </div>
+        <footer className={styles.footer}>
+          <span className={styles.footerSignature}>
+            Ziris<span>Votre campus, simplement.</span>
+          </span>
+          <button
+            type="button"
+            aria-label="Ce n’est pas vous ? Se déconnecter"
+            disabled={busy || verified || logout.isPending}
+            onClick={() =>
+              logout.mutate(undefined, {
+                onSettled: () => router.replace("/login"),
+              })
+            }
+          >
+            <LogOut size={13} />
+            <span>
+              {logout.isPending ? "Déconnexion…" : "Ce n’est pas vous ?"}
+            </span>
+          </button>
+        </footer>
+      </main>
+    </MotionConfig>
   );
 }

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Fingerprint } from "lucide-react";
 import { OrbitHero } from "@/components/orbit-hero";
+import { ZirisWordmark } from "@/components/ziris-brand";
 
 export default function AuthLayout({
   children,
@@ -10,7 +11,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  if (pathname === "/login") return children;
+  if (pathname === "/login" || pathname === "/face") return children;
 
   return (
     <div className="relative flex min-h-screen flex-1 flex-col overflow-hidden bg-background">
@@ -34,7 +35,7 @@ export default function AuthLayout({
           </div>
           <div>
             <h1 className="font-display text-xl font-bold tracking-tight text-ink-900">
-              Présence
+              <ZirisWordmark />
             </h1>
             <p className="text-sm text-ink-500">
               Pointage de présence en ligne
