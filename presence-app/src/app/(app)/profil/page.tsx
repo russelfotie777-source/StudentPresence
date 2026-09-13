@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RoleBadge } from "@/components/user-badge";
 import { AttendanceTrendChart } from "@/components/attendance-trend-chart";
 import { CarteAutorisations } from "@/components/carte-autorisations";
+import { CarteRappels } from "@/components/carte-rappels";
 import { CarteNotifications } from "@/components/carte-notifications";
 import { BanniereRestriction } from "@/components/banniere-restriction";
 import { useLogout, useMe } from "@/hooks/use-auth";
@@ -80,6 +81,12 @@ export default function ProfilPage() {
           question de rôle. L'afficher aux autres laisserait croire à une
           autorisation manquante alors qu'elle ne leur sera jamais demandée. */}
       <CarteAutorisations afficherCamera={data?.face_enrolled === true} />
+
+      {/* Les rappels visent ceux qui pointent ou ouvrent le pointage :
+          étudiants et délégués. */}
+      {user.effective_role !== "Enseignant" && (
+        <CarteRappels delegue={user.effective_role === "Delegue"} />
+      )}
 
       <Button
         variant="outline"
