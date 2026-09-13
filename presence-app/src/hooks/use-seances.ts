@@ -53,6 +53,7 @@ export function useSendPosition(seanceId: number) {
 
 export function useCheckIn(seanceId: number) {
   const invalidate = useInvalidateToday();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (coords: Coords) =>
@@ -63,6 +64,7 @@ export function useCheckIn(seanceId: number) {
     onSuccess: () => {
       invalidate();
       toast.success("Présence confirmée !");
+      queryClient.invalidateQueries({ queryKey: ["attendance-stats"] });
     },
     onError: (error) => toast.error(errorMessage(error, "Le pointage a échoué.")),
   });

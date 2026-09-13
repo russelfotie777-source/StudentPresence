@@ -28,25 +28,36 @@ export function RosterDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { data: roster, isLoading } = useRoster(seance.id, open);
+  const {
+    data: roster,
+    isLoading,
+    isError,
+    refetch,
+  } = useRoster(seance.id, open);
   const confirmRoster = useConfirmRoster(seance.id);
-  const [checked, setChecked] = useState<Set<number>>(new Set());
+  const [checked, setChecked] = useState<Set<number>>(
+    () => new Set(roster?.filter((r) => r.etat === "present").map((r) => r.id)),
+  );
 
   // Initialise `checked` dès que le roster arrive (données async de
   // useRoster) — setState pendant le rendu plutôt que dans un effet, pattern
   // recommandé par React pour "ajuster un state quand une prop change" :
   // https://react.dev/learn/you-might-not-need-an-effect
   const [syncedRoster, setSyncedRoster] = useState(roster);
-  if (roster !== syncedRoster) {
+  if (!syncedRoster && roster) {
     setSyncedRoster(roster);
     if (roster) {
-      setChecked(new Set(roster.filter((r) => r.etat === "present").map((r) => r.id)));
+      setChecked(
+        new Set(roster.filter((r) => r.etat === "present").map((r) => r.id)),
+      );
     }
   }
 
   const attendu = seance.push?.etudiants_presents ?? null;
   const depasse = attendu !== null && checked.size > attendu;
-  const progressPct = attendu ? Math.min(100, (checked.size / attendu) * 100) : 0;
+  const progressPct = attendu
+    ? Math.min(100, (checked.size / attendu) * 100)
+    : 0;
 
   function toggle(id: number) {
     setChecked((prev) => {
@@ -57,7 +68,10 @@ export function RosterDialog({
     });
   }
 
-  const apiError = confirmRoster.error instanceof ApiError ? confirmRoster.error.message : null;
+  const apiError =
+    confirmRoster.error instanceof ApiError
+      ? confirmRoster.error.message
+      : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,9 +112,24 @@ export function RosterDialog({
         {!seance.push && (
           <Alert variant="destructive">
             <AlertDescription>
-              L&apos;enseignant n&apos;a pas encore déclaré son effectif présent — impossible de
-              confirmer pour l&apos;instant.
+              L&apos;enseignant n&apos;a pas encore déclaré son effectif présent
+              — impossible de confirmer pour l&apos;instant.
             </AlertDescription>
+          </Alert>
+        )}
+
+        <p className="text-sm text-ink-500">
+          Incluez les étudiants présents en salle même si leur pointage GPS a
+          échoué.
+        </p>
+        {isError && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              La liste n’a pas pu être chargée.
+            </AlertDescription>
+            <Button variant="outline" onClick={() => refetch()}>
+              Réessayer
+            </Button>
           </Alert>
         )}
 
@@ -121,7 +150,9 @@ export function RosterDialog({
                   key={etudiant.id}
                   className={cn(
                     "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors",
-                    isChecked ? "border-indigo-100 bg-indigo-50" : "border-line",
+                    isChecked
+                      ? "border-indigo-100 bg-indigo-50"
+                      : "border-line",
                   )}
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
@@ -135,7 +166,10 @@ export function RosterDialog({
                   <span className="flex-1 truncate font-semibold text-ink-900">
                     {etudiant.name}
                   </span>
-                  <Checkbox checked={isChecked} onCheckedChange={() => toggle(etudiant.id)} />
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={() => toggle(etudiant.id)}
+                  />
                 </label>
               );
             })}
@@ -160,7 +194,14 @@ export function RosterDialog({
                 onSuccess: () => onOpenChange(false),
               })
             }
-            disabled={!seance.push || depasse || confirmRoster.isPending}
+            disabled={
+              !seance.push ||
+              !roster ||
+              isLoading ||
+              isError ||
+              depasse ||
+              confirmRoster.isPending
+            }
             className="gap-1.5 rounded-xl bg-ink-900 hover:bg-ink-700"
           >
             <Lock className="h-4 w-4" />

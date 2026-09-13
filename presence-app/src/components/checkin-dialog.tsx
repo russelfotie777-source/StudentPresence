@@ -29,7 +29,9 @@ export function CheckInDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const geo = useGeolocation();
+  const geo = useGeolocation(
+    seance.geolocation?.max_check_in_accuracy_meters ?? 75,
+  );
   const checkIn = useCheckIn(seance.id);
   const { etat } = usePermission("position");
 
@@ -52,14 +54,15 @@ export function CheckInDialog({
     // la convergence, `coords` contient déjà le meilleur point provisoire, qui
     // peut encore être très imprécis.
     if (geo.status !== "success" || !geo.coords) return;
-    checkIn.mutate(geo.coords, { onSuccess: () => onOpenChange(false) });
+    checkIn.mutate(geo.coords);
   }
 
-  const apiError = checkIn.error instanceof ApiError ? checkIn.error.message : null;
+  const apiError =
+    checkIn.error instanceof ApiError ? checkIn.error.message : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-3xl">
+      <DialogContent className="rounded-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-lg font-bold">
             Confirmer ma présence
@@ -91,13 +94,15 @@ export function CheckInDialog({
                 Localisation en cours&hellip;
               </h2>
               <p className="max-w-[270px] text-[13.5px] leading-relaxed text-ink-500">
-                Nous vérifions votre position par rapport à celle du délégué pour la salle{" "}
-                {seance.salle}.
+                Nous vérifions votre position par rapport à celle du délégué
+                pour la salle {seance.salle}.
               </p>
               {/* Le GPS affine sa mesure pendant quelques secondes : afficher
                   la précision montre que l'attente sert à quelque chose. */}
               {geo.precision !== null && (
-                <p className="text-xs text-ink-300">Précision ±{geo.precision} m, affinage…</p>
+                <p className="text-xs text-ink-300">
+                  Précision ±{geo.precision} m, affinage…
+                </p>
               )}
             </>
           )}
@@ -108,8 +113,8 @@ export function CheckInDialog({
                 <MapPin className="h-6 w-6 text-indigo-600" />
               </div>
               <p className="text-sm text-ink-500">
-                Position obtenue à ±{geo.precision} m. Confirmez pour valider votre présence — la
-                distance avec le délégué est vérifiée côté serveur.
+                Position obtenue à ±{geo.precision} m. Vous pouvez maintenant
+                confirmer votre présence.
               </p>
             </>
           )}
@@ -124,7 +129,10 @@ export function CheckInDialog({
                 <span className="animate-dc-ray absolute bottom-2.5 left-0.5 h-3 w-[3px] rounded-full bg-emerald-500" />
                 <span className="animate-dc-ray absolute top-1/2 left-0 h-[3px] w-3 -mt-[1.5px] rounded-full bg-emerald-500" />
                 <div className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full bg-emerald-500 shadow-[0_20px_40px_-14px_rgba(15,165,114,.4)]">
-                  <CheckCircle2 className="h-8 w-8 text-white" strokeWidth={2.2} />
+                  <CheckCircle2
+                    className="h-8 w-8 text-white"
+                    strokeWidth={2.2}
+                  />
                 </div>
               </div>
               <h2 className="font-display text-[20px] font-bold text-ink-900">
@@ -147,26 +155,55 @@ export function CheckInDialog({
               <AlertDescription>{apiError}</AlertDescription>
             </Alert>
           )}
+          {!checkIn.isSuccess &&
+            (geo.status === "error" ||
+              permission === "refusee" ||
+              apiError) && (
+              <p className="text-sm text-ink-700" role="status">
+                Votre présence n’est pas encore enregistrée. Le délégué peut
+                vous cocher dans la liste après avoir constaté votre présence en
+                salle.
+              </p>
+            )}
         </div>
 
         <DialogFooter
           className={cn(
             "gap-2",
-            (checkIn.isSuccess || doitDemander || permission === "refusee") && "hidden",
+            !checkIn.isSuccess &&
+              (doitDemander || permission === "refusee") &&
+              "hidden",
           )}
         >
-          {geo.status === "error" && (
-            <Button variant="outline" onClick={() => geo.locate()}>
+          {(geo.status === "error" || (apiError && !checkIn.isPending)) && (
+            <Button
+              variant="outline"
+              disabled={geo.status === "loading"}
+              onClick={() => {
+                checkIn.reset();
+                geo.locate();
+              }}
+            >
               Réessayer
             </Button>
           )}
-          <Button
-            onClick={handleConfirm}
-            disabled={geo.status !== "success" || checkIn.isPending || checkIn.isSuccess}
-            className="rounded-xl"
-          >
-            {checkIn.isPending ? "Envoi…" : "Confirmer ma présence"}
-          </Button>
+          {checkIn.isSuccess ? (
+            <Button className="w-full" onClick={() => onOpenChange(false)}>
+              <CheckCircle2 size={17} /> Terminer
+            </Button>
+          ) : (
+            <Button
+              onClick={handleConfirm}
+              disabled={
+                geo.status !== "success" ||
+                checkIn.isPending ||
+                checkIn.isSuccess
+              }
+              className="rounded-xl"
+            >
+              {checkIn.isPending ? "Envoi…" : "Confirmer ma présence"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

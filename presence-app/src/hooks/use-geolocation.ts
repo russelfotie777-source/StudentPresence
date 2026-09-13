@@ -7,6 +7,7 @@ export type GeolocationErrorReason =
   | "position_unavailable"
   | "timeout"
   | "unsupported"
+  | "imprecise"
   | "unknown";
 
 export interface Coords {
@@ -27,19 +28,16 @@ const ERROR_MESSAGES: Record<GeolocationErrorReason, string> = {
     "L'accès à la position a été refusé. Autorisez la géolocalisation dans les réglages de votre navigateur puis réessayez.",
   position_unavailable:
     "Impossible de déterminer votre position. Vérifiez que le GPS est activé.",
-  timeout: "La localisation prend trop de temps. Vérifiez votre signal GPS et réessayez.",
+  timeout:
+    "La localisation prend trop de temps. Vérifiez votre signal GPS et réessayez.",
   unsupported: "Votre navigateur ne supporte pas la géolocalisation.",
+  imprecise:
+    "La position reste trop imprécise. Réessayez dans un endroit mieux couvert ou faites constater votre présence par le délégué.",
   unknown: "Une erreur inattendue est survenue lors de la localisation.",
 };
 
-/**
- * Précision visée avant de s'arrêter. En dessous, continuer à attendre
- * n'apporte plus rien d'utile face à un périmètre de 120 m.
- */
-const PRECISION_VISEE_METRES = 20;
-
-/** Durée maximale de convergence avant de retenir le meilleur point obtenu. */
-const DUREE_MAX_MS = 12_000;
+/** Temps laissé au GPS pour atteindre la précision acceptée par le serveur. */
+const DUREE_MAX_MS = 20_000;
 
 /**
  * Localisation par convergence plutôt que par lecture unique.
@@ -52,11 +50,10 @@ const DUREE_MAX_MS = 12_000;
  * n'a aucun sens.
  *
  * On écoute donc les positions successives (`watchPosition`) en gardant la plus
- * précise, et on s'arrête dès que la précision visée est atteinte, ou au bout
- * de DUREE_MAX_MS avec le meilleur point obtenu — mieux vaut un point moyen que
- * pas de point du tout, le serveur reste juge de ce qu'il accepte.
+ * précise. Une mesure exploitable termine la recherche immédiatement ; une
+ * mesure encore imprécise à l'échéance ne doit pas déclencher un envoi.
  */
-export function useGeolocation() {
+export function useGeolocation(maxAccuracy = 75) {
   const [state, setState] = useState<GeolocationState>({
     status: "idle",
     coords: null,
@@ -66,8 +63,10 @@ export function useGeolocation() {
   const watchIdRef = useRef<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const meilleurRef = useRef<Coords | null>(null);
+  const generationRef = useRef(0);
 
   const arreter = useCallback(() => {
+    generationRef.current++;
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
@@ -84,29 +83,36 @@ export function useGeolocation() {
 
   const locate = useCallback(
     (options?: PositionOptions) => {
+      arreter();
       if (!("geolocation" in navigator)) {
         setState({ status: "error", coords: null, error: "unsupported" });
         return;
       }
 
-      arreter();
+      const generation = generationRef.current;
       meilleurRef.current = null;
       setState({ status: "loading", coords: null, error: null });
 
       const terminer = () => {
+        if (generation !== generationRef.current) return;
         arreter();
         const meilleur = meilleurRef.current;
         setState(
-          meilleur
+          meilleur && meilleur.accuracy <= maxAccuracy
             ? { status: "success", coords: meilleur, error: null }
-            : { status: "error", coords: null, error: "timeout" },
+            : {
+                status: "error",
+                coords: meilleur,
+                error: meilleur ? "imprecise" : "timeout",
+              },
         );
       };
 
       timeoutRef.current = setTimeout(terminer, DUREE_MAX_MS);
 
-      watchIdRef.current = navigator.geolocation.watchPosition(
+      const watchId = navigator.geolocation.watchPosition(
         (position) => {
+          if (generation !== generationRef.current) return;
           const candidat: Coords = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -121,17 +127,18 @@ export function useGeolocation() {
             setState({ status: "loading", coords: candidat, error: null });
           }
 
-          if (meilleurRef.current!.accuracy <= PRECISION_VISEE_METRES) {
+          if (meilleurRef.current!.accuracy <= maxAccuracy) {
             terminer();
           }
         },
         (error) => {
-          // Une erreur ponctuelle alors qu'on a déjà un point exploitable ne
-          // doit pas faire perdre ce point.
-          if (meilleurRef.current) {
-            terminer();
+          if (generation !== generationRef.current) return;
+          // Une indisponibilité temporaire peut être suivie d'une mesure valide.
+          if (
+            error.code === error.POSITION_UNAVAILABLE ||
+            error.code === error.TIMEOUT
+          )
             return;
-          }
 
           arreter();
 
@@ -146,10 +153,17 @@ export function useGeolocation() {
 
           setState({ status: "error", coords: null, error: reason });
         },
-        { enableHighAccuracy: true, timeout: DUREE_MAX_MS, maximumAge: 0, ...options },
+        {
+          enableHighAccuracy: true,
+          timeout: DUREE_MAX_MS,
+          maximumAge: 0,
+          ...options,
+        },
       );
+      if (generation === generationRef.current) watchIdRef.current = watchId;
+      else navigator.geolocation.clearWatch(watchId);
     },
-    [arreter],
+    [arreter, maxAccuracy],
   );
 
   return {
