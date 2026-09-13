@@ -18,6 +18,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 #[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'statut_compte', 'motif_statut', 'statut_modifie_le', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
 // face_descriptor est une donnée biométrique : jamais renvoyée par l'API,
@@ -26,7 +27,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable;
 
     /**
      * Sans ça, un User fraîchement créé sans `quota` explicite (ex.

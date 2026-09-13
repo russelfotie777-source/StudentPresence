@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'course_template_id', 'semaine_id', 'salle_id', 'enseignant_id', 'groupe',
     'date_seance', 'jour', 'heure_debut', 'heure_fin', 'debut_reel', 'fin_reelle',
     'etat_delegue', 'etat_prof', 'presences_locked', 'commentaires',
+    'rappel_delegue_at', 'rappel_ouverture_at', 'rappel_cloture_at',
 ])]
 class Seance extends Model
 {
@@ -32,6 +33,9 @@ class Seance extends Model
             'etat_final' => PresenceState::class,
             'presences_locked' => 'boolean',
             'quota_credited_at' => 'datetime',
+            'rappel_delegue_at' => 'datetime',
+            'rappel_ouverture_at' => 'datetime',
+            'rappel_cloture_at' => 'datetime',
         ];
     }
 
