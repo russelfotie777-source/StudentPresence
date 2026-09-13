@@ -1,17 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  CalendarRange,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  DoorOpen,
-  GraduationCap,
-  Lock,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { CalendarRange, DoorOpen, GraduationCap, Lock, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,9 +17,11 @@ import { useEnseignants } from "@/hooks/use-scheduling";
 import { useEmploiDuTemps, type ModeGrille } from "@/hooks/use-emploi-du-temps";
 import { useHeureDouala } from "@/hooks/use-heure";
 import { libelleSalle } from "@/lib/catalogue";
-import { FUSEAU, minutes, plageSemaine, type Ymd } from "@/lib/dates";
+import { minutes, type Ymd } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { Seance, Weekday } from "@/types/api";
+import { HorlogeDouala } from "@/components/horloge-douala";
+import { NavigateurSemaine, semaineCouvrant } from "@/components/navigateur-semaine";
 import { GrilleSemaine } from "@/components/emploi-du-temps/grille-semaine";
 import { DialogueCours, type PreremplissageCours } from "@/components/emploi-du-temps/dialogue-cours";
 import { DialogueSemestre } from "@/components/emploi-du-temps/dialogue-semestre";
@@ -66,16 +58,7 @@ export default function EmploisDuTempsPage() {
     () => [...(semaines ?? [])].sort((a, b) => a.numero - b.numero),
     [semaines],
   );
-  const indexSemaine = semaine ? semainesTriees.findIndex((s) => s.id === semaine.id) : -1;
-  const precedente = indexSemaine > 0 ? semainesTriees[indexSemaine - 1] : null;
-  const suivante =
-    indexSemaine >= 0 && indexSemaine < semainesTriees.length - 1
-      ? semainesTriees[indexSemaine + 1]
-      : null;
-  const dateDuJour = heure.date;
-  const semaineDuJour = dateDuJour
-    ? (semainesTriees.find((s) => s.date_debut <= dateDuJour && dateDuJour <= s.date_fin) ?? null)
-    : null;
+  const semaineDuJour = semaineCouvrant(semainesTriees, heure.date);
 
   const matieresDeLaSemaine = useMemo(() => {
     const vues = new Map<string, Seance>();
@@ -202,55 +185,12 @@ export default function EmploisDuTempsPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="icon"
-                variant="outline"
-                aria-label="Semaine précédente"
-                disabled={!precedente}
-                onClick={() => precedente && setSemaineChoisie(precedente.id)}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <Select
-                value={semaine ? String(semaine.id) : ""}
-                onValueChange={(v) => v && setSemaineChoisie(Number(v))}
-              >
-                <SelectTrigger className="h-8 w-52 rounded-lg font-medium">
-                  <SelectValue placeholder="Semaine…">
-                    {() =>
-                      semaine &&
-                      `S${semaine.numero} · ${plageSemaine(semaine.date_debut, semaine.date_fin)}`
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {semainesTriees.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      S{s.numero} · {plageSemaine(s.date_debut, s.date_fin)}
-                      {s.id === semaineDuJour?.id ? " · cette semaine" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                size="icon"
-                variant="outline"
-                aria-label="Semaine suivante"
-                disabled={!suivante}
-                onClick={() => suivante && setSemaineChoisie(suivante.id)}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!semaineDuJour || semaineDuJour.id === semaine?.id}
-                onClick={() => semaineDuJour && setSemaineChoisie(semaineDuJour.id)}
-              >
-                Aujourd&apos;hui
-              </Button>
-            </div>
+            <NavigateurSemaine
+              semaines={semainesTriees}
+              semaine={semaine}
+              aujourdhui={heure.date}
+              onChoisir={setSemaineChoisie}
+            />
           </div>
 
           {grille.isLoading || !semaine ? (
@@ -330,40 +270,6 @@ export default function EmploisDuTempsPage() {
         />
       )}
     </div>
-  );
-}
-
-/**
- * L'heure qui fait foi : celle de Douala, servie par l'API. Rendue ici pour
- * qu'un admin dont la machine est réglée sur un autre fuseau voie tout de
- * suite sur quelle horloge la grille s'aligne.
- */
-function HorlogeDouala({ heure }: { heure: ReturnType<typeof useHeureDouala> }) {
-  if (!heure.pret) return null;
-
-  return (
-    <span
-      className="flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12.5px] tabular-nums text-muted-foreground"
-      title={`Heure de référence de l'application (${heure.fuseau})`}
-    >
-      <Clock className="size-3.5" />
-      <span className="first-letter:uppercase">
-        {heure.maintenant.toLocaleDateString("fr-FR", {
-          timeZone: FUSEAU,
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        })}
-      </span>
-      <span className="font-semibold text-foreground">
-        {heure.maintenant.toLocaleTimeString("fr-FR", {
-          timeZone: FUSEAU,
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-      </span>
-      <span className="text-[10.5px] uppercase tracking-wide">Douala</span>
-    </span>
   );
 }
 
