@@ -1,9 +1,9 @@
 "use client";
 
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch, ApiError, telechargerFichier } from "@/lib/api-client";
-import type { PresenceState, Seance, StatutCompte, User } from "@/types/api";
+import type { PresenceState, StatutCompte, User } from "@/types/api";
 
 interface PageEtudiants {
   data: User[];
@@ -16,9 +16,10 @@ export interface FiltresEtudiants {
   statut?: StatutCompte;
 }
 
-export function useEtudiants(filtres: FiltresEtudiants) {
+export function useEtudiants(filtres: FiltresEtudiants, enabled = true) {
   return useInfiniteQuery({
     queryKey: ["etudiants", filtres],
+    enabled,
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ page: String(pageParam) });
       if (filtres.search) params.set("search", filtres.search);
@@ -50,6 +51,7 @@ function useMutationEtudiant<TVariables>(
     mutationFn: executer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["etudiants"] });
+      queryClient.invalidateQueries({ queryKey: ["feuille-presence"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success(succes);
     },
@@ -94,31 +96,22 @@ export function useForcerPresence() {
         method: "POST",
         body: JSON.stringify({ etat: v.etat }),
       }),
-    onSuccess: (_d, v) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["historique-seances"] });
-      toast.success(v.etat === "present" ? "Présence enregistrée." : "Absence enregistrée.");
+      queryClient.invalidateQueries({ queryKey: ["feuille-presence"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e) => toast.error(message(e, "L'enregistrement a échoué.")),
   });
 }
 
-/** Séances récentes d'une salle, pour choisir celle sur laquelle forcer une présence. */
-export function useSeancesDeSalle(salleId: number | undefined) {
-  return useQuery({
-    queryKey: ["historique-seances", "salle", salleId],
-    queryFn: () =>
-      apiFetch<{ data: Seance[] }>(`/api/historique-seances?salle_id=${salleId}&per_page=12`),
-    enabled: salleId !== undefined,
-    select: (r) => r.data,
-  });
-}
-
 export function useTelechargerListe() {
   return useMutation({
-    mutationFn: (v: { salleId: number; semaineId: number; semestre?: number; annee?: string }) => {
+    mutationFn: (v: { salleId: number; semaineId: number; semestre?: number; annee?: string; symboles?: string }) => {
       const params = new URLSearchParams({ semaine_id: String(v.semaineId) });
       if (v.semestre) params.set("semestre", String(v.semestre));
       if (v.annee) params.set("annee", v.annee);
+      if (v.symboles) params.set("symboles", v.symboles);
       return telechargerFichier(`/api/salles/${v.salleId}/liste-presence.pdf?${params}`, "liste-presence.pdf");
     },
     onSuccess: () => toast.success("Liste de présence téléchargée."),

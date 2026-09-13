@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Enums\FormationType;
-use App\Enums\UserRole;
 use App\Enums\Weekday;
+use App\Models\Parametre;
 use App\Models\Salle;
 use App\Models\Seance;
 use App\Models\Semaine;
@@ -19,19 +19,27 @@ use Illuminate\Support\Str;
  */
 class ListeHebdomadaire
 {
+    public function __construct(private FeuilleDePresence $feuille) {}
+
     /** Mots vides ignorés pour former le sigle d'une filière. */
     private const MOTS_VIDES = ['de', 'des', 'du', 'et', 'la', 'le', 'les', 'l', 'd', 'en', 'a', 'à'];
 
     private const ROMAINS = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];
 
+    /** Lundi → samedi : les colonnes de la liste officielle. */
+    private const JOURS_OUVRES = [
+        Weekday::Lundi, Weekday::Mardi, Weekday::Mercredi, Weekday::Jeudi, Weekday::Vendredi, Weekday::Samedi,
+    ];
+
     /**
      * @return array<string, mixed>
      */
-    public function pour(Salle $salle, Semaine $semaine, ?int $semestre = null, ?string $annee = null): array
+    public function pour(Salle $salle, Semaine $semaine, ?int $semestre = null, ?string $annee = null, ?string $symboles = null): array
     {
         $salle->loadMissing('filiere.niveau');
         $niveauChiffre = $this->chiffreDuNiveau($salle->filiere->niveau->nom);
         $option = $this->sigle($salle->filiere->nom);
+        $donnees = $this->feuille->pour($salle, $semaine);
 
         return [
             'etablissement' => config('presence.etablissement'),
@@ -45,9 +53,11 @@ class ListeHebdomadaire
             'groupe' => "{$option}{$niveauChiffre} – {$salle->formation->value}",
             'semaine_du' => $semaine->date_debut->format('d/m/Y'),
             'semaine_au' => $semaine->date_fin->format('d/m/Y'),
-            'etudiants' => $this->etudiants($salle),
-            'jours' => $this->seancesParJour($salle, $semaine),
+            'symboles' => $symboles ?? Parametre::symbolesPresence(),
+            'etudiants' => $this->etudiants($donnees['etudiants'], $donnees['seances']),
+            'jours' => $this->seancesParJour($donnees['seances']),
             'contient_fm' => $salle->formation === FormationType::FI,
+            'contient_marques' => $donnees['seances']->contains(fn (Seance $s) => $this->feuille->statut($s) === 'tenue'),
         ];
     }
 
@@ -55,24 +65,29 @@ class ListeHebdomadaire
      * Étudiants suivant les cours dans cette salle, par ordre alphabétique —
      * les FM (migrants FA → FI) y figurent dans une salle FI et sont
      * signalés, c'est le point que la liste papier doit faire ressortir.
+     * Chaque jour porte la marque de chacune de ses séances, dans l'ordre
+     * horaire (null = rien à noter : séance à venir ou appel non validé).
      *
+     * @param  Collection<int, User>  $etudiants
+     * @param  Collection<int, Seance>  $seances
      * @return Collection<int, array<string, mixed>>
      */
-    private function etudiants(Salle $salle): Collection
+    private function etudiants(Collection $etudiants, Collection $seances): Collection
     {
-        return User::query()
-            ->whereIn('role', [UserRole::Etudiant->value, UserRole::Delegue->value])
-            ->where('salle_id', $salle->id)
-            ->whereIn('formation', $salle->formationsAccueillies())
-            ->orderBy('name')
-            ->get(['id', 'name', 'phone', 'formation'])
-            ->values()
-            ->map(fn (User $u, int $i) => [
-                'numero' => $i + 1,
-                'matricule' => $u->phone,
-                'nom' => Str::upper($u->name),
-                'fm' => $u->formation === FormationType::FM,
-            ]);
+        $parJour = $seances->groupBy(fn (Seance $s) => $s->jour->value);
+
+        return $etudiants->values()->map(fn (User $u, int $i) => [
+            'numero' => $i + 1,
+            'matricule' => $u->phone,
+            'nom' => Str::upper($u->name),
+            'fm' => $u->formation === FormationType::FM,
+            'jours' => collect(self::JOURS_OUVRES)->mapWithKeys(fn (Weekday $jour) => [
+                $jour->value => ($parJour[$jour->value] ?? collect())
+                    ->map(fn (Seance $s) => $this->feuille->marque($s, $u)?->value)
+                    ->values()
+                    ->all(),
+            ])->all(),
+        ]);
     }
 
     /**
@@ -82,18 +97,12 @@ class ListeHebdomadaire
      *
      * @return array<string, array{label: string, seances: array<int, array<string, mixed>>}>
      */
-    private function seancesParJour(Salle $salle, Semaine $semaine): array
+    private function seancesParJour(Collection $seances): array
     {
-        $seances = Seance::query()
-            ->with(['courseTemplate.matiere', 'enseignant'])
-            ->where('salle_id', $salle->id)
-            ->whereBetween('date_seance', [$semaine->date_debut->toDateString(), $semaine->date_fin->toDateString()])
-            ->orderBy('heure_debut')
-            ->get()
-            ->groupBy(fn (Seance $s) => $s->jour->value);
+        $seances = $seances->groupBy(fn (Seance $s) => $s->jour->value);
 
         $jours = [];
-        foreach ([Weekday::Lundi, Weekday::Mardi, Weekday::Mercredi, Weekday::Jeudi, Weekday::Vendredi, Weekday::Samedi] as $jour) {
+        foreach (self::JOURS_OUVRES as $jour) {
             $lignes = ($seances[$jour->value] ?? collect())->map(fn (Seance $s) => [
                 'ec' => trim(($s->courseTemplate?->matiere?->code ?? '').' '.($s->courseTemplate?->matiere?->nom ?? '')),
                 'enseignant' => $s->enseignant?->name ?? '',

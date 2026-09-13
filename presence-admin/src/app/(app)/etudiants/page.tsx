@@ -1,25 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "motion/react";
-import {
-  Search,
-  MoreHorizontal,
-  UserCheck,
-  ArrowLeftRight,
-  ShieldOff,
-  ShieldBan,
-  Trash2,
-  ClipboardCheck,
-  FileDown,
-  Users,
-  RotateCcw,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { CalendarX2, Crown, DoorOpen, FileDown, ShieldBan, ShieldOff, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -27,280 +12,399 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { salleHooks, semaineHooks, type Salle } from "@/hooks/use-catalog";
 import {
   useChangerSalle,
   useChangerStatut,
-  useEtudiants,
   useForcerPresence,
-  useSeancesDeSalle,
   useSupprimerEtudiant,
-  useTelechargerListe,
 } from "@/hooks/use-etudiants";
 import {
-  AvertissementRestreint,
+  useFeuillePresence,
+  useSymboles,
+  type EtudiantFeuille,
+  type FeuillePresence,
+  type SeanceFeuille,
+} from "@/hooks/use-feuille-presence";
+import { useHeureDouala } from "@/hooks/use-heure";
+import { libelleSalle } from "@/lib/catalogue";
+import { cn } from "@/lib/utils";
+import type { PresenceState, User } from "@/types/api";
+import { HorlogeDouala } from "@/components/horloge-douala";
+import { NavigateurSemaine } from "@/components/navigateur-semaine";
+import { GrillePresences, tauxDeLaSemaine } from "@/components/etudiants/grille-presences";
+import { PanneauEtudiant } from "@/components/etudiants/panneau-etudiant";
+import { RechercheGlobale } from "@/components/etudiants/recherche-globale";
+import { DialogueListe } from "@/components/etudiants/dialogue-liste";
+import { SelecteurSymboles } from "@/components/etudiants/selecteur-symboles";
+import {
   DialogueConfirmation,
-  DialoguePresence,
   DialogueSalle,
   DialogueSanction,
   type ActionEtudiant,
 } from "@/components/etudiants/dialogues";
-import { libelleSalle } from "@/lib/catalogue";
-import type { StatutCompte, User } from "@/types/api";
-import { cn } from "@/lib/utils";
-
-const TOUTES = "toutes";
-const TOUS = "tous";
-
-const STATUTS: Record<StatutCompte, { label: string; classe: string }> = {
-  actif: { label: "Actif", classe: "bg-success/15 text-success" },
-  restreint: { label: "Restreint", classe: "bg-warning/20 text-warning-foreground" },
-  bloque: { label: "Bloqué", classe: "bg-destructive/10 text-destructive" },
-};
 
 export default function EtudiantsPage() {
-  const [search, setSearch] = useState("");
-  const [salleId, setSalleId] = useState(TOUTES);
-  const [statut, setStatut] = useState(TOUS);
+  const { data: salles } = salleHooks.useList();
+  const { data: semaines } = semaineHooks.useList();
+  const heure = useHeureDouala();
+  const reglage = useSymboles();
+
+  const [salleChoisie, setSalleChoisie] = useState<number | null>(null);
+  const [semaineChoisie, setSemaineChoisie] = useState<number | null>(null);
+  const [filtre, setFiltre] = useState("");
+  const [etudiantOuvertId, setEtudiantOuvertId] = useState<number | null>(null);
   const [action, setAction] = useState<ActionEtudiant | null>(null);
   const [dialogueListe, setDialogueListe] = useState(false);
+  const [enCours, setEnCours] = useState<{ etudiantId: number; seanceId: number } | null>(null);
 
-  const { data: salles } = salleHooks.useList();
-  const requete = useEtudiants({
-    search,
-    salleId: salleId === TOUTES ? undefined : Number(salleId),
-    statut: statut === TOUS ? undefined : (statut as StatutCompte),
-  });
+  // Par défaut la première salle : l'onglet montre tout de suite une classe.
+  const salleId = salleChoisie ?? salles?.[0]?.id ?? null;
+  const requete = useFeuillePresence(salleId, semaineChoisie);
+  const feuille = requete.data;
+  const semaine = feuille?.semaine ?? null;
+  const symboles = reglage.data?.symboles ?? feuille?.symboles ?? "coche";
 
-  const etudiants = requete.data?.pages.flatMap((p) => p.data) ?? [];
-  const total = requete.data?.pages[0]?.meta.total ?? 0;
-  const salleActive = salles?.find((s) => String(s.id) === salleId);
+  const semainesTriees = useMemo(
+    () => [...(semaines ?? [])].sort((a, b) => a.numero - b.numero),
+    [semaines],
+  );
+
+  // Un étudiant choisi dans la recherche globale s'ouvre dès que la feuille
+  // de sa salle est chargée ; s'il n'y figure plus (changé de salle,
+  // supprimé), le panneau disparaît simplement.
+  const etudiantOuvert = feuille?.etudiants.find((e) => e.id === etudiantOuvertId) ?? null;
+
+  const forcer = useForcerPresence();
+
+  function basculer(e: EtudiantFeuille, s: SeanceFeuille, etat: PresenceState) {
+    const precedent = e.presences[s.id] ?? null;
+    setEnCours({ etudiantId: e.id, seanceId: s.id });
+    forcer.mutate(
+      { seanceId: s.id, etudiantId: e.id, etat },
+      {
+        onSuccess: () =>
+          toast.success(
+            `${e.name} : ${etat === "present" ? "présent" : "absent"} · ${s.heure_debut} ${s.matiere ?? ""}`,
+            precedent
+              ? {
+                  action: {
+                    label: "Annuler",
+                    onClick: () => forcer.mutate({ seanceId: s.id, etudiantId: e.id, etat: precedent }),
+                  },
+                }
+              : undefined,
+          ),
+        onSettled: () => setEnCours(null),
+      },
+    );
+  }
+
+  function ouvrirDepuisRecherche(u: User) {
+    if (u.salle) setSalleChoisie(u.salle.id);
+    setFiltre("");
+    setEtudiantOuvertId(u.id);
+  }
+
+  const aucuneSemaine = semaines !== undefined && semainesTriees.length === 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
-            Étudiants
-          </h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Étudiants</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Comptes inscrits, salle par salle. Rattachement, présence forcée, restriction ou
-            blocage — et la liste de présence officielle à imprimer.
+            La feuille de présence de chaque salle, semaine par semaine. Cliquez une case pour
+            corriger une présence, un nom pour gérer le compte — et imprimez la liste officielle
+            telle qu&apos;elle s&apos;affiche.
           </p>
         </div>
-        <Button className="gap-1.5" onClick={() => setDialogueListe(true)}>
-          <FileDown className="size-4" />
-          Liste de présence
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <HorlogeDouala heure={heure} />
+          <SelecteurSymboles valeur={symboles} compact />
+          <Button
+            className="gap-1.5"
+            disabled={!feuille || !semaine}
+            onClick={() => setDialogueListe(true)}
+          >
+            <FileDown className="size-4" />
+            Liste de présence
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Nom ou matricule…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-10 rounded-lg pl-9"
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={salleId ? String(salleId) : ""}
+            onValueChange={(v) => {
+              setSalleChoisie(v ? Number(v) : null);
+              setFiltre("");
+              setEtudiantOuvertId(null);
+            }}
+          >
+            <SelectTrigger className="h-9 w-full rounded-lg sm:w-80">
+              <SelectValue placeholder="Choisir une salle…">
+                {() => {
+                  const s = salles?.find((s) => s.id === salleId);
+                  return s && `${libelleSalle(s)} · ${s.formation}`;
+                }}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {salles?.length === 0 && (
+                <p className="px-2.5 py-2 text-xs text-muted-foreground">
+                  Aucune salle : créez-en une dans le catalogue.
+                </p>
+              )}
+              {salles?.map((s: Salle) => (
+                <SelectItem key={s.id} value={String(s.id)}>
+                  {libelleSalle(s)} · {s.formation}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <RechercheGlobale
+            valeur={filtre}
+            onChange={setFiltre}
+            onChoisir={ouvrirDepuisRecherche}
+            salleAffichee={salleId}
           />
         </div>
-        <Select value={salleId} onValueChange={(v) => setSalleId(v ?? TOUTES)}>
-          <SelectTrigger className="h-10 w-full rounded-lg sm:w-64">
-            <SelectValue placeholder="Toutes les salles">
-              {() => (salleActive ? libelleSalle(salleActive) : "Toutes les salles")}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TOUTES}>Toutes les salles</SelectItem>
-            {salles?.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>{libelleSalle(s)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={statut} onValueChange={(v) => setStatut(v ?? TOUS)}>
-          <SelectTrigger className="h-10 w-full rounded-lg sm:w-40">
-            <SelectValue>
-              {() => (statut === TOUS ? "Tous statuts" : STATUTS[statut as StatutCompte].label)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TOUS}>Tous statuts</SelectItem>
-            {(Object.keys(STATUTS) as StatutCompte[]).map((s) => (
-              <SelectItem key={s} value={s}>{STATUTS[s].label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {(salleId !== TOUTES || statut !== TOUS || search) && (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Retirer les filtres"
-            onClick={() => { setSearch(""); setSalleId(TOUTES); setStatut(TOUS); }}
-          >
-            <RotateCcw className="size-4" />
-          </Button>
+
+        {!aucuneSemaine && (
+          <NavigateurSemaine
+            semaines={semainesTriees}
+            semaine={semaine}
+            aujourdhui={heure.date}
+            onChoisir={setSemaineChoisie}
+          />
         )}
       </div>
 
-      {requete.isLoading && (
-        <div className="flex flex-col gap-2">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[66px] rounded-xl" />)}
+      {feuille && <ResumeSalle feuille={feuille} />}
+
+      {requete.isLoading || !feuille ? (
+        <Skeleton className="h-[480px] w-full rounded-2xl" />
+      ) : !semaine ? (
+        <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-border px-4 py-3 text-[13px] text-muted-foreground">
+          <CalendarX2 className="size-4 shrink-0" />
+          Aucune semaine n&apos;est définie : créez le calendrier du semestre depuis l&apos;onglet
+          Emplois du temps pour voir les présences.
         </div>
+      ) : (
+        <>
+          {feuille.seances.length === 0 && feuille.etudiants.length > 0 && (
+            <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-border px-4 py-3 text-[13px] text-muted-foreground">
+              <CalendarX2 className="size-4 shrink-0" />
+              Aucune séance programmée cette semaine dans cette salle : la grille n&apos;a pas de
+              colonne. Programmez les cours depuis l&apos;onglet Emplois du temps.
+            </div>
+          )}
+          <GrillePresences
+            feuille={feuille}
+            symboles={symboles}
+            filtre={filtre}
+            aujourdhui={heure.date}
+            enCours={enCours}
+            onEtudiant={(e) => setEtudiantOuvertId(e.id)}
+            onBasculer={basculer}
+          />
+          <Legende symboles={symboles} />
+        </>
       )}
 
-      {!requete.isLoading && etudiants.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border py-14 text-center">
-          <Users className="size-5 text-muted-foreground/60" />
-          <p className="text-[13px] text-muted-foreground">Aucun étudiant ne correspond.</p>
-        </div>
+      {etudiantOuvert && feuille && (
+        <PanneauEtudiant
+          etudiant={etudiantOuvert}
+          feuille={feuille}
+          symboles={symboles}
+          onAction={(type) => setAction({ type, etudiant: versUser(etudiantOuvert, feuille) })}
+          onFermer={() => setEtudiantOuvertId(null)}
+        />
       )}
 
-      {etudiants.length > 0 && (
-        <p className="text-xs text-muted-foreground tabular-nums">
-          {etudiants.length} sur {total}
-        </p>
+      {action && salles && (
+        <Dialogues
+          action={action}
+          salles={salles}
+          onFermer={() => setAction(null)}
+          onTermine={() => {
+            setAction(null);
+            if (action.type === "supprimer" || action.type === "salle") setEtudiantOuvertId(null);
+          }}
+        />
       )}
 
-      <div className="flex flex-col gap-2">
-        {etudiants.map((e) => (
-          <LigneEtudiant key={e.id} etudiant={e} onAction={(type) => setAction({ type, etudiant: e } as ActionEtudiant)} />
-        ))}
-      </div>
-
-      {requete.hasNextPage && (
-        <div className="flex justify-center pt-1">
-          <Button
-            variant="outline"
-            className="h-10 rounded-xl px-5"
-            onClick={() => requete.fetchNextPage()}
-            disabled={requete.isFetchingNextPage}
-          >
-            {requete.isFetchingNextPage ? "Chargement…" : "Voir plus"}
-          </Button>
-        </div>
+      {dialogueListe && feuille && semaine && (
+        <DialogueListe
+          salle={feuille.salle}
+          semaine={semaine}
+          symboles={symboles}
+          onFermer={() => setDialogueListe(false)}
+        />
       )}
-
-      {action && <Dialogues action={action} salles={salles ?? []} onFermer={() => setAction(null)} />}
-      {dialogueListe && <DialogueListePresence salles={salles ?? []} onFermer={() => setDialogueListe(false)} />}
     </div>
   );
 }
 
-function LigneEtudiant({
-  etudiant: e,
-  onAction,
-}: {
-  etudiant: User;
-  onAction: (type: ActionEtudiant["type"]) => void;
-}) {
-  const statut = STATUTS[e.statut_compte];
-  const fm = e.formation === "FM";
+/** Effectif, délégué, comptes sanctionnés : ce qu'on veut savoir d'une classe d'un coup d'œil. */
+function ResumeSalle({ feuille }: { feuille: FeuillePresence }) {
+  const total = feuille.etudiants.length;
+  const parFormation = feuille.etudiants.reduce<Record<string, number>>((acc, e) => {
+    if (e.formation) acc[e.formation] = (acc[e.formation] ?? 0) + 1;
+    return acc;
+  }, {});
+  const restreints = feuille.etudiants.filter((e) => e.statut_compte === "restreint").length;
+  const bloques = feuille.etudiants.filter((e) => e.statut_compte === "bloque").length;
+  const tenues = feuille.seances.filter((s) => s.statut === "tenue").length;
+  const { presents, notees } = feuille.etudiants.reduce(
+    (acc, e) => {
+      const t = tauxDeLaSemaine(e, feuille.seances);
+      return { presents: acc.presents + t.presents, notees: acc.notees + t.total };
+    },
+    { presents: 0, notees: 0 },
+  );
+  const taux = notees > 0 ? Math.round((presents / notees) * 100) : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className={cn(
-        "flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs",
-        e.statut_compte === "actif" ? "border-border" : "border-warning/40",
-      )}
-    >
-      <Avatar className="size-9 shrink-0">
-        <AvatarFallback>{initiales(e.name)}</AvatarFallback>
-      </Avatar>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="truncate text-sm font-semibold text-foreground">{e.name}</p>
-          {e.role === "Delegue" && (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">Délégué</span>
-          )}
-          {e.formation && (
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                fm ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300 dark:bg-amber-900/40 dark:text-amber-200 dark:ring-amber-700" : "bg-muted text-muted-foreground",
-              )}
-              title={fm ? "Formation migrante : venu de l'alternance, rattaché à une salle FI" : undefined}
-            >
-              {e.formation}
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-border bg-card px-4 py-2.5 text-[13px] text-muted-foreground shadow-xs">
+      <span className="flex items-center gap-1.5">
+        <DoorOpen className="size-4" />
+        <span className="font-medium text-foreground">{feuille.salle.nom}</span>
+        {feuille.salle.filiere && <span>· {feuille.salle.filiere}</span>}
+        {feuille.salle.niveau && <span>· {feuille.salle.niveau}</span>}
+      </span>
+      <span className="flex items-center gap-1.5">
+        <Users className="size-4" />
+        <span className="font-medium text-foreground tabular-nums">{total}</span> étudiant{total > 1 ? "s" : ""}
+        {Object.keys(parFormation).length > 0 && (
+          <span className="flex items-center gap-1">
+            {Object.entries(parFormation).map(([f, n]) => (
+              <span
+                key={f}
+                className={cn(
+                  "rounded px-1.5 py-px text-[11px] font-semibold tabular-nums",
+                  f === "FM" ? "bg-warning/25 text-warning-foreground" : "bg-secondary text-secondary-foreground",
+                )}
+              >
+                {n} {f}
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
+      <span className="flex items-center gap-1.5">
+        <Crown className="size-4 text-warning-foreground" />
+        {feuille.delegue ? (
+          <span className="font-medium text-foreground">{feuille.delegue.name}</span>
+        ) : (
+          <span>aucun délégué</span>
+        )}
+      </span>
+      {(restreints > 0 || bloques > 0) && (
+        <span className="flex items-center gap-2">
+          {restreints > 0 && (
+            <span className="flex items-center gap-1 text-warning-foreground">
+              <ShieldOff className="size-3.5" /> {restreints} restreint{restreints > 1 ? "s" : ""}
             </span>
           )}
-          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", statut.classe)}>{statut.label}</span>
-        </div>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          <span className="tabular-nums">{e.phone}</span>
-          {e.salle && ` · ${e.salle.nom}`}
-          {e.filiere && ` · ${e.filiere.nom}`}
-          {e.niveau && ` · ${e.niveau.nom}`}
-        </p>
-        <AvertissementRestreint etudiant={e} />
-      </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon-sm" aria-label={`Actions pour ${e.name}`} />}
-        >
-          <MoreHorizontal className="size-4" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onClick={() => onAction("presence")}>
-            <ClipboardCheck className="size-4" /> Forcer une présence
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAction("salle")}>
-            <ArrowLeftRight className="size-4" /> Changer de salle
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {e.statut_compte !== "actif" && (
-            <DropdownMenuItem onClick={() => onAction("retablir")}>
-              <UserCheck className="size-4" /> Rétablir le compte
-            </DropdownMenuItem>
+          {bloques > 0 && (
+            <span className="flex items-center gap-1 text-destructive">
+              <ShieldBan className="size-3.5" /> {bloques} bloqué{bloques > 1 ? "s" : ""}
+            </span>
           )}
-          {e.statut_compte !== "restreint" && (
-            <DropdownMenuItem onClick={() => onAction("restreindre")}>
-              <ShieldOff className="size-4" /> Restreindre
-            </DropdownMenuItem>
-          )}
-          {e.statut_compte !== "bloque" && (
-            <DropdownMenuItem onClick={() => onAction("bloquer")}>
-              <ShieldBan className="size-4" /> Bloquer
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => onAction("supprimer")}>
-            <Trash2 className="size-4" /> Supprimer le compte
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </motion.div>
+        </span>
+      )}
+      {taux !== null && (
+        <span className="ml-auto tabular-nums">
+          Assiduité de la semaine :{" "}
+          <span
+            className={cn(
+              "font-semibold",
+              taux >= 75 ? "text-success" : taux >= 50 ? "text-warning-foreground" : "text-destructive",
+            )}
+          >
+            {taux} %
+          </span>{" "}
+          <span className="text-muted-foreground/70">
+            sur {tenues} séance{tenues > 1 ? "s" : ""} tenue{tenues > 1 ? "s" : ""}
+          </span>
+        </span>
+      )}
+    </div>
   );
 }
 
-/** Un seul point de montage pour tous les dialogues d'action, selon ce qui est demandé. */
-function Dialogues({ action, salles, onFermer }: { action: ActionEtudiant; salles: Salle[]; onFermer: () => void }) {
+function Legende({ symboles }: { symboles: "coche" | "valeur" }) {
+  const present = symboles === "valeur" ? "+1" : "✓";
+  const absent = symboles === "valeur" ? "−1" : "✗";
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1 text-[12.5px] text-muted-foreground">
+      <span>
+        <span className="font-display font-bold text-success">{present}</span> présent
+      </span>
+      <span>
+        <span className="font-display font-bold text-destructive">{absent}</span> absent
+      </span>
+      <span>
+        <span className="font-display font-bold text-muted-foreground/60">·</span> non renseigné
+      </span>
+      <span>
+        <span className="font-display font-bold text-muted-foreground/60">–</span> appel jamais validé
+      </span>
+      <span className="flex items-center gap-1">
+        <Crown className="size-3.5 text-warning-foreground" /> délégué
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="rounded bg-warning/25 px-1 text-[10px] font-semibold text-warning-foreground">FM</span>
+        formation migrante
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Les dialogues d'action attendent le modèle `User` de l'API ; la feuille
+ * ne transporte que ce dont la grille a besoin. On complète avec la salle
+ * affichée — ce que ces dialogues lisent réellement.
+ */
+function versUser(e: EtudiantFeuille, feuille: FeuillePresence): User {
+  return {
+    id: e.id,
+    name: e.name,
+    phone: e.phone,
+    role: e.role,
+    effective_role: e.role,
+    validation_status: "approved",
+    statut_compte: e.statut_compte,
+    motif_statut: e.motif_statut,
+    statut_modifie_le: null,
+    formation: e.formation,
+    salle: { id: feuille.salle.id, nom: feuille.salle.nom },
+    niveau: null,
+    filiere: feuille.salle.filiere ? { id: 0, nom: feuille.salle.filiere } : null,
+    quota: 0,
+    has_active_promotion: false,
+  };
+}
+
+/** Un seul point de montage pour les dialogues d'action sur un compte. */
+function Dialogues({
+  action,
+  salles,
+  onFermer,
+  onTermine,
+}: {
+  action: ActionEtudiant;
+  salles: Salle[];
+  onFermer: () => void;
+  onTermine: () => void;
+}) {
   const changerSalle = useChangerSalle();
   const changerStatut = useChangerStatut();
   const supprimer = useSupprimerEtudiant();
-  const forcer = useForcerPresence();
-  const seances = useSeancesDeSalle(action.type === "presence" ? action.etudiant.salle?.id : undefined);
-
-  const fermerApres = { onSuccess: onFermer };
+  const apres = { onSuccess: onTermine };
 
   switch (action.type) {
     case "salle":
@@ -309,7 +413,7 @@ function Dialogues({ action, salles, onFermer }: { action: ActionEtudiant; salle
           etudiant={action.etudiant}
           salles={salles}
           enCours={changerSalle.isPending}
-          onConfirmer={(salle_id) => changerSalle.mutate({ id: action.etudiant.id, salle_id }, fermerApres)}
+          onConfirmer={(salle_id) => changerSalle.mutate({ id: action.etudiant.id, salle_id }, apres)}
           onFermer={onFermer}
         />
       );
@@ -320,7 +424,9 @@ function Dialogues({ action, salles, onFermer }: { action: ActionEtudiant; salle
           etudiant={action.etudiant}
           type={action.type}
           enCours={changerStatut.isPending}
-          onConfirmer={(motif) => changerStatut.mutate({ id: action.etudiant.id, action: action.type, motif }, fermerApres)}
+          onConfirmer={(motif) =>
+            changerStatut.mutate({ id: action.etudiant.id, action: action.type, motif }, apres)
+          }
           onFermer={onFermer}
         />
       );
@@ -330,7 +436,7 @@ function Dialogues({ action, salles, onFermer }: { action: ActionEtudiant; salle
           etudiant={action.etudiant}
           type="retablir"
           enCours={changerStatut.isPending}
-          onConfirmer={() => changerStatut.mutate({ id: action.etudiant.id, action: "retablir" }, fermerApres)}
+          onConfirmer={() => changerStatut.mutate({ id: action.etudiant.id, action: "retablir" }, apres)}
           onFermer={onFermer}
         />
       );
@@ -340,122 +446,9 @@ function Dialogues({ action, salles, onFermer }: { action: ActionEtudiant; salle
           etudiant={action.etudiant}
           type="supprimer"
           enCours={supprimer.isPending}
-          onConfirmer={() => supprimer.mutate(action.etudiant.id, fermerApres)}
-          onFermer={onFermer}
-        />
-      );
-    case "presence":
-      return (
-        <DialoguePresence
-          etudiant={action.etudiant}
-          seances={seances.data}
-          chargement={seances.isLoading}
-          enCours={forcer.isPending}
-          onConfirmer={(seanceId, etat) =>
-            forcer.mutate({ seanceId, etudiantId: action.etudiant.id, etat }, fermerApres)
-          }
+          onConfirmer={() => supprimer.mutate(action.etudiant.id, apres)}
           onFermer={onFermer}
         />
       );
   }
-}
-
-/** Génération de la liste de présence hebdomadaire officielle d'une salle. */
-function DialogueListePresence({ salles, onFermer }: { salles: Salle[]; onFermer: () => void }) {
-  const { data: semaines } = semaineHooks.useList();
-  const telecharger = useTelechargerListe();
-  const [salleId, setSalleId] = useState("");
-  const [semaineId, setSemaineId] = useState("");
-  const [semestre, setSemestre] = useState("");
-  const [annee, setAnnee] = useState("");
-
-  const salle = salles.find((s) => String(s.id) === salleId);
-  const semaine = semaines?.find((s) => String(s.id) === semaineId);
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onFermer()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileDown className="size-4 text-primary" />
-            Liste de présence officielle
-          </DialogTitle>
-          <DialogDescription>
-            Au format du département : en-tête bilingue, une colonne par jour, séances de la
-            semaine préremplies. Les étudiants FM y sont signalés. Semestre et année sont
-            déduits automatiquement — précisez-les seulement s&apos;ils diffèrent.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <Label className="text-xs text-muted-foreground">Salle</Label>
-            <Select value={salleId} onValueChange={(v) => setSalleId(v ?? "")}>
-              <SelectTrigger className="h-10 w-full rounded-lg">
-                <SelectValue placeholder="Choisir…">{() => (salle ? libelleSalle(salle) : "Choisir…")}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {salles.map((s) => (
-                  <SelectItem key={s.id} value={String(s.id)}>{libelleSalle(s)} · {s.formation}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <Label className="text-xs text-muted-foreground">Semaine</Label>
-            <Select value={semaineId} onValueChange={(v) => setSemaineId(v ?? "")}>
-              <SelectTrigger className="h-10 w-full rounded-lg">
-                <SelectValue placeholder="Choisir…">
-                  {() => (semaine ? `S${semaine.numero} · du ${dateFr(semaine.date_debut)} au ${dateFr(semaine.date_fin)}` : "Choisir…")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {semaines?.map((s) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    S{s.numero} · du {dateFr(s.date_debut)} au {dateFr(s.date_fin)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs text-muted-foreground">Semestre (optionnel)</Label>
-            <Input type="number" min={1} max={6} value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="auto" className="h-10 rounded-lg" />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs text-muted-foreground">Année académique (optionnel)</Label>
-            <Input value={annee} onChange={(e) => setAnnee(e.target.value)} placeholder="auto, ex. 2026-2027" className="h-10 rounded-lg" />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onFermer}>Fermer</Button>
-          <Button
-            className="gap-1.5"
-            disabled={!salle || !semaine || telecharger.isPending}
-            onClick={() =>
-              salle && semaine &&
-              telecharger.mutate({
-                salleId: salle.id,
-                semaineId: semaine.id,
-                semestre: semestre ? Number(semestre) : undefined,
-                annee: annee || undefined,
-              })
-            }
-          >
-            <FileDown className="size-4" />
-            {telecharger.isPending ? "Génération…" : "Télécharger le PDF"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function initiales(nom: string) {
-  return nom.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-}
-
-function dateFr(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }

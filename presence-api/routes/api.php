@@ -10,9 +10,11 @@ use App\Http\Controllers\Api\EnseignantController;
 use App\Http\Controllers\Api\EtudiantController;
 use App\Http\Controllers\Api\FaceAuthSettingController;
 use App\Http\Controllers\Api\FaceController;
+use App\Http\Controllers\Api\FeuillePresenceController;
 use App\Http\Controllers\Api\FiliereController;
 use App\Http\Controllers\Api\FormationRequestController;
 use App\Http\Controllers\Api\HeureController;
+use App\Http\Controllers\Api\ListePresenceSettingController;
 use App\Http\Controllers\Api\MatiereController;
 use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\NotificationController;
@@ -116,6 +118,9 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
 
     // Liste de présence hebdomadaire officielle d'une salle.
     Route::get('/salles/{salle}/liste-presence.pdf', [PdfController::class, 'listeHebdomadaire']);
+    Route::get('/salles/{salle}/feuille-presence', [FeuillePresenceController::class, 'semaine']);
+    Route::get('/parametres/liste-presence', [ListePresenceSettingController::class, 'show']);
+    Route::put('/parametres/liste-presence', [ListePresenceSettingController::class, 'update']);
 
     // Présence forcée par l'admin : passe outre fenêtre, verrou et GPS.
     Route::post('/seances/{seance}/presences/{etudiant}', [PresenceController::class, 'forcer']);
