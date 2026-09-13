@@ -34,6 +34,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useMe } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useAttendanceStats } from "@/hooks/use-attendance-stats";
+import { FUSEAU, useHeureDouala } from "@/hooks/use-heure";
 import {
   useMarkDelegue,
   useMarkProf,
@@ -71,7 +72,9 @@ export default function DashboardPage() {
   const [checkInSeance, setCheckInSeance] = useState<Seance | null>(null);
   const [rosterSeance, setRosterSeance] = useState<Seance | null>(null);
   const [pushSeance, setPushSeance] = useState<Seance | null>(null);
-  const today = new Date();
+  // La date affichée est celle de Douala, servie par l'API : c'est elle qui
+  // décide des séances « d'aujourd'hui », pas l'horloge du téléphone.
+  const { maintenant: today } = useHeureDouala();
   const active = seances?.find((s) => s.is_active);
   const focus = active ?? seances?.find((s) => !s.is_past && !s.is_active);
   const remaining = seances?.filter((s) => !s.is_past).length ?? 0;
@@ -163,19 +166,26 @@ export default function DashboardPage() {
                   : "Votre journée, à votre rythme."}
           </p>
         </div>
-        <div className={`date-stamp ${styles.date}`}>
+        <div className={`date-stamp ${styles.date}`} title={`Heure de ${FUSEAU.split("/")[1]}`}>
           <span className={styles.dateNumber}>
-            {today.getDate().toString().padStart(2, "0")}
+            {today
+              ? today.toLocaleDateString("fr-FR", { timeZone: FUSEAU, day: "2-digit" })
+              : "--"}
           </span>
           <span className={styles.dateWords}>
             <strong>
-              {today.toLocaleDateString("fr-FR", { weekday: "long" })}
+              {today
+                ? today.toLocaleDateString("fr-FR", { timeZone: FUSEAU, weekday: "long" })
+                : "\u00a0"}
             </strong>
             <span>
-              {today.toLocaleDateString("fr-FR", {
-                month: "long",
-                year: "numeric",
-              })}
+              {today
+                ? today.toLocaleDateString("fr-FR", {
+                    timeZone: FUSEAU,
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "\u00a0"}
             </span>
           </span>
         </div>
