@@ -450,8 +450,5 @@ function Dialogues({
           onFermer={onFermer}
         />
       );
-    case "presence":
-      // Les présences se corrigent directement dans la grille.
-      return null;
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, ShieldBan, ShieldOff, Trash2, ArrowLeftRight, UserCheck } from "lucide-react";
+import { ShieldBan, ShieldOff, Trash2, ArrowLeftRight, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,25 +22,15 @@ import {
 } from "@/components/ui/select";
 import { libelleSalle } from "@/lib/catalogue";
 import type { Salle } from "@/hooks/use-catalog";
-import type { PresenceState, Seance, User } from "@/types/api";
-import { cn } from "@/lib/utils";
+import type { User } from "@/types/api";
 
-/** Action demandée depuis le menu d'une ligne : un seul dialogue ouvert à la fois. */
+/** Action demandée sur un compte : un seul dialogue ouvert à la fois. */
 export type ActionEtudiant =
-  | { type: "presence"; etudiant: User }
   | { type: "salle"; etudiant: User }
   | { type: "restreindre"; etudiant: User }
   | { type: "bloquer"; etudiant: User }
   | { type: "retablir"; etudiant: User }
   | { type: "supprimer"; etudiant: User };
-
-const JOURS: Record<string, string> = {
-  LUNDI: "Lun", MARDI: "Mar", MERCREDI: "Mer", JEUDI: "Jeu", VENDREDI: "Ven", SAMEDI: "Sam", DIMANCHE: "Dim",
-};
-
-function dateCourte(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
-}
 
 // --- Changer de salle -----------------------------------------------------
 
@@ -232,113 +222,5 @@ export function DialogueConfirmation({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-// --- Forcer une présence ---------------------------------------------------
-
-export function DialoguePresence({
-  etudiant,
-  seances,
-  chargement,
-  enCours,
-  onConfirmer,
-  onFermer,
-}: {
-  etudiant: User;
-  seances: Seance[] | undefined;
-  chargement: boolean;
-  enCours: boolean;
-  onConfirmer: (seanceId: number, etat: PresenceState) => void;
-  onFermer: () => void;
-}) {
-  const [seanceId, setSeanceId] = useState<number | null>(null);
-  const [etat, setEtat] = useState<PresenceState>("present");
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onFermer()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Forcer la présence de {etudiant.name}</DialogTitle>
-          <DialogDescription>
-            Passe outre la fenêtre horaire, le verrou du délégué et le périmètre GPS. Votre nom
-            est enregistré avec la présence : elle restera distinguable d&apos;un pointage réel.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
-            {(["present", "absent"] as const).map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => setEtat(e)}
-                className={cn(
-                  "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                  etat === e
-                    ? e === "present"
-                      ? "border-success bg-success/10 text-success"
-                      : "border-destructive bg-destructive/10 text-destructive"
-                    : "border-border text-muted-foreground hover:bg-muted",
-                )}
-              >
-                {e === "present" ? "Présent" : "Absent"}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto rounded-lg border border-border p-1.5">
-            {chargement && <p className="p-3 text-sm text-muted-foreground">Chargement des séances…</p>}
-            {seances?.length === 0 && (
-              <p className="p-3 text-sm text-muted-foreground">Aucune séance enregistrée pour sa salle.</p>
-            )}
-            {seances?.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setSeanceId(s.id)}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors",
-                  seanceId === s.id ? "bg-primary/10 text-foreground" : "hover:bg-muted",
-                )}
-              >
-                <span className="w-16 shrink-0 text-xs text-muted-foreground tabular-nums">
-                  {JOURS[s.jour]} {dateCourte(s.date_seance)}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-medium">{s.matiere ?? "Séance"}</span>
-                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                  {s.heure_debut.slice(0, 5)}–{s.heure_fin.slice(0, 5)}
-                </span>
-                {s.presences_locked && (
-                  <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    verrouillée
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onFermer}>Annuler</Button>
-          <Button disabled={seanceId === null || enCours} onClick={() => seanceId && onConfirmer(seanceId, etat)}>
-            {enCours ? "Enregistrement…" : `Marquer ${etat === "present" ? "présent" : "absent"}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function AvertissementRestreint({ etudiant }: { etudiant: User }) {
-  if (etudiant.statut_compte === "actif") return null;
-  return (
-    <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-      <AlertTriangle className="mt-0.5 size-3 shrink-0 text-warning-foreground" />
-      <span>
-        {etudiant.statut_compte === "bloque" ? "Bloqué" : "Restreint"}
-        {etudiant.motif_statut && ` — ${etudiant.motif_statut}`}
-      </span>
-    </p>
   );
 }
