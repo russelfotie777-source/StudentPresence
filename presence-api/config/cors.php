@@ -30,9 +30,11 @@ return [
 
     'allowed_headers' => ['*'],
 
-    // Sans cette exposition, le navigateur ne lit pas le nom de fichier d'un
-    // PDF téléchargé en cross-origin et retombe sur un nom générique.
-    'exposed_headers' => ['Content-Disposition'],
+    // Sans ces expositions, le navigateur ne peut lire en cross-origin ni
+    // Retry-After sur un 429 (les apps n'afficheraient qu'un « patientez »
+    // au lieu du délai réel), ni le nom de fichier d'un PDF téléchargé (qui
+    // retomberait sur un nom générique).
+    'exposed_headers' => ['Retry-After', 'Content-Disposition'],
 
     'max_age' => 0,
 
