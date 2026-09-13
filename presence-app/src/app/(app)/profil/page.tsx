@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RoleBadge } from "@/components/user-badge";
 import { AttendanceTrendChart } from "@/components/attendance-trend-chart";
 import { CarteAutorisations } from "@/components/carte-autorisations";
+import { CarteNotifications } from "@/components/carte-notifications";
+import { BanniereRestriction } from "@/components/banniere-restriction";
 import { useLogout, useMe } from "@/hooks/use-auth";
 import { useAttendanceTrend } from "@/hooks/use-attendance-stats";
 import { useMyFormationRequests, useSubmitFormationRequest } from "@/hooks/use-formation-requests";
@@ -54,6 +56,10 @@ export default function ProfilPage() {
         {user.filiere && <InfoRow icon={BookOpen} label="Filière" value={user.filiere.nom} />}
         {user.niveau && <InfoRow icon={GraduationCap} label="Niveau" value={user.niveau.nom} />}
       </div>
+
+      <BanniereRestriction user={user} />
+
+      <CarteNotifications />
 
       {isFA && <FormationMigrationCard />}
 

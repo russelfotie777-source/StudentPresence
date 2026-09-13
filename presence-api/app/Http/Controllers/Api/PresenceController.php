@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\FormationType;
 use App\Enums\PresenceState;
 use App\Enums\PushStatus;
 use App\Enums\UserRole;
@@ -12,6 +11,7 @@ use App\Models\User;
 use App\Services\GeoDistance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class PresenceController extends Controller
@@ -32,6 +32,17 @@ class PresenceController extends Controller
 
         if ($seance->salle_id !== $user->salle_id) {
             abort(403, "Cette séance n'appartient pas à votre salle.");
+        }
+
+        if ($user->pointageInterdit()) {
+            throw ValidationException::withMessages([
+                'compte' => [
+                    'Le pointage vous est refusé : votre compte est '
+                    .($user->estBloque() ? 'bloqué' : 'restreint')
+                    .' par l\'administration.'
+                    .($user->motif_statut ? " Motif : {$user->motif_statut}" : ''),
+                ],
+            ]);
         }
 
         // Même fenêtre ±15 min que le marquage du délégué (Seance::isActive) :
@@ -106,6 +117,42 @@ class PresenceController extends Controller
         );
 
         return response()->json(['presence' => $presence, 'distance' => $distance]);
+    }
+
+    /**
+     * L'admin force l'état de présence d'un étudiant sur une séance — le
+     * "super pouvoir" : il passe outre la fenêtre horaire, le verrou du
+     * délégué et le périmètre GPS. Précisément parce qu'il écrase le pointage
+     * réel, l'auteur est enregistré (forcee_par_id) : une présence forcée
+     * doit rester distinguable d'une présence constatée en cas de
+     * contestation.
+     */
+    public function forcer(Request $request, Seance $seance, User $etudiant)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        if (! in_array($etudiant->role, [UserRole::Etudiant, UserRole::Delegue], true)) {
+            throw ValidationException::withMessages(['etudiant' => ['Ce compte n\'est pas un compte étudiant.']]);
+        }
+
+        if ($etudiant->salle_id !== $seance->salle_id) {
+            throw ValidationException::withMessages([
+                'etudiant' => ['Cet étudiant n\'appartient pas à la salle de cette séance.'],
+            ]);
+        }
+
+        $data = $request->validate(['etat' => ['required', Rule::enum(PresenceState::class)]]);
+
+        $presence = $seance->presences()->updateOrCreate(
+            ['etudiant_id' => $etudiant->id],
+            [
+                'etat' => $data['etat'],
+                'date_marquage' => now(),
+                'forcee_par_id' => $request->user()->id,
+            ],
+        );
+
+        return response()->json(['presence' => $presence]);
     }
 
     /**
@@ -195,15 +242,11 @@ class PresenceController extends Controller
      */
     private function rosterQuery(Seance $seance, User $delegue)
     {
-        $formations = $seance->salle->formation === FormationType::FI
-            ? [FormationType::FI->value, FormationType::FM->value]
-            : [FormationType::FA->value];
-
         return User::query()
             ->where('role', UserRole::Etudiant->value)
             ->where('salle_id', $seance->salle_id)
             ->where('niveau_id', $delegue->niveau_id)
-            ->whereIn('formation', $formations);
+            ->whereIn('formation', $seance->salle->formationsAccueillies());
     }
 
     private function authorizeDelegue(Request $request, Seance $seance): User

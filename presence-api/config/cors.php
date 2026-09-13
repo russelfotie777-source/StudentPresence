@@ -30,10 +30,11 @@ return [
 
     'allowed_headers' => ['*'],
 
-    // Sans cette exposition, le navigateur ne peut pas lire Retry-After sur
-    // une réponse 429 cross-origin, et les apps ne peuvent afficher qu'un
-    // « patientez un instant » au lieu du délai réel.
-    'exposed_headers' => ['Retry-After'],
+    // Sans ces expositions, le navigateur ne peut lire en cross-origin ni
+    // Retry-After sur un 429 (les apps n'afficheraient qu'un « patientez »
+    // au lieu du délai réel), ni le nom de fichier d'un PDF téléchargé (qui
+    // retomberait sur un nom générique).
+    'exposed_headers' => ['Retry-After', 'Content-Disposition'],
 
     'max_age' => 0,
 

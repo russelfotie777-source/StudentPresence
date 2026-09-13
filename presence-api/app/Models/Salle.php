@@ -39,4 +39,19 @@ class Salle extends Model
     {
         return $this->hasMany(User::class, 'salle_id');
     }
+
+    /**
+     * Formations dont les étudiants suivent les cours dans cette salle : une
+     * salle FI accueille aussi les "migrants" FM (des FA passés à l'emploi
+     * du temps de jour), une salle FA n'accueille que des FA. Règle héritée
+     * de l'ancienne app, partagée par le roster et la liste de présence.
+     *
+     * @return array<int, string>
+     */
+    public function formationsAccueillies(): array
+    {
+        return $this->formation === FormationType::FI
+            ? [FormationType::FI->value, FormationType::FM->value]
+            : [FormationType::FA->value];
+    }
 }
