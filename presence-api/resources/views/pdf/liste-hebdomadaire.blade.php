@@ -30,13 +30,18 @@
         table.etudiants td.num { width: 3.5%; text-align: center; }
         table.etudiants td.mat { width: 9%; }
         table.etudiants td.nom { width: 33%; }
-        table.etudiants td.jour { width: 9.08%; }
+        table.etudiants td.jour { width: 9.08%; text-align: center; font-size: 11.5px; line-height: 1; }
+        /* Marques de présence : la croix (ou le −1) en rouge, c'est ce que l'œil cherche. */
+        .present { color: #1b5e20; }
+        .absent { color: #c62828; }
+        .marque + .marque { margin-left: 6px; }
         tr.fm td { background: #fff3cd; }
         tr.fm td.nom .tag { display: inline-block; margin-left: 5px; padding: 0 4px; border: 1px solid #b7791f;
                              color: #7a4f00; font-size: 6.6px; border-radius: 2px; vertical-align: middle; }
         .legende { margin-top: 4px; font-size: 7.2px; color: #444; }
         .legende .pastille { display: inline-block; width: 9px; height: 9px; background: #fff3cd;
                              border: 1px solid #b7791f; vertical-align: middle; margin-right: 4px; }
+        .legende .marque { font-weight: bold; font-size: 10px; }
 
         /* Tableau des séances de la semaine. */
         table.seances { width: 100%; border-collapse: collapse; margin-top: 14px; page-break-inside: avoid; }
@@ -52,6 +57,7 @@
 </head>
 <body>
     @php($e = $etablissement)
+    @php($signe = $symboles === 'valeur' ? ['present' => '+1', 'absent' => '−1'] : ['present' => '✓', 'absent' => '✗'])
 
     <table class="entete">
         <tr>
@@ -130,8 +136,13 @@
                     <td class="num">{{ $etudiant['numero'] }}</td>
                     <td class="mat">{{ $etudiant['matricule'] }}</td>
                     <td class="nom">{{ $etudiant['nom'] }}@if ($etudiant['fm'])<span class="tag">FM</span>@endif</td>
-                    <td class="jour"></td><td class="jour"></td><td class="jour"></td>
-                    <td class="jour"></td><td class="jour"></td><td class="jour"></td>
+                    @foreach ($etudiant['jours'] as $marques)
+                        <td class="jour">
+                            @foreach ($marques as $marque)
+                                @if ($marque)<span class="marque {{ $marque }}">{{ $signe[$marque] }}</span>@endif
+                            @endforeach
+                        </td>
+                    @endforeach
                 </tr>
             @endforeach
             @if ($etudiants->isEmpty())
@@ -140,10 +151,18 @@
         </tbody>
     </table>
 
-    @if ($contient_fm && $etudiants->contains('fm', true))
+    @if ($contient_marques || ($contient_fm && $etudiants->contains('fm', true)))
         <div class="legende">
-            <span class="pastille"></span>
-            Étudiant en formation migrante (FM) : venu de l'alternance, rattaché à cette salle de formation initiale.
+            @if ($contient_marques)
+                <span class="marque present">{{ $signe['present'] }}</span> présent&nbsp;&nbsp;
+                <span class="marque absent">{{ $signe['absent'] }}</span> absent&nbsp;&nbsp;
+                (une marque par séance, dans l'ordre des horaires ; case vide : séance à venir ou appel non validé)
+            @endif
+            @if ($contient_fm && $etudiants->contains('fm', true))
+                @if ($contient_marques)<br>@endif
+                <span class="pastille"></span>
+                Étudiant en formation migrante (FM) : venu de l'alternance, rattaché à cette salle de formation initiale.
+            @endif
         </div>
     @endif
 
