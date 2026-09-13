@@ -1,7 +1,17 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { Fingerprint } from "lucide-react";
 import { OrbitHero } from "@/components/orbit-hero";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  if (pathname === "/login") return children;
+
   return (
     <div className="relative flex min-h-screen flex-1 flex-col overflow-hidden bg-background">
       <OrbitHero heightClass="h-52" roundedClass="rounded-b-[2rem]" />
@@ -12,15 +22,23 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <div
               aria-hidden
               className="pointer-events-none absolute -inset-3 -z-10 rounded-full blur-xl"
-              style={{ background: "radial-gradient(circle, rgba(129,111,255,.5) 0%, transparent 70%)" }}
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(129,111,255,.5) 0%, transparent 70%)",
+              }}
             />
-            <Fingerprint className="h-7 w-7 text-white drop-shadow-[0_1px_2px_rgba(30,20,90,.4)]" strokeWidth={2} />
+            <Fingerprint
+              className="h-7 w-7 text-white drop-shadow-[0_1px_2px_rgba(30,20,90,.4)]"
+              strokeWidth={2}
+            />
           </div>
           <div>
             <h1 className="font-display text-xl font-bold tracking-tight text-ink-900">
               Présence
             </h1>
-            <p className="text-sm text-ink-500">Pointage de présence en ligne</p>
+            <p className="text-sm text-ink-500">
+              Pointage de présence en ligne
+            </p>
           </div>
         </div>
         {children}

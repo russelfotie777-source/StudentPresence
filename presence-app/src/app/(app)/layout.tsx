@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { BottomNav } from "@/components/bottom-nav";
 import { useMe } from "@/hooks/use-auth";
 import { getToken } from "@/lib/api-client";
@@ -26,7 +26,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace("/face");
       return;
     }
-    if (!isLoading && user && user.role !== "Etudiant" && user.validation_status !== "approved") {
+    if (
+      !isLoading &&
+      user &&
+      user.role !== "Etudiant" &&
+      user.validation_status !== "approved"
+    ) {
       router.replace("/validation-en-attente");
     }
   }, [isLoading, isError, user, data, router]);
@@ -40,24 +45,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col bg-background">
-      <main
-        className="flex flex-1 flex-col px-4 pt-6"
-        style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}
+    <MotionConfig reducedMotion="user">
+      <div
+        className={`app-shell ${pathname === "/dashboard" ? "is-dashboard" : ""}`}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-      <BottomNav role={user.effective_role} />
-    </div>
+        <main className="app-main">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+        <BottomNav role={user.effective_role} />
+      </div>
+    </MotionConfig>
   );
 }

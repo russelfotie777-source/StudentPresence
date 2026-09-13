@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
+import { MapPin, RefreshCw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useGeolocation } from "@/hooks/use-geolocation";
+import { useGeolocation, type Coords } from "@/hooks/use-geolocation";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionRefusee } from "@/components/demande-permission";
 import { useSendPosition } from "@/hooks/use-seances";
@@ -10,63 +11,78 @@ import { useSendPosition } from "@/hooks/use-seances";
 export function SendPositionButton({
   seanceId,
   alreadySent = false,
+  maxAccuracy = 50,
+  onManualValidation,
 }: {
   seanceId: number;
   alreadySent?: boolean;
+  maxAccuracy?: number;
+  onManualValidation?: () => void;
 }) {
-  const geo = useGeolocation();
-  const sendPosition = useSendPosition(seanceId);
-  const [sent, setSent] = useState(alreadySent);
+  const geo = useGeolocation(maxAccuracy);
+  const { mutate, isPending, isSuccess, isError } = useSendPosition(seanceId);
+  const submitted = useRef<Coords | null>(null);
   const { etat } = usePermission("position");
-
   const refusee = geo.error === "permission_denied" || etat === "refusee";
 
   useEffect(() => {
-    if (geo.status === "success" && geo.coords && !sent && !sendPosition.isPending) {
-      sendPosition.mutate(geo.coords, { onSuccess: () => setSent(true) });
+    if (
+      geo.status === "success" &&
+      geo.coords &&
+      !alreadySent &&
+      submitted.current !== geo.coords
+    ) {
+      submitted.current = geo.coords;
+      mutate(geo.coords);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geo.status, geo.coords]);
+  }, [geo.status, geo.coords, alreadySent, mutate]);
 
-  if (sent) {
+  if (alreadySent || isSuccess)
     return (
       <Button size="sm" variant="outline" disabled>
-        📍 Position envoyée
+        <MapPin size={16} /> Position envoyée
       </Button>
     );
-  }
-
-  // Ici le clic sur le bouton vaut déjà consentement explicite : l'écran
-  // d'explication n'apporterait rien. En revanche, une fois la permission
-  // refusée, le bouton ne peut plus rien faire — il cède la place au seul
-  // chemin qui reste, les réglages du navigateur.
-  if (refusee) {
-    return <PermissionRefusee type="position" />;
-  }
+  const busy = geo.status === "loading" || isPending;
+  const failed = geo.status === "error" || isError || refusee;
 
   return (
-    <div className="flex flex-col items-start gap-1">
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => geo.locate()}
-        disabled={geo.status === "loading" || sendPosition.isPending}
-      >
-        {geo.status === "loading" || sendPosition.isPending
-          ? "Localisation…"
-          : "📍 Envoyer ma position"}
-      </Button>
-      {/* La précision se resserre pendant que le GPS converge : l'afficher
-          explique l'attente, et prévient que ce point sert de référence à
-          toute la classe. */}
-      {geo.status === "loading" && geo.precision !== null && (
-        <p className="text-xs text-ink-500">Précision ±{geo.precision} m, affinage en cours…</p>
+    <div className="gps-position-control flex w-full flex-col gap-2">
+      {refusee ? (
+        <PermissionRefusee type="position" />
+      ) : (
+        <Button variant="outline" onClick={() => geo.locate()} disabled={busy}>
+          {failed ? <RefreshCw size={16} /> : <MapPin size={16} />}
+          {busy
+            ? "Localisation en cours…"
+            : failed
+              ? "Réessayer la localisation"
+              : "Envoyer ma position"}
+        </Button>
       )}
-      {geo.status === "success" && geo.precision !== null && (
-        <p className="text-xs text-ink-500">Précision ±{geo.precision} m</p>
+      {geo.precision !== null && (
+        <p className="text-xs" aria-live="polite">
+          Précision ±{geo.precision} m
+          {geo.status === "loading" ? ", recherche en cours…" : ""}
+        </p>
       )}
-      {geo.status === "error" && (
-        <p className="max-w-xs text-xs text-destructive">{geo.errorMessage}</p>
+      {geo.status === "error" && !refusee && (
+        <p className="text-xs" role="status">
+          {geo.error === "imprecise"
+            ? "La localisation reste trop imprécise pour toute la classe."
+            : geo.errorMessage}
+        </p>
+      )}
+      {failed && !busy && onManualValidation && (
+        <>
+          <p className="text-xs">
+            Vous pouvez constater les présences dans la liste, même sans
+            position GPS.
+          </p>
+          <Button variant="secondary" onClick={onManualValidation}>
+            <Users size={16} /> Faire l’appel sans GPS
+          </Button>
+        </>
       )}
     </div>
   );
