@@ -6,6 +6,7 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { BottomNav } from "@/components/bottom-nav";
 import { useMe } from "@/hooks/use-auth";
 import { getToken } from "@/lib/api-client";
+import styles from "./workspace.module.css";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
       <div
-        className={`app-shell ${pathname === "/dashboard" ? "is-dashboard" : ""}`}
+        className={`app-shell ${pathname === "/dashboard" ? "is-dashboard" : pathname === "/historique" ? "is-history" : ""} ${pathname === "/dashboard" || pathname === "/historique" ? styles.workspace : ""}`}
       >
         <main className="app-main">
           <AnimatePresence mode="wait" initial={false}>
