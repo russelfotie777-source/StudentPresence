@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AccountValidationController;
+use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
@@ -109,6 +110,17 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::get('/payroll/teachers/{teacher}', [PayrollController::class, 'forTeacher']);
 
     Route::get('/historique-seances', [SessionHistoryController::class, 'index']);
+
+    // Assistant IA : conversations par admin, actions proposées puis appliquées explicitement.
+    Route::get('/assistant', [AssistantController::class, 'etat']);
+    Route::get('/assistant/conversations', [AssistantController::class, 'index']);
+    Route::post('/assistant/conversations', [AssistantController::class, 'store']);
+    Route::get('/assistant/conversations/{conversation}', [AssistantController::class, 'show']);
+    Route::delete('/assistant/conversations/{conversation}', [AssistantController::class, 'destroy']);
+    Route::post('/assistant/conversations/{conversation}/messages', [AssistantController::class, 'envoyer']);
+    Route::post('/assistant/conversations/{conversation}/appliquer', [AssistantController::class, 'appliquer']);
+    Route::post('/assistant/conversations/{conversation}/ignorer', [AssistantController::class, 'ignorer']);
+    Route::get('/assistant/conversations/{conversation}/actions/{actionId}/identifiants.csv', [AssistantController::class, 'identifiants']);
 
     // Gestion des comptes étudiants (délégués compris : ce sont des étudiants).
     Route::get('/etudiants', [EtudiantController::class, 'index']);

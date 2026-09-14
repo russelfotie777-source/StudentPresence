@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    /*
+     * Assistant IA du back-office (Claude). Sans clé, l'assistant se déclare
+     * indisponible au lieu d'échouer au premier message.
+     */
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-opus-5'),
+        // Taille maximale d'une pièce jointe (Mo). Aligner post_max_size /
+        // upload_max_filesize (PHP) et client_max_body_size (nginx) au-dessus.
+        'taille_max_fichier_mo' => env('ASSISTANT_TAILLE_MAX_FICHIER_MO', 25),
+    ],
 ];

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\SeanceResource;
 use App\Models\CourseTemplate;
 use App\Models\Seance;
+use App\Services\RetouchesPlanning;
 use App\Services\SeanceGenerator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -84,29 +85,12 @@ class CourseTemplateController extends Controller
     }
 
     /**
-     * Supprimer un cours retire aussi ses séances à venir — c'est ce qu'un
-     * admin attend quand il annule un cours. Les séances déjà tenues (ou
-     * avec des présences enregistrées) restent : elles font partie de
-     * l'historique et de la paie de l'enseignant.
+     * Supprimer un cours retire aussi ses séances à venir (voir
+     * RetouchesPlanning, partagé avec l'assistant IA).
      */
-    public function destroy(CourseTemplate $courseTemplate)
+    public function destroy(CourseTemplate $courseTemplate, RetouchesPlanning $retouches)
     {
-        $supprimees = DB::transaction(function () use ($courseTemplate) {
-            $aVenir = $courseTemplate->seances()
-                ->whereDate('date_seance', '>=', now()->toDateString())
-                ->whereNull('etat_delegue')
-                ->whereNull('etat_prof')
-                ->where('presences_locked', false)
-                ->whereDoesntHave('presences');
-
-            $nombre = (clone $aVenir)->count();
-            $aVenir->delete();
-            $courseTemplate->delete();
-
-            return $nombre;
-        });
-
-        return response()->json(['seances_supprimees' => $supprimees]);
+        return response()->json(['seances_supprimees' => $retouches->supprimerCours($courseTemplate)]);
     }
 
     /**
