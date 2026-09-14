@@ -10,7 +10,9 @@ export type TypeAction =
   | "modifier_seance"
   | "supprimer_seance"
   | "supprimer_cours"
-  | "changer_salle_etudiant";
+  | "changer_salle_etudiant"
+  | "importer_etudiants"
+  | "importer_cours";
 
 export type StatutAction = "en_attente" | "appliquee" | "echouee" | "ignoree";
 
@@ -30,11 +32,30 @@ export interface MessageIA {
   texte: string;
 }
 
+export interface Traitement {
+  statut: "en_cours" | "termine" | "erreur";
+  etape: string | null;
+  progression: { fait: number; total: number } | null;
+  erreur: string | null;
+  nouvelles_actions?: string[];
+}
+
+export interface FichierConversation {
+  id: string;
+  nom: string;
+  genre: "pdf" | "image" | "tableur" | "texte" | "inconnu";
+  taille: number;
+  pages: number | null;
+  feuilles: string[];
+}
+
 export interface ConversationIA {
   id: number;
   titre: string | null;
   messages: MessageIA[];
   actions: ActionIA[];
+  traitement: Traitement | null;
+  fichiers: FichierConversation[];
   mise_a_jour: string | null;
 }
 
@@ -45,16 +66,18 @@ export interface ResumeConversation {
   actions_en_attente: number;
 }
 
-export interface FichierJoint {
-  nom: string;
-  type: string;
-  base64: string;
+export interface EtatAssistant {
+  disponible: boolean;
+  modele: string;
+  types_fichiers: string[];
+  extensions: string[];
+  taille_max_mo: number;
 }
 
 export function useEtatAssistant() {
   return useQuery({
     queryKey: ["assistant", "etat"],
-    queryFn: () => apiFetch<{ disponible: boolean; modele: string; types_fichiers: string[] }>("/api/assistant"),
+    queryFn: () => apiFetch<EtatAssistant>("/api/assistant"),
     staleTime: 5 * 60_000,
   });
 }
@@ -67,11 +90,17 @@ export function useConversations(enabled: boolean) {
   });
 }
 
+/**
+ * Tant qu'un message est en traitement, on interroge la conversation
+ * toutes les 1,5 s : c'est là qu'arrivent l'étape en cours, puis la
+ * réponse et les propositions.
+ */
 export function useConversation(id: number | null) {
   return useQuery({
     queryKey: ["assistant", "conversation", id],
     queryFn: () => apiFetch<ConversationIA>(`/api/assistant/conversations/${id}`),
     enabled: id !== null,
+    refetchInterval: (query) => (query.state.data?.traitement?.statut === "en_cours" ? 1500 : false),
   });
 }
 
@@ -94,27 +123,23 @@ export function useSupprimerConversation() {
   });
 }
 
-interface ReponseEnvoi {
-  reponse: string;
-  actions: ActionIA[];
-  nouvelles: string[];
-  conversation: ConversationIA;
-  jetons: { entree: number; sortie: number };
-}
-
 /**
- * Un message peut déclencher plusieurs allers-retours avec le modèle
- * (lecture du référentiel, propositions) : la réponse prend de quelques
- * secondes à une minute pour un emploi du temps complet.
+ * Le message part en multipart (fichiers jusqu'à plusieurs dizaines de Mo)
+ * et le serveur répond 202 tout de suite : le traitement continue en
+ * arrière-plan, suivi par useConversation.
  */
 export function useEnvoyerMessage(conversationId: number | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (v: { texte: string; fichiers: FichierJoint[] }) =>
-      apiFetch<ReponseEnvoi>(`/api/assistant/conversations/${conversationId}/messages`, {
+    mutationFn: (v: { texte: string; fichiers: File[] }) => {
+      const corps = new FormData();
+      corps.append("texte", v.texte);
+      for (const f of v.fichiers) corps.append("fichiers[]", f, f.name);
+      return apiFetch<{ conversation: ConversationIA }>(`/api/assistant/conversations/${conversationId}/messages`, {
         method: "POST",
-        body: JSON.stringify(v),
-      }),
+        body: corps,
+      });
+    },
     onSuccess: (r) => {
       queryClient.setQueryData(["assistant", "conversation", r.conversation.id], r.conversation);
       queryClient.invalidateQueries({ queryKey: ["assistant", "conversations"] });

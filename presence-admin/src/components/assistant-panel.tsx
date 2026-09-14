@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  AlertTriangle,
   CalendarClock,
+  FileSpreadsheet,
   FileText,
   GraduationCap,
   History,
@@ -36,14 +38,13 @@ import {
   useEnvoyerMessage,
   useEtatAssistant,
   useSupprimerConversation,
-  type FichierJoint,
+  type ActionIA,
   type MessageIA,
+  type Traitement,
 } from "@/hooks/use-assistant";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { ActionsProposees } from "@/components/assistant/actions-proposees";
-
-const TAILLE_MAX = 8 * 1024 * 1024;
 
 const SUGGESTIONS = [
   {
@@ -54,9 +55,9 @@ const SUGGESTIONS = [
   },
   {
     icon: GraduationCap,
-    titre: "Inscrire des étudiants",
-    texte: "Inscris ces étudiants dans la salle … (formation FI) :\n- NOM Prénom, matricule …\n- …",
-    fichier: false,
+    titre: "Inscrire des étudiants (Excel, PDF ou texte)",
+    texte: "Inscris les étudiants de ce fichier dans la salle … (formation FI).",
+    fichier: true,
   },
   {
     icon: Pencil,
@@ -180,8 +181,10 @@ export function AssistantPanel() {
               conversationId={idCourant}
               messages={conversation.data?.messages ?? []}
               actions={conversation.data?.actions ?? []}
+              traitement={conversation.data?.traitement ?? null}
               chargement={conversation.isLoading || (conversationId === null && conversations.isLoading)}
-              typesFichiers={etat.data?.types_fichiers ?? []}
+              extensions={etat.data?.extensions ?? []}
+              tailleMaxMo={etat.data?.taille_max_mo ?? 25}
               onCreer={nouvelleConversation}
               creation={creer.isPending}
             />
@@ -214,55 +217,56 @@ function Conversation({
   conversationId,
   messages,
   actions,
+  traitement,
   chargement,
-  typesFichiers,
+  extensions,
+  tailleMaxMo,
   onCreer,
   creation,
 }: {
   conversationId: number | null;
   messages: MessageIA[];
-  actions: Parameters<typeof ActionsProposees>[0]["actions"];
+  actions: ActionIA[];
+  traitement: Traitement | null;
   chargement: boolean;
-  typesFichiers: string[];
+  extensions: string[];
+  tailleMaxMo: number;
   onCreer: () => void;
   creation: boolean;
 }) {
   const envoyer = useEnvoyerMessage(conversationId);
   const [texte, setTexte] = useState("");
-  const [fichiers, setFichiers] = useState<FichierJoint[]>([]);
+  const [fichiers, setFichiers] = useState<File[]>([]);
   const [enAttente, setEnAttente] = useState<string | null>(null);
   const fil = useRef<HTMLDivElement>(null);
   const saisie = useRef<HTMLInputElement>(null);
 
+  const enCours = traitement?.statut === "en_cours";
+
   useEffect(() => {
     fil.current?.scrollTo({ top: fil.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, enAttente, actions.length]);
+  }, [messages.length, enAttente, enCours, actions.length, traitement?.etape]);
 
-  async function joindre(liste: FileList | null) {
+  function joindre(liste: FileList | null) {
     if (!liste) return;
-    const ajouts: FichierJoint[] = [];
-    for (const f of Array.from(liste).slice(0, 3 - fichiers.length)) {
-      if (!typesFichiers.includes(f.type)) {
-        toast.error(`${f.name} : format non pris en charge (PDF ou image).`);
+    const ajouts: File[] = [];
+    for (const f of Array.from(liste).slice(0, 5 - fichiers.length)) {
+      const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+      if (!extensions.includes(ext)) {
+        toast.error(`${f.name} : format non pris en charge (PDF, image, Excel/CSV ou texte).`);
         continue;
       }
-      if (f.size > TAILLE_MAX) {
-        toast.error(`${f.name} dépasse 8 Mo.`);
+      if (f.size > tailleMaxMo * 1024 * 1024) {
+        toast.error(`${f.name} dépasse ${tailleMaxMo} Mo.`);
         continue;
       }
-      const base64 = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result).split(",")[1] ?? "");
-        r.onerror = () => rej(r.error);
-        r.readAsDataURL(f);
-      });
-      ajouts.push({ nom: f.name, type: f.type, base64 });
+      ajouts.push(f);
     }
     setFichiers((prev) => [...prev, ...ajouts]);
   }
 
   function soumettre() {
-    if (conversationId === null || envoyer.isPending) return;
+    if (conversationId === null || envoyer.isPending || enCours) return;
     const contenu = texte.trim();
     if (!contenu && fichiers.length === 0) return;
 
@@ -274,14 +278,19 @@ function Conversation({
           setTexte("");
           setFichiers([]);
         },
-        onError: (e) =>
-          toast.error(e instanceof ApiError ? e.message : "L'assistant n'a pas répondu. Réessayez."),
-        onSettled: () => setEnAttente(null),
+        onError: (e) => {
+          setEnAttente(null);
+          toast.error(e instanceof ApiError ? e.message : "L'envoi a échoué. Réessayez.");
+        },
       },
     );
   }
 
-  const vide = messages.length === 0 && !enAttente;
+  // L'écho du message envoyé n'est montré que pendant le traitement : une
+  // fois terminé, il fait partie de l'historique renvoyé par le serveur.
+  const echo = enCours ? enAttente : null;
+  const vide = messages.length === 0 && !echo;
+  const occupe = envoyer.isPending || enCours;
 
   return (
     <>
@@ -331,14 +340,15 @@ function Conversation({
               <Bulle key={i} message={m} />
             ))}
 
-            {enAttente && (
-              <>
-                <Bulle message={{ role: "user", texte: enAttente }} />
-                <div className="flex items-center gap-2 px-1 text-[13px] text-muted-foreground">
-                  <Loader2 className="size-3.5 animate-spin" />
-                  L&apos;assistant consulte les données et prépare ses propositions…
-                </div>
-              </>
+            {echo && <Bulle message={{ role: "user", texte: echo }} />}
+
+            {enCours && <Progression traitement={traitement} />}
+
+            {traitement?.statut === "erreur" && traitement.erreur && (
+              <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-[13px] text-destructive">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                <span>{traitement.erreur}</span>
+              </div>
             )}
 
             {conversationId !== null && <ActionsProposees conversationId={conversationId} actions={actions} />}
@@ -352,14 +362,15 @@ function Conversation({
             <ul className="mb-2 flex flex-wrap gap-1.5">
               {fichiers.map((f, i) => (
                 <li
-                  key={`${f.nom}-${i}`}
+                  key={`${f.name}-${i}`}
                   className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2 py-1 text-[12px]"
                 >
-                  {f.type === "application/pdf" ? <FileText className="size-3.5" /> : <ImageIcon className="size-3.5" />}
-                  <span className="max-w-[160px] truncate">{f.nom}</span>
+                  <IconeFichier nom={f.name} />
+                  <span className="max-w-[160px] truncate">{f.name}</span>
+                  <span className="text-muted-foreground">{tailleLisible(f.size)}</span>
                   <button
                     type="button"
-                    aria-label={`Retirer ${f.nom}`}
+                    aria-label={`Retirer ${f.name}`}
                     onClick={() => setFichiers((prev) => prev.filter((_, j) => j !== i))}
                     className="text-muted-foreground hover:text-foreground"
                   >
@@ -373,19 +384,19 @@ function Conversation({
             <input
               ref={saisie}
               type="file"
-              accept={typesFichiers.join(",")}
+              accept={extensions.map((e) => `.${e}`).join(",")}
               multiple
               hidden
               onChange={(e) => {
-                void joindre(e.target.files);
+                joindre(e.target.files);
                 e.target.value = "";
               }}
             />
             <Button
               variant="outline"
               size="icon"
-              aria-label="Joindre un PDF ou une image"
-              disabled={envoyer.isPending || fichiers.length >= 3}
+              aria-label="Joindre un PDF, une image, un tableur Excel ou un CSV"
+              disabled={occupe || fichiers.length >= 5}
               onClick={() => saisie.current?.click()}
             >
               <Paperclip className="size-4" />
@@ -399,18 +410,18 @@ function Conversation({
                   soumettre();
                 }
               }}
-              placeholder="Écrivez à l'assistant… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)"
+              placeholder={enCours ? "L'assistant travaille…" : "Écrivez à l'assistant… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)"}
               rows={2}
-              disabled={envoyer.isPending}
+              disabled={occupe}
               className="max-h-40 min-h-10 flex-1 resize-none rounded-xl text-[13px]"
             />
             <Button
               size="icon"
               aria-label="Envoyer"
-              disabled={envoyer.isPending || (!texte.trim() && fichiers.length === 0)}
+              disabled={occupe || (!texte.trim() && fichiers.length === 0)}
               onClick={soumettre}
             >
-              {envoyer.isPending ? <Loader2 className="size-4 animate-spin" /> : <SendHorizontal className="size-4" />}
+              {occupe ? <Loader2 className="size-4 animate-spin" /> : <SendHorizontal className="size-4" />}
             </Button>
           </div>
         </div>
@@ -433,4 +444,36 @@ function Bulle({ message }: { message: MessageIA }) {
       </div>
     </div>
   );
+}
+
+/** Ce que fait l'assistant en ce moment, avec la progression quand il lit un long document. */
+function Progression({ traitement }: { traitement: Traitement | null }) {
+  const p = traitement?.progression;
+  const pourcent = p && p.total > 0 ? Math.round((p.fait / p.total) * 100) : null;
+
+  return (
+    <div className="flex flex-col gap-1.5 px-1 text-[13px] text-muted-foreground">
+      <div className="flex items-center gap-2">
+        <Loader2 className="size-3.5 shrink-0 animate-spin" />
+        <span>{traitement?.etape ?? "L'assistant travaille…"}</span>
+      </div>
+      {pourcent !== null && (
+        <div className="ml-5.5 h-1.5 w-56 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${pourcent}%` }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IconeFichier({ nom }: { nom: string }) {
+  const ext = nom.split(".").pop()?.toLowerCase() ?? "";
+  if (["xlsx", "xls", "csv"].includes(ext)) return <FileSpreadsheet className="size-3.5 text-success" />;
+  if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) return <ImageIcon className="size-3.5" />;
+  return <FileText className="size-3.5" />;
+}
+
+function tailleLisible(octets: number) {
+  if (octets >= 1024 * 1024) return `${(octets / 1024 / 1024).toFixed(1)} Mo`;
+  return `${Math.max(1, Math.round(octets / 1024))} Ko`;
 }
