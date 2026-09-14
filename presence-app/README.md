@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Présence — application mobile
 
-## Getting Started
+Application des étudiants, délégués et enseignants (Next.js 16, React 19,
+Tailwind v4, React Query). Vue d'ensemble du projet : `README.md` à la racine.
 
-First, run the development server:
+## Démarrer
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.local.example .env.local    # NEXT_PUBLIC_API_URL=http://localhost:8001
+npm run dev                          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'API doit tourner en parallèle (`presence-api`, port 8001).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Ce qu'on y fait
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Étudiant** : séances du jour, pointage de présence géolocalisé, historique,
+  taux d'assiduité, notifications et rappels de pointage.
+- **Délégué** : envoi de la position de la salle, appel de la classe,
+  désignation d'un remplaçant temporaire.
+- **Enseignant** : séances, déclaration d'heures, requêtes, suivi des vacations.
 
-## Learn More
+La connexion peut exiger un second facteur facial selon le grade (réglable
+depuis le back-office). Le service worker (`public/sw.js`) reçoit les rappels
+push ; sur iPhone ils n'existent qu'une fois l'application installée sur
+l'écran d'accueil.
 
-To learn more about Next.js, take a look at the following resources:
+## Repères
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/app/(auth)/` connexion, inscription, reconnaissance faciale —
+  `src/app/(app)/` écrans authentifiés, avec la navigation du bas.
+- `src/hooks/` un fichier par domaine (séances, présences, notifications…) ;
+  toutes les requêtes passent par `src/lib/api-client.ts`.
+- L'heure et la date affichées viennent de l'API (`useHeureDouala`), jamais de
+  l'horloge du téléphone.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npx eslint src      # style
+npm run build       # vérification avant livraison
+```

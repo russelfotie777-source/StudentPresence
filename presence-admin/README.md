@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Présence — back-office
 
-## Getting Started
+Interface d'administration du département (Next.js 16, React 19, shadcn /
+base-ui, React Query). Vue d'ensemble du projet : `README.md` à la racine.
 
-First, run the development server:
+## Démarrer
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.local.example .env.local    # NEXT_PUBLIC_API_URL=http://localhost:8001
+npm run dev -- --port 3001           # http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'API doit tourner en parallèle (`presence-api`, port 8001). Le compte
+d'administration se crée en ligne de commande : `php artisan app:make-admin "Nom" 690000000 motdepasse`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Les écrans
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Vue d'ensemble** — ce qui attend une décision, activité de la semaine.
+- **Catalogue** — niveaux, filières, salles, matières.
+- **Emplois du temps** — grille hebdomadaire par salle ou par enseignant :
+  cliquer un créneau libre pour programmer un cours, une séance pour la
+  déplacer ou l'annuler ; calendrier du semestre.
+- **Étudiants** — feuille de présence d'une salle sur une semaine ; corriger une
+  présence d'un clic, gérer un compte (salle, restriction, blocage), imprimer la
+  liste officielle en PDF (coche/croix ou +1/−1, au choix).
+- **Validations**, **Requêtes enseignants**, **Migrations FA → FI**,
+  **Historique des séances**, **Tarifs horaires**, **Reconnaissance faciale**.
+- **Assistant** (facultatif) — importe un emploi du temps ou une liste
+  d'étudiants depuis un PDF, un tableur ou un message, et propose des actions à
+  valider avant application.
 
-## Learn More
+Toutes les dates et heures affichées viennent de l'API (`useHeureDouala`), dans
+le fuseau de l'établissement.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npx eslint src      # style
+npm run build       # vérification avant livraison
+```
