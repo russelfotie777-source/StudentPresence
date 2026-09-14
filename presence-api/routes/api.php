@@ -120,6 +120,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::post('/assistant/conversations/{conversation}/messages', [AssistantController::class, 'envoyer']);
     Route::post('/assistant/conversations/{conversation}/appliquer', [AssistantController::class, 'appliquer']);
     Route::post('/assistant/conversations/{conversation}/ignorer', [AssistantController::class, 'ignorer']);
+    Route::get('/assistant/conversations/{conversation}/actions/{actionId}/identifiants.csv', [AssistantController::class, 'identifiants']);
 
     // Gestion des comptes étudiants (délégués compris : ce sont des étudiants).
     Route::get('/etudiants', [EtudiantController::class, 'index']);

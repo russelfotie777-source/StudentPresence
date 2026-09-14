@@ -15,8 +15,21 @@ class ModeleFictif implements Modele
     /** @var list<array{systeme: string, messages: list<array<string, mixed>>, outils: list<array<string, mixed>>}> */
     public array $appels = [];
 
-    /** @param  list<ReponseModele>  $scenario */
-    public function __construct(private array $scenario, private bool $disponible = true) {}
+    /** @var list<array{consigne: string, pdf: string, schema: array<string, mixed>}> */
+    public array $extractions = [];
+
+    /**
+     * @param  list<ReponseModele>  $scenario
+     * @param  list<array<string, mixed>|null>  $structures  réponses successives de structurer() (null = débordement)
+     */
+    public function __construct(private array $scenario, private bool $disponible = true, private array $structures = []) {}
+
+    public function structurer(string $consigne, string $pdfBase64, array $schema): ?array
+    {
+        $this->extractions[] = ['consigne' => $consigne, 'pdf' => $pdfBase64, 'schema' => $schema];
+
+        return array_shift($this->structures);
+    }
 
     public function disponible(): bool
     {

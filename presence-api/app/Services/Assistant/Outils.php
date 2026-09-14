@@ -3,6 +3,7 @@
 namespace App\Services\Assistant;
 
 use App\Enums\UserRole;
+use App\Models\ConversationIA;
 use App\Models\CourseTemplate;
 use App\Models\Matiere;
 use App\Models\Salle;
@@ -29,9 +30,17 @@ class Outils
     public const ACTIONS = [
         'creer_cours', 'inscrire_etudiant', 'creer_enseignant', 'modifier_seance',
         'supprimer_seance', 'supprimer_cours', 'changer_salle_etudiant',
+        'importer_etudiants', 'importer_cours',
     ];
 
-    public function __construct(private FeuilleDePresence $feuille) {}
+    /** Outils qui lisent un fichier joint et enregistrent une proposition d'import (voir Imports). */
+    public const IMPORTS = ['proposer_import_etudiants', 'extraire_etudiants_pdf', 'extraire_cours_pdf'];
+
+    public function __construct(
+        private FeuilleDePresence $feuille,
+        private PiecesJointes $pieces,
+        private LecteurTableur $tableur,
+    ) {}
 
     /**
      * @return list<array<string, mixed>>
@@ -80,6 +89,55 @@ class Outils
                 'inputSchema' => $schema([
                     'salle_id' => $entier('Salle concernée'),
                     'semaine_id' => $entierOuNul('Semaine ; null pour la semaine en cours'),
+                ]),
+            ],
+            [
+                'name' => 'lire_tableur',
+                'description' => "Lignes supplémentaires d'un tableur joint (au-delà de l'aperçu), pour vérifier des colonnes ou des valeurs. Ne t'en sers pas pour recopier les lignes : l'import les lit lui-même.",
+                'strict' => true,
+                'inputSchema' => $schema([
+                    'fichier' => $entier('Numéro du fichier joint (tel que présenté)'),
+                    'feuille' => $texte('Nom de la feuille'),
+                    'depuis' => $entier('Première ligne à lire (numéro de ligne du tableur)'),
+                    'nombre' => $entier('Nombre de lignes (200 maximum)'),
+                ]),
+            ],
+            [
+                'name' => 'proposer_import_etudiants',
+                'description' => "Import en masse des étudiants d'une feuille de tableur joint : tu désignes les colonnes, le serveur lit toutes les lignes (des milliers s'il faut) et enregistre une seule proposition d'import. Indique la salle et la formation par défaut si le tableur ne les donne pas colonne par colonne.",
+                'strict' => true,
+                'inputSchema' => $schema([
+                    'resume' => $texte("Une phrase pour l'admin (ex. « Inscrire les 312 étudiants de la feuille L3 GI en A23-FI, FI »)"),
+                    'fichier' => $entier('Numéro du fichier joint'),
+                    'feuille' => $texteOuNul('Nom de la feuille ; null pour la première'),
+                    'colonne_nom' => $texte('En-tête de la colonne des noms (ou lettre de colonne)'),
+                    'colonne_matricule' => $texte('En-tête de la colonne des matricules (ou lettre)'),
+                    'colonne_formation' => $texteOuNul('En-tête de la colonne formation (FI/FA/FM) si elle existe'),
+                    'colonne_salle' => $texteOuNul('En-tête de la colonne salle/classe si elle existe'),
+                    'salle_id' => $entierOuNul('Salle par défaut pour les lignes sans salle'),
+                    'formation' => ['anyOf' => [['type' => 'string', 'enum' => ['FI', 'FA', 'FM']], ['type' => 'null']], 'description' => 'Formation par défaut pour les lignes sans formation'],
+                    'ligne_debut' => $entierOuNul("Première ligne de données si l'en-tête détecté est faux ; null sinon"),
+                ]),
+            ],
+            [
+                'name' => 'extraire_etudiants_pdf',
+                'description' => "Lit un long PDF joint (liste d'étudiants) par tranches de pages et enregistre une proposition d'import de tous les étudiants trouvés. Long : plusieurs minutes pour cent pages. Salle et formation par défaut pour les lignes que le document ne précise pas.",
+                'strict' => true,
+                'inputSchema' => $schema([
+                    'resume' => $texte("Une phrase pour l'admin"),
+                    'fichier' => $entier('Numéro du fichier joint'),
+                    'salle_id' => $entierOuNul('Salle par défaut'),
+                    'formation' => ['anyOf' => [['type' => 'string', 'enum' => ['FI', 'FA', 'FM']], ['type' => 'null']], 'description' => 'Formation par défaut'],
+                ]),
+            ],
+            [
+                'name' => 'extraire_cours_pdf',
+                'description' => "Lit un long PDF joint (emploi du temps de plusieurs pages ou de plusieurs classes) par tranches et enregistre une proposition d'import de tous les cours trouvés, salle par salle. Salle par défaut pour les créneaux dont la classe n'est pas indiquée.",
+                'strict' => true,
+                'inputSchema' => $schema([
+                    'resume' => $texte("Une phrase pour l'admin"),
+                    'fichier' => $entier('Numéro du fichier joint'),
+                    'salle_id' => $entierOuNul('Salle par défaut'),
                 ]),
             ],
             [
@@ -174,7 +232,12 @@ class Outils
 
     public static function estProposition(string $nom): bool
     {
-        return str_starts_with($nom, self::PREFIXE_PROPOSITION);
+        return str_starts_with($nom, self::PREFIXE_PROPOSITION) && ! self::estImport($nom);
+    }
+
+    public static function estImport(string $nom): bool
+    {
+        return in_array($nom, self::IMPORTS, true);
     }
 
     /** Type d'action correspondant à un outil de proposition ("proposer_creer_cours" → "creer_cours"). */
@@ -188,16 +251,42 @@ class Outils
      *
      * @param  array<string, mixed>  $input
      */
-    public function consulter(string $nom, array $input): string
+    public function consulter(string $nom, array $input, ?ConversationIA $conversation = null): string
     {
         $resultat = match ($nom) {
             'consulter_referentiel' => $this->referentiel($input['partie'] ?? 'tout'),
             'rechercher_etudiants' => $this->etudiants($input['recherche'] ?? null, $input['salle_id'] ?? null),
             'consulter_emploi_du_temps' => $this->emploiDuTemps((int) $input['salle_id'], $input['semaine_id'] ?? null),
+            'lire_tableur' => $this->lireTableur($conversation, $input),
             default => ['erreur' => "Outil inconnu : {$nom}"],
         };
 
         return json_encode($resultat, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    private function lireTableur(?ConversationIA $conversation, array $input): array
+    {
+        $fichier = $conversation ? $this->pieces->trouver($conversation, (int) $input['fichier']) : null;
+        if (! $fichier || ($fichier['genre'] ?? null) !== 'tableur') {
+            return ['erreur' => 'Fichier introuvable ou pas un tableur.'];
+        }
+
+        try {
+            $lignes = $this->tableur->lignes(
+                $this->pieces->cheminAbsolu($fichier),
+                (string) $input['feuille'],
+                max(1, (int) $input['depuis']),
+                min(200, max(1, (int) $input['nombre'])),
+            );
+        } catch (\Throwable $e) {
+            return ['erreur' => $e->getMessage()];
+        }
+
+        return ['feuille' => $input['feuille'], 'lignes' => array_map(fn ($l) => ['n' => $l['numero'], 'cellules' => $l['cellules']], $lignes)];
     }
 
     /**

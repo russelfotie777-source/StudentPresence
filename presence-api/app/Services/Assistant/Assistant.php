@@ -3,6 +3,7 @@
 namespace App\Services\Assistant;
 
 use App\Models\ConversationIA;
+use Closure;
 use Illuminate\Support\Str;
 
 /**
@@ -17,18 +18,11 @@ class Assistant
     /** Au-delà, le modèle tourne en rond : on rend la main à l'admin. */
     private const MAX_TOURS = 12;
 
-    /** Types MIME acceptés en pièce jointe, et le bloc de contenu qui les porte. */
-    public const TYPES_FICHIERS = [
-        'application/pdf' => 'document',
-        'image/png' => 'image',
-        'image/jpeg' => 'image',
-        'image/webp' => 'image',
-        'image/gif' => 'image',
-    ];
-
     public function __construct(
         private Modele $modele,
         private Outils $outils,
+        private Imports $imports,
+        private PiecesJointes $pieces,
     ) {}
 
     public function disponible(): bool
@@ -37,22 +31,25 @@ class Assistant
     }
 
     /**
-     * @param  list<array{nom: string, type: string, base64: string}>  $fichiers
+     * @param  list<array<string, mixed>>  $fichiers  descripteurs des pièces jointes de ce message (voir PiecesJointes)
+     * @param  Closure(string, array{fait: int, total: int}|null): void|null  $progression
      * @return array{texte: string, actions: list<array<string, mixed>>, nouvelles: list<string>, tours: int, jetons: array{entree: int, sortie: int}}
      */
-    public function repondre(ConversationIA $conversation, string $texte, array $fichiers = []): array
+    public function repondre(ConversationIA $conversation, string $texte, array $fichiers = [], ?Closure $progression = null): array
     {
         $messages = $conversation->messages ?? [];
-        $messages[] = ['role' => 'user', 'content' => $this->contenuUtilisateur($texte, $fichiers)];
+        $messages[] = ['role' => 'user', 'content' => $this->contenuUtilisateur($conversation, $texte, $fichiers)];
 
         $actions = $conversation->actions ?? [];
         $nouvelles = [];
         $jetons = ['entree' => 0, 'sortie' => 0];
         $textes = [];
+        $notes = [];
         $tours = 0;
 
         do {
             $tours++;
+            $progression?->__invoke($tours === 1 ? "L'assistant lit votre demande" : "L'assistant prépare ses propositions (étape {$tours})", null);
             $reponse = $this->modele->repondre($this->systeme(), $messages, $this->outils->definitions());
             $jetons['entree'] += $reponse->jetonsEntree;
             $jetons['sortie'] += $reponse->jetonsSortie;
@@ -63,12 +60,12 @@ class Assistant
             }
 
             if ($reponse->raisonArret === 'refusal') {
-                $textes[] = 'Je ne peux pas traiter cette demande.';
+                $notes[] = 'Je ne peux pas traiter cette demande.';
                 break;
             }
 
             if ($reponse->raisonArret === 'max_tokens') {
-                $textes[] = '(Réponse interrompue : trop longue. Reformulez ou découpez la demande.)';
+                $notes[] = '(Réponse interrompue : trop longue. Reformulez ou découpez la demande.)';
                 break;
             }
 
@@ -78,6 +75,7 @@ class Assistant
 
             $resultats = [];
             foreach ($reponse->appelsOutils as $appel) {
+                $erreur = false;
                 if (Outils::estProposition($appel['name'])) {
                     $action = $this->enregistrer($appel['name'], $appel['input']);
                     $actions[] = $action;
@@ -86,11 +84,22 @@ class Assistant
                         'statut' => 'proposition enregistrée, en attente de confirmation de l\'admin',
                         'action_id' => $action['id'],
                     ], JSON_UNESCAPED_UNICODE);
+                } elseif (Outils::estImport($appel['name'])) {
+                    try {
+                        $import = $this->importer($conversation, $appel['name'], $appel['input'], $progression);
+                        $actions[] = $import['action'];
+                        $nouvelles[] = $import['action']['id'];
+                        $contenu = json_encode($import['resultat'], JSON_UNESCAPED_UNICODE);
+                    } catch (\Throwable $e) {
+                        report($e);
+                        $erreur = true;
+                        $contenu = json_encode(['erreur' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                    }
                 } else {
-                    $contenu = $this->outils->consulter($appel['name'], $appel['input']);
+                    $contenu = $this->outils->consulter($appel['name'], $appel['input'], $conversation);
                 }
 
-                $resultats[] = ['type' => 'tool_result', 'toolUseID' => $appel['id'], 'content' => $contenu];
+                $resultats[] = ['type' => 'tool_result', 'toolUseID' => $appel['id'], 'content' => $contenu, ...($erreur ? ['isError' => true] : [])];
             }
 
             // Tous les résultats dans un seul message : c'est ce que le modèle attend.
@@ -98,7 +107,14 @@ class Assistant
         } while ($tours < self::MAX_TOURS);
 
         if ($tours >= self::MAX_TOURS && $reponse->appelsOutils !== []) {
-            $textes[] = "(J'ai atteint la limite d'étapes pour ce message. Dites-moi comment continuer.)";
+            $notes[] = "(J'ai atteint la limite d'étapes pour ce message. Dites-moi comment continuer.)";
+        }
+
+        // Ces remarques viennent de la boucle, pas du modèle : on les range
+        // quand même dans l'historique pour que l'admin les voie.
+        if ($notes !== []) {
+            $textes = [...$textes, ...$notes];
+            $messages[] = ['role' => 'assistant', 'content' => [['type' => 'text', 'text' => implode("\n\n", $notes)]]];
         }
 
         $conversation->fill([
@@ -117,27 +133,37 @@ class Assistant
     }
 
     /**
-     * Blocs du message de l'admin : d'abord les fichiers (PDF en document,
-     * images en image), puis le texte.
+     * @param  array<string, mixed>  $input
+     * @param  Closure(string, array{fait: int, total: int}|null): void|null  $progression
+     * @return array{action: array<string, mixed>, resultat: array<string, mixed>}
+     */
+    private function importer(ConversationIA $conversation, string $outil, array $input, ?Closure $progression): array
+    {
+        $suivi = $progression ? fn (string $etape, array $p) => $progression($etape, $p) : null;
+
+        return match ($outil) {
+            'proposer_import_etudiants' => $this->imports->etudiantsDepuisTableur($conversation, $input),
+            'extraire_etudiants_pdf' => $this->imports->etudiantsDepuisPdf($conversation, $input, $suivi),
+            'extraire_cours_pdf' => $this->imports->coursDepuisPdf($conversation, $input, $suivi),
+        };
+    }
+
+    /**
+     * Blocs du message de l'admin : d'abord les fichiers (lus d'un bloc ou
+     * décrits avec le moyen de les exploiter), puis le texte.
      *
-     * @param  list<array{nom: string, type: string, base64: string}>  $fichiers
+     * @param  list<array<string, mixed>>  $fichiers
      * @return list<array<string, mixed>>
      */
-    private function contenuUtilisateur(string $texte, array $fichiers): array
+    private function contenuUtilisateur(ConversationIA $conversation, string $texte, array $fichiers): array
     {
         $blocs = [];
+        $tous = array_values($conversation->fichiers ?? []);
 
         foreach ($fichiers as $fichier) {
-            $type = self::TYPES_FICHIERS[$fichier['type']] ?? null;
-            if (! $type) {
-                continue;
-            }
-
-            $blocs[] = [
-                'type' => $type,
-                'source' => ['type' => 'base64', 'mediaType' => $fichier['type'], 'data' => $fichier['base64']],
-                ...($type === 'document' ? ['title' => $fichier['nom']] : []),
-            ];
+            // Le numéro présenté au modèle est la position du fichier dans la conversation.
+            $numero = (int) array_search($fichier['id'], array_column($tous, 'id'), true) + 1;
+            array_push($blocs, ...$this->pieces->blocs($fichier, $numero));
         }
 
         $blocs[] = [
@@ -186,8 +212,7 @@ class Assistant
             }
             foreach ($message['content'] as &$bloc) {
                 if (in_array($bloc['type'] ?? null, ['document', 'image'], true)) {
-                    $nom = $bloc['title'] ?? ($bloc['type'] === 'image' ? 'image' : 'document');
-                    $bloc = ['type' => 'text', 'text' => "[Pièce jointe analysée : {$nom}]"];
+                    $bloc = ['type' => 'text', 'text' => '[Pièce jointe déjà analysée — voir les outils d\'import si besoin de la relire]'];
                 }
             }
             unset($bloc);

@@ -40,6 +40,36 @@ class ModeleClaude implements Modele
         return $this->convertir($reponse);
     }
 
+    public function structurer(string $consigne, string $pdfBase64, array $schema): ?array
+    {
+        $reponse = $this->client()->messages->create(
+            model: $this->modele,
+            maxTokens: 16000,
+            messages: [[
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'document', 'source' => ['type' => 'base64', 'mediaType' => 'application/pdf', 'data' => $pdfBase64]],
+                    ['type' => 'text', 'text' => $consigne],
+                ],
+            ]],
+            outputConfig: ['format' => ['type' => 'json_schema', 'schema' => $schema]],
+        );
+
+        if ($reponse->stopReason === 'max_tokens') {
+            return null;
+        }
+
+        foreach ($reponse->content as $bloc) {
+            if ($bloc->type === 'text') {
+                $donnees = json_decode($bloc->text, true);
+
+                return is_array($donnees) ? $donnees : null;
+            }
+        }
+
+        return null;
+    }
+
     private function client(): Client
     {
         return $this->client ??= new Client(apiKey: $this->cle);
