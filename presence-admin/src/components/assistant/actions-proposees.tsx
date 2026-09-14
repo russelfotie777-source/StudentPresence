@@ -8,11 +8,13 @@ import {
   CalendarX2,
   Check,
   ClipboardCopy,
+  Download,
   GraduationCap,
   Loader2,
   Pencil,
   Trash2,
   UserPlus,
+  Users,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +26,7 @@ import {
   type ActionIA,
   type TypeAction,
 } from "@/hooks/use-assistant";
+import { telechargerFichier } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 const ICONES: Record<TypeAction, typeof BookOpen> = {
@@ -34,6 +37,8 @@ const ICONES: Record<TypeAction, typeof BookOpen> = {
   supprimer_seance: CalendarX2,
   supprimer_cours: Trash2,
   changer_salle_etudiant: ArrowLeftRight,
+  importer_etudiants: Users,
+  importer_cours: CalendarPlus,
 };
 
 const LIBELLES: Record<TypeAction, string> = {
@@ -44,7 +49,41 @@ const LIBELLES: Record<TypeAction, string> = {
   supprimer_seance: "Annulation",
   supprimer_cours: "Suppression",
   changer_salle_etudiant: "Salle",
+  importer_etudiants: "Import",
+  importer_cours: "Import",
 };
+
+interface ApercuLigne {
+  nom?: string;
+  matricule?: string;
+  formation?: string | null;
+  salle_nom?: string | null;
+  matiere_nom?: string;
+  jour?: string;
+  heure_debut?: string;
+  heure_fin?: string;
+  anomalie?: string | null;
+}
+
+interface ParametresImport {
+  total?: number;
+  anomalies?: number;
+  apercu?: ApercuLigne[];
+  source?: { fichier?: string; feuille?: string; pages?: number };
+}
+
+interface Echec {
+  ligne?: string | number;
+  source?: string | number;
+  nom?: string;
+  matricule?: string;
+  cours?: string;
+  motif: string;
+}
+
+function estImport(a: ActionIA) {
+  return a.type === "importer_etudiants" || a.type === "importer_cours";
+}
 
 const DESTRUCTIVES: TypeAction[] = ["supprimer_seance", "supprimer_cours"];
 
@@ -129,6 +168,7 @@ export function ActionsProposees({ conversationId, actions }: { conversationId: 
                         {LIBELLES[a.type] ?? a.type}
                       </span>
                       {a.resume}
+                      {estImport(a) && <ApercuImport action={a} />}
                     </span>
                   </label>
                 </li>
@@ -188,6 +228,9 @@ export function ActionsProposees({ conversationId, actions }: { conversationId: 
                       </p>
                     )}
                     <Identifiants details={a.resultat?.details} />
+                    {estImport(a) && a.statut !== "ignoree" && (
+                      <ResultatImport conversationId={conversationId} action={a} />
+                    )}
                   </div>
                 </li>
               ))}
@@ -198,6 +241,140 @@ export function ActionsProposees({ conversationId, actions }: { conversationId: 
 
       {traitees.some((a) => a.resultat?.details?.mot_de_passe_initial) && (
         <CopierIdentifiants actions={traitees} />
+      )}
+    </div>
+  );
+}
+
+/** Ce que contient un import avant application : effectif, source, premières lignes, anomalies. */
+function ApercuImport({ action }: { action: ActionIA }) {
+  const p = action.parametres as ParametresImport;
+  const [ouvert, setOuvert] = useState(false);
+  const total = p.total ?? 0;
+  const anomalies = p.anomalies ?? 0;
+
+  return (
+    <span className="mt-1 block text-[12px] font-normal text-muted-foreground">
+      <span>
+        {total} ligne{total > 1 ? "s" : ""}
+        {p.source?.feuille ? ` · feuille « ${p.source.feuille} »` : ""}
+        {p.source?.pages ? ` · ${p.source.pages} pages lues` : ""}
+        {anomalies > 0 && (
+          <span className="ml-1.5 rounded bg-warning/20 px-1 py-px font-semibold text-warning-foreground">
+            {anomalies} anomalie{anomalies > 1 ? "s" : ""} (ignorée{anomalies > 1 ? "s" : ""} à l&apos;application)
+          </span>
+        )}
+      </span>
+      {(p.apercu?.length ?? 0) > 0 && (
+        <>
+          {" · "}
+          <button
+            type="button"
+            className="text-primary underline-offset-2 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              setOuvert((o) => !o);
+            }}
+          >
+            {ouvert ? "masquer l'aperçu" : "voir l'aperçu"}
+          </button>
+          {ouvert && (
+            <span className="mt-1.5 block overflow-x-auto rounded-lg border border-border bg-card">
+              <table className="w-full text-[11.5px]">
+                <tbody>
+                  {p.apercu!.map((l, i) => (
+                    <tr key={i} className={cn("border-b border-border last:border-b-0", l.anomalie && "text-warning-foreground")}>
+                      {action.type === "importer_etudiants" ? (
+                        <>
+                          <td className="px-2 py-1 font-medium text-foreground">{l.nom}</td>
+                          <td className="px-2 py-1 tabular-nums">{l.matricule}</td>
+                          <td className="px-2 py-1">{l.formation ?? "—"}</td>
+                          <td className="px-2 py-1">{l.salle_nom ?? "—"}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-2 py-1 font-medium text-foreground">{l.matiere_nom}</td>
+                          <td className="px-2 py-1">{l.jour?.toLowerCase()} {l.heure_debut}–{l.heure_fin}</td>
+                          <td className="px-2 py-1">{l.salle_nom ?? "—"}</td>
+                        </>
+                      )}
+                      <td className="px-2 py-1 text-warning-foreground">{l.anomalie ?? ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {total > p.apercu!.length && (
+                <span className="block px-2 py-1 text-[11px] text-muted-foreground">
+                  … et {total - p.apercu!.length} autres lignes
+                </span>
+              )}
+            </span>
+          )}
+        </>
+      )}
+    </span>
+  );
+}
+
+/** Après application d'un import : comptes, échecs détaillés, export des identifiants. */
+function ResultatImport({ conversationId, action }: { conversationId: number; action: ActionIA }) {
+  const d = (action.resultat?.details ?? {}) as {
+    crees?: number;
+    total?: number;
+    echecs?: Echec[];
+    echecs_total?: number;
+    identifiants_count?: number;
+    seances_creees?: number;
+  };
+  const [echecsOuverts, setEchecsOuverts] = useState(false);
+  const [telechargement, setTelechargement] = useState(false);
+
+  return (
+    <div className="mt-1.5 flex flex-col gap-1.5">
+      {(d.identifiants_count ?? 0) > 0 && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-fit gap-1.5"
+          disabled={telechargement}
+          onClick={() => {
+            setTelechargement(true);
+            telechargerFichier(
+              `/api/assistant/conversations/${conversationId}/actions/${action.id}/identifiants.csv`,
+              "identifiants.csv",
+            )
+              .then(() => toast.success("Identifiants téléchargés — à remettre aux étudiants."))
+              .catch(() => toast.error("Téléchargement impossible."))
+              .finally(() => setTelechargement(false));
+          }}
+        >
+          <Download className="size-3.5" />
+          Identifiants des {d.identifiants_count} comptes créés (CSV)
+        </Button>
+      )}
+      {(d.echecs_total ?? 0) > 0 && (
+        <div>
+          <button
+            type="button"
+            className="text-[12px] text-destructive underline-offset-2 hover:underline"
+            onClick={() => setEchecsOuverts((o) => !o)}
+          >
+            {d.echecs_total} ligne{(d.echecs_total ?? 0) > 1 ? "s" : ""} en échec — {echecsOuverts ? "masquer" : "voir"}
+          </button>
+          {echecsOuverts && (
+            <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-[11.5px]">
+              {(d.echecs ?? []).map((e, i) => (
+                <li key={i} className="py-0.5">
+                  <span className="font-medium text-foreground">{e.nom ?? e.cours ?? `ligne ${e.ligne ?? e.source}`}</span>
+                  {e.matricule ? ` (${e.matricule})` : ""} — <span className="text-destructive">{e.motif}</span>
+                </li>
+              ))}
+              {(d.echecs_total ?? 0) > (d.echecs?.length ?? 0) && (
+                <li className="py-0.5 text-muted-foreground">… {(d.echecs_total ?? 0) - (d.echecs?.length ?? 0)} autres</li>
+              )}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );
