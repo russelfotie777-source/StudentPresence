@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { BottomNav } from "@/components/bottom-nav";
+import { ZirisMark } from "@/components/ziris-brand";
 import { useMe } from "@/hooks/use-auth";
 import { getToken } from "@/lib/api-client";
 import styles from "./workspace.module.css";
@@ -37,10 +38,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isError, user, data, router]);
 
+  // Écran de démarrage : il prend la suite de l'image figée que le système
+  // affiche au lancement de l'application installée, d'où le vert de la tuile.
   if (isLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+        <span className="text-success">
+          <ZirisMark size={54} anime />
+        </span>
+        <span className="text-ink-500 text-[13px]" role="status">
+          Ouverture de votre espace&hellip;
+        </span>
       </div>
     );
   }

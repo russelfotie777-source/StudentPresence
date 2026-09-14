@@ -26,12 +26,25 @@ const ANNEAUX = [
 /** L'anneau qui passe au-dessus de celui d'indice i. */
 const dessus = (i: number) => ANNEAUX[(i + 2) % 3];
 
-export function ZirisMark({ size = 24 }: { size?: number }) {
+/**
+ * `anime` réserve le sceau aux attentes : les anneaux se nouent, puis tournent
+ * tant que l'écran charge. La symétrie d'ordre 3 rend la rotation continue —
+ * un tiers de tour suffit à boucler. À n'utiliser que sur un écran d'attente,
+ * jamais sur la marque permanente de la navigation.
+ */
+export function ZirisMark({ size = 24, anime = false }: { size?: number; anime?: boolean }) {
   const brut = useId();
   const id = `ziris${brut.replace(/[^a-zA-Z0-9]/g, "")}`;
 
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      aria-hidden="true"
+      className={anime ? "ziris-anime" : undefined}
+    >
       <defs>
         {ANNEAUX.map((_, i) => (
           <mask
@@ -54,7 +67,7 @@ export function ZirisMark({ size = 24 }: { size?: number }) {
           </mask>
         ))}
       </defs>
-      <g stroke="currentColor" strokeWidth={TRAIT}>
+      <g className="ziris-noeud" stroke="currentColor" strokeWidth={TRAIT}>
         {ANNEAUX.map((anneau, i) => (
           <circle
             key={i}
