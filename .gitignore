@@ -32,5 +32,16 @@ presence-admin/out/
 presence-admin/.env*
 !presence-admin/.env*.example
 
+# Consignes et configurations d'outillage local (éditeurs, assistants de
+# développement) : utiles sur le poste, sans intérêt pour le dépôt.
+CLAUDE.md
+AGENTS.md
+.claude/
+.cursor/
+.cursorrules
+.github/copilot-instructions.md
+presence-api/boost.json
+presence-api/.ai/
+
 # OS/editor cruft
 .DS_Store
