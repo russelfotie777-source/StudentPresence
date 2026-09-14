@@ -252,6 +252,43 @@
   animation: dc-ray 0.7s ease-out both;
 }
 
+/* Le sceau Ziris pendant une attente : les trois anneaux se nouent, puis le
+   nœud tourne. 47.75 = circonférence d'un anneau (2π × 7.6). Un tiers de tour
+   ramène le dessin sur lui-même : la boucle ne se voit pas. */
+@keyframes ziris-nouer {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ziris-tourner {
+  to {
+    transform: rotate(120deg);
+  }
+}
+.ziris-anime .ziris-noeud > circle {
+  stroke-dasharray: 47.75;
+  stroke-dashoffset: 47.75;
+  animation: ziris-nouer 0.85s cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
+}
+.ziris-anime .ziris-noeud > circle:nth-of-type(2) {
+  animation-delay: 0.1s;
+}
+.ziris-anime .ziris-noeud > circle:nth-of-type(3) {
+  animation-delay: 0.2s;
+}
+.ziris-anime .ziris-noeud {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: ziris-tourner 1.2s linear 1.05s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ziris-anime .ziris-noeud,
+  .ziris-anime .ziris-noeud > circle {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+}
+
 /* Shared application palette and mobile workspace. */
 .session-live .gps-position-control {
   --ink-900: #ffffff;
