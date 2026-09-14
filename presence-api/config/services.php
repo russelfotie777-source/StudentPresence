@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    /*
+     * Assistant IA du back-office (Claude). Sans clé, l'assistant se déclare
+     * indisponible au lieu d'échouer au premier message.
+     */
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-opus-5'),
+    ],
 ];

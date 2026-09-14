@@ -2,17 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\Weekday;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SeanceResource;
 use App\Models\Seance;
 use App\Models\Semaine;
-use App\Services\DetecteurConflits;
-use Carbon\Carbon;
+use App\Services\RetouchesPlanning;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Grille hebdomadaire du back-office : les séances d'une salle (ou d'un
@@ -56,13 +52,12 @@ class EmploiDuTempsController extends Controller
     }
 
     /**
-     * Retouche d'une occurrence : horaires, jour (dans la même semaine ou
-     * une autre), enseignant. Refusée dès que la séance a été tenue — ses
-     * présences et ses heures payées sont figées.
+     * Retouche d'une occurrence — la règle vit dans RetouchesPlanning,
+     * partagée avec l'assistant IA.
      */
-    public function update(Request $request, Seance $seance, DetecteurConflits $conflits)
+    public function update(Request $request, Seance $seance, RetouchesPlanning $retouches)
     {
-        $this->assertModifiable($seance);
+        $retouches->assertModifiable($seance);
 
         $data = $request->validate([
             'date_seance' => ['sometimes', 'date'],
@@ -72,69 +67,13 @@ class EmploiDuTempsController extends Controller
             'salle_id' => ['sometimes', 'exists:salles,id'],
         ]);
 
-        $date = Carbon::parse($data['date_seance'] ?? $seance->date_seance->toDateString());
-        $debut = $data['heure_debut'] ?? substr($seance->heure_debut, 0, 5);
-        $fin = $data['heure_fin'] ?? substr($seance->heure_fin, 0, 5);
-
-        if ($fin <= $debut) {
-            throw ValidationException::withMessages(['heure_fin' => ["L'heure de fin doit être après l'heure de début."]]);
-        }
-
-        $semaine = Semaine::couvrant($date);
-
-        if (! $semaine) {
-            throw ValidationException::withMessages(['date_seance' => ['Aucune semaine du semestre ne couvre cette date.']]);
-        }
-
-        $creneau = [
-            'salle_id' => (int) ($data['salle_id'] ?? $seance->salle_id),
-            'groupe' => $seance->groupe,
-            'enseignant_id' => (int) ($data['enseignant_id'] ?? $seance->enseignant_id),
-            'date_seance' => $date->toDateString(),
-            'semaine_id' => $semaine->id,
-            'jour' => Weekday::fromCarbon($date)->value,
-            'heure_debut' => $debut,
-            'heure_fin' => $fin,
-        ];
-
-        if ($conflit = $conflits->pour($creneau, $seance->id)) {
-            throw ValidationException::withMessages(['creneau' => [$conflit]]);
-        }
-
-        $seance->update($creneau);
-
-        return new SeanceResource($seance->fresh(['salle', 'enseignant', 'courseTemplate.matiere']));
+        return new SeanceResource($retouches->modifier($seance, $data));
     }
 
-    public function destroy(Seance $seance)
+    public function destroy(Seance $seance, RetouchesPlanning $retouches)
     {
-        $this->assertModifiable($seance);
-
-        DB::transaction(function () use ($seance) {
-            $template = $seance->courseTemplate;
-            $seance->delete();
-
-            // Un cours ponctuel n'existe que pour porter sa séance : l'annuler
-            // ne doit pas laisser un cours vide dans la liste.
-            if ($template && $template->date_debut->equalTo($template->date_fin) && ! $template->seances()->exists()) {
-                $template->delete();
-            }
-        });
+        $retouches->annuler($seance);
 
         return response()->noContent();
-    }
-
-    private function assertModifiable(Seance $seance): void
-    {
-        $tenue = $seance->etat_delegue !== null
-            || $seance->etat_prof !== null
-            || $seance->presences_locked
-            || $seance->presences()->exists();
-
-        if ($tenue) {
-            throw ValidationException::withMessages([
-                'seance' => ['Cette séance a déjà été tenue ou a des présences enregistrées : elle ne peut plus être modifiée ni supprimée.'],
-            ]);
-        }
     }
 }
