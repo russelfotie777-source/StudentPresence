@@ -15,5 +15,16 @@ interface Modele
      */
     public function repondre(string $systeme, array $messages, array $outils): ReponseModele;
 
+    /**
+     * Extraction structurée d'un document : le modèle lit le PDF joint et
+     * répond en JSON conforme au schéma, sans outils. Renvoie le JSON
+     * décodé, ou null si la réponse a débordé (max_tokens) — l'appelant
+     * réduit alors la tranche de pages.
+     *
+     * @param  array<string, mixed>  $schema  JSON Schema de la réponse attendue
+     * @return array<string, mixed>|null
+     */
+    public function structurer(string $consigne, string $pdfBase64, array $schema): ?array;
+
     public function disponible(): bool;
 }

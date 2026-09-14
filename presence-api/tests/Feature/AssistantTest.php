@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\FormationType;
 use App\Models\ConversationIA;
 use App\Models\Matiere;
 use App\Models\Salle;
@@ -10,9 +11,16 @@ use App\Models\Semaine;
 use App\Models\User;
 use App\Services\Assistant\Modele;
 use App\Services\Assistant\Outils;
+use App\Services\Assistant\PiecesJointes;
+use App\Services\Assistant\ReponseModele;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\Support\ModeleFictif;
 use Tests\TestCase;
 
@@ -36,8 +44,9 @@ class AssistantTest extends TestCase
         parent::setUp();
 
         Carbon::setTestNow(Carbon::parse('2026-09-16 10:00:00', 'Africa/Douala'));
+        Storage::fake('local');
         $this->admin = User::factory()->admin()->create();
-        $this->salle = Salle::factory()->create(['nom' => 'A23-FI']);
+        $this->salle = Salle::factory()->create(['nom' => 'A23-FI', 'formation' => FormationType::FI]);
         $this->prof = User::factory()->enseignant()->create(['name' => 'Étienne Mballa']);
         Semaine::factory()->create(['numero' => 1, 'date_debut' => '2026-09-14', 'date_fin' => '2026-09-20']);
         Semaine::factory()->create(['numero' => 2, 'date_debut' => '2026-09-21', 'date_fin' => '2026-09-27']);
@@ -61,6 +70,52 @@ class AssistantTest extends TestCase
         return ConversationIA::create(['admin_id' => $this->admin->id]);
     }
 
+    /**
+     * Envoie un message (multipart) ; la file étant synchrone en test, la
+     * réponse 202 porte déjà la conversation traitée.
+     *
+     * @param  list<UploadedFile>  $fichiers
+     * @return array<string, mixed>
+     */
+    private function envoyer(ConversationIA $conversation, string $texte, array $fichiers = []): array
+    {
+        $reponse = $this->actingAs($this->admin, 'sanctum')
+            ->post("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => $texte, 'fichiers' => $fichiers], ['Accept' => 'application/json']);
+
+        $reponse->assertStatus(202);
+
+        return $reponse->json('conversation');
+    }
+
+    /** Un vrai PDF de N pages (dompdf), pour que Ghostscript ait quelque chose à compter et découper. */
+    private function pdf(int $pages, string $nom = 'liste.pdf'): UploadedFile
+    {
+        $html = implode('<div style="page-break-after: always"></div>', array_map(fn ($i) => "<p>Page {$i}</p>", range(1, $pages)));
+        $chemin = tempnam(sys_get_temp_dir(), 'pdf');
+        file_put_contents($chemin, Pdf::loadHTML($html)->output());
+
+        return new UploadedFile($chemin, $nom, 'application/pdf', null, true);
+    }
+
+    /**
+     * @param  array<string, list<list<string|int>>>  $feuilles  nom → lignes
+     */
+    private function tableur(array $feuilles, string $nom = 'etudiants.xlsx'): UploadedFile
+    {
+        $classeur = new Spreadsheet;
+        $premiere = true;
+        foreach ($feuilles as $titre => $lignes) {
+            $feuille = $premiere ? $classeur->getActiveSheet() : $classeur->createSheet();
+            $premiere = false;
+            $feuille->setTitle($titre);
+            $feuille->fromArray($lignes, null, 'A1');
+        }
+        $chemin = tempnam(sys_get_temp_dir(), 'xlsx');
+        (new Xlsx($classeur))->save($chemin);
+
+        return new UploadedFile($chemin, $nom, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+    }
+
     // --- disponibilité et accès ---------------------------------------------
 
     public function test_assistant_reports_when_no_api_key_is_configured(): void
@@ -70,7 +125,7 @@ class AssistantTest extends TestCase
 
         $this->actingAs($this->admin, 'sanctum')->getJson('/api/assistant')->assertOk()->assertJsonPath('disponible', false);
         $this->actingAs($this->admin, 'sanctum')
-            ->postJson("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => 'Bonjour'])
+            ->post("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => 'Bonjour'], ['Accept' => 'application/json'])
             ->assertStatus(503);
     }
 
@@ -86,7 +141,7 @@ class AssistantTest extends TestCase
         $this->actingAs($this->admin, 'sanctum')
             ->getJson("/api/assistant/conversations/{$conversation->id}")->assertNotFound();
         $this->actingAs($this->admin, 'sanctum')
-            ->postJson("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => 'x'])->assertNotFound();
+            ->post("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => 'x'], ['Accept' => 'application/json'])->assertNotFound();
     }
 
     // --- boucle d'outils ----------------------------------------------------
@@ -113,17 +168,16 @@ class AssistantTest extends TestCase
         ]));
         $conversation = $this->conversation();
 
-        $reponse = $this->actingAs($this->admin, 'sanctum')
-            ->postJson("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => 'Crée cet emploi du temps pour A23-FI']);
+        $c = $this->envoyer($conversation, 'Crée cet emploi du temps pour A23-FI');
 
-        $reponse->assertOk();
-        $this->assertStringContainsString('Deux cours proposés', $reponse->json('reponse'));
-        $this->assertCount(2, $reponse->json('actions'));
-        $this->assertSame(['creer_cours', 'creer_cours'], $reponse->json('actions.*.type'));
-        $this->assertSame(['en_attente', 'en_attente'], $reponse->json('actions.*.statut'));
-        $this->assertSame('Maths Discrètes avec Étienne Mballa, lundi 08:00–10:00 en A23-FI', $reponse->json('actions.0.resume'));
-        $this->assertArrayNotHasKey('resume', $reponse->json('actions.0.parametres'));
-        $this->assertCount(2, $reponse->json('nouvelles'));
+        $this->assertSame('termine', $c['traitement']['statut']);
+        $this->assertStringContainsString('Deux cours proposés', end($c['messages'])['texte']);
+        $this->assertCount(2, $c['actions']);
+        $this->assertSame(['creer_cours', 'creer_cours'], array_column($c['actions'], 'type'));
+        $this->assertSame(['en_attente', 'en_attente'], array_column($c['actions'], 'statut'));
+        $this->assertSame('Maths Discrètes avec Étienne Mballa, lundi 08:00–10:00 en A23-FI', $c['actions'][0]['resume']);
+        $this->assertArrayNotHasKey('resume', $c['actions'][0]['parametres']);
+        $this->assertCount(2, $c['traitement']['nouvelles_actions']);
 
         // Rien n'a été écrit : les propositions attendent l'admin.
         $this->assertDatabaseCount('course_templates', 0);
@@ -146,29 +200,40 @@ class AssistantTest extends TestCase
         $this->assertCount(2, $conversation->actions);
     }
 
-    public function test_attachments_reach_the_model_but_are_not_persisted(): void
+    public function test_a_short_pdf_reaches_the_model_whole_but_is_not_persisted(): void
     {
         $modele = $this->scenario(new ModeleFictif([ModeleFictif::texte('Document lu.')]));
         $conversation = $this->conversation();
-        $pdf = base64_encode('%PDF-1.4 faux document');
 
-        $this->actingAs($this->admin, 'sanctum')
-            ->postJson("/api/assistant/conversations/{$conversation->id}/messages", [
-                'texte' => '',
-                'fichiers' => [['nom' => 'edt.pdf', 'type' => 'application/pdf', 'base64' => $pdf]],
-            ])
-            ->assertOk();
+        $c = $this->envoyer($conversation, '', [$this->pdf(2, 'edt.pdf')]);
+
+        $this->assertSame('termine', $c['traitement']['statut']);
+        $this->assertSame([['nom' => 'edt.pdf', 'genre' => 'pdf', 'pages' => 2]], array_map(fn ($f) => ['nom' => $f['nom'], 'genre' => $f['genre'], 'pages' => $f['pages']], $c['fichiers']));
 
         $envoye = $modele->appels[0]['messages'][0]['content'];
-        $this->assertSame('document', $envoye[0]['type']);
-        $this->assertSame(['type' => 'base64', 'mediaType' => 'application/pdf', 'data' => $pdf], $envoye[0]['source']);
-        $this->assertSame('edt.pdf', $envoye[0]['title']);
-        $this->assertSame('text', $envoye[1]['type']);
+        $this->assertSame('text', $envoye[0]['type']);
+        $this->assertStringContainsString('edt.pdf', $envoye[0]['text']);
+        $this->assertSame('document', $envoye[1]['type']);
+        $this->assertSame('application/pdf', $envoye[1]['source']['mediaType']);
+        $this->assertStringStartsWith('JVBERi', $envoye[1]['source']['data'], 'Le PDF part en base64.');
+        $this->assertSame('text', $envoye[2]['type']);
 
-        $persiste = $conversation->fresh()->messages[0]['content'];
-        $this->assertSame('text', $persiste[0]['type']);
-        $this->assertStringContainsString('edt.pdf', $persiste[0]['text']);
-        $this->assertStringNotContainsString($pdf, json_encode($conversation->fresh()->messages));
+        $persiste = json_encode($conversation->fresh()->messages);
+        $this->assertStringNotContainsString('JVBERi', $persiste, 'Le fichier n\'est pas conservé dans l\'historique.');
+        $this->assertTrue(Storage::disk('local')->exists($conversation->fresh()->fichiers[0]['chemin']), 'Mais il reste sur le disque, pour un import ultérieur.');
+    }
+
+    public function test_a_long_pdf_is_described_instead_of_sent_whole(): void
+    {
+        $modele = $this->scenario(new ModeleFictif([ModeleFictif::texte('Je vais l\'extraire.')]));
+        $conversation = $this->conversation();
+
+        $this->envoyer($conversation, 'Inscris ces étudiants', [$this->pdf(PiecesJointes::PAGES_LECTURE_DIRECTE + 1)]);
+
+        $envoye = $modele->appels[0]['messages'][0]['content'];
+        $this->assertCount(2, $envoye, 'Une description et le texte : pas de bloc document.');
+        $this->assertStringContainsString('extraire_etudiants_pdf', $envoye[0]['text']);
+        $this->assertStringContainsString('fichier = 1', $envoye[0]['text']);
     }
 
     public function test_attachments_are_validated(): void
@@ -176,16 +241,56 @@ class AssistantTest extends TestCase
         $this->scenario(new ModeleFictif([]));
         $conversation = $this->conversation();
         $this->actingAs($this->admin, 'sanctum');
+        $json = ['Accept' => 'application/json'];
 
-        $this->postJson("/api/assistant/conversations/{$conversation->id}/messages", [
-            'fichiers' => [['nom' => 'x.exe', 'type' => 'application/octet-stream', 'base64' => base64_encode('x')]],
-        ])->assertUnprocessable();
+        $this->post("/api/assistant/conversations/{$conversation->id}/messages", [
+            'fichiers' => [UploadedFile::fake()->create('x.exe', 10, 'application/octet-stream')],
+        ], $json)->assertUnprocessable();
 
-        $this->postJson("/api/assistant/conversations/{$conversation->id}/messages", [
-            'fichiers' => [['nom' => 'x.pdf', 'type' => 'application/pdf', 'base64' => '%%%pas du base64%%%']],
-        ])->assertUnprocessable();
+        config(['services.anthropic.taille_max_fichier_mo' => 1]);
+        $this->post("/api/assistant/conversations/{$conversation->id}/messages", [
+            'fichiers' => [UploadedFile::fake()->create('gros.pdf', 2048, 'application/pdf')],
+        ], $json)->assertUnprocessable();
 
-        $this->postJson("/api/assistant/conversations/{$conversation->id}/messages", [])->assertUnprocessable();
+        $this->post("/api/assistant/conversations/{$conversation->id}/messages", [], $json)->assertUnprocessable();
+    }
+
+    public function test_a_second_message_waits_for_the_running_one(): void
+    {
+        $this->scenario(new ModeleFictif([]));
+        $conversation = $this->conversation();
+        $conversation->forceFill(['traitement' => ['statut' => 'en_cours', 'etape' => 'Lecture']])->save();
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->post("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => 'encore'], ['Accept' => 'application/json'])
+            ->assertStatus(409);
+    }
+
+    public function test_a_model_failure_is_reported_on_the_conversation(): void
+    {
+        $this->app->instance(Modele::class, new class implements Modele
+        {
+            public function repondre(string $systeme, array $messages, array $outils): ReponseModele
+            {
+                throw new \RuntimeException('panne');
+            }
+
+            public function structurer(string $consigne, string $pdfBase64, array $schema): ?array
+            {
+                return null;
+            }
+
+            public function disponible(): bool
+            {
+                return true;
+            }
+        });
+        $conversation = $this->conversation();
+
+        $c = $this->envoyer($conversation, 'Bonjour');
+
+        $this->assertSame('erreur', $c['traitement']['statut']);
+        $this->assertStringContainsString('panne', $c['traitement']['erreur']);
     }
 
     public function test_the_loop_stops_after_too_many_tool_turns(): void
@@ -194,12 +299,10 @@ class AssistantTest extends TestCase
         $modele = $this->scenario(new ModeleFictif($boucle));
         $conversation = $this->conversation();
 
-        $reponse = $this->actingAs($this->admin, 'sanctum')
-            ->postJson("/api/assistant/conversations/{$conversation->id}/messages", ['texte' => 'Tourne en rond']);
+        $c = $this->envoyer($conversation, 'Tourne en rond');
 
-        $reponse->assertOk();
         $this->assertCount(12, $modele->appels);
-        $this->assertStringContainsString("limite d'étapes", $reponse->json('reponse'));
+        $this->assertStringContainsString("limite d'étapes", end($c['messages'])['texte']);
     }
 
     // --- application des actions ---------------------------------------------
@@ -338,7 +441,8 @@ class AssistantTest extends TestCase
         $definitions = app(Outils::class)->definitions();
         $propositions = collect($definitions)->filter(fn ($d) => Outils::estProposition($d['name']));
 
-        $this->assertCount(count(Outils::ACTIONS), $propositions);
+        $this->assertCount(count(Outils::ACTIONS) - 2, $propositions, 'Les deux imports en masse passent par leurs propres outils.');
+        $this->assertSame(Outils::IMPORTS, collect($definitions)->pluck('name')->filter(fn ($n) => Outils::estImport($n))->values()->all());
         foreach ($propositions as $outil) {
             $this->assertContains(Outils::typeAction($outil['name']), Outils::ACTIONS);
             $this->assertTrue($outil['strict']);

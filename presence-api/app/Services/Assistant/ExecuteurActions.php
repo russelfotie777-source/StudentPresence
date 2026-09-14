@@ -40,6 +40,15 @@ class ExecuteurActions
      */
     public function executer(array $action): array
     {
+        // Les imports en masse se traitent ligne par ligne, chacune dans sa
+        // propre transaction : un doublon ne doit pas annuler 1 999 inscriptions.
+        if ($action['type'] === 'importer_etudiants') {
+            return $this->importerEtudiants($action['parametres']);
+        }
+        if ($action['type'] === 'importer_cours') {
+            return $this->importerCours($action['parametres']);
+        }
+
         try {
             $details = DB::transaction(fn () => match ($action['type']) {
                 'creer_cours' => $this->creerCours($action['parametres']),
@@ -354,6 +363,105 @@ class ExecuteurActions
         $n = $this->retouches->supprimerCours($cours);
 
         return ['message' => "{$nom} supprimé, {$n} séance(s) à venir retirée(s).", 'seances_supprimees' => $n];
+    }
+
+    /** Échecs conservés dans le résultat : au-delà, seul le compte est gardé. */
+    private const MAX_ECHECS_DETAILLES = 300;
+
+    /**
+     * @param  array<string, mixed>  $p
+     * @return array{ok: bool, message: string, details: array<string, mixed>}
+     */
+    private function importerEtudiants(array $p): array
+    {
+        $crees = 0;
+        $echecs = [];
+        $identifiants = [];
+
+        foreach ($p['etudiants'] ?? [] as $ligne) {
+            if (($ligne['anomalie'] ?? null) !== null) {
+                $echecs[] = ['ligne' => $ligne['ligne'], 'nom' => $ligne['nom'], 'matricule' => $ligne['matricule'], 'motif' => $ligne['anomalie']];
+
+                continue;
+            }
+
+            try {
+                $r = DB::transaction(fn () => $this->inscrireEtudiant([
+                    'nom' => $ligne['nom'], 'matricule' => $ligne['matricule'],
+                    'salle_id' => $ligne['salle_id'], 'formation' => $ligne['formation'], 'email' => null,
+                ]));
+                $crees++;
+                $identifiants[] = ['nom' => $ligne['nom'], 'matricule' => $r['matricule'], 'mot_de_passe' => $r['mot_de_passe_initial'], 'salle' => $ligne['salle_nom'] ?? null];
+            } catch (ValidationException $e) {
+                $echecs[] = ['ligne' => $ligne['ligne'], 'nom' => $ligne['nom'], 'matricule' => $ligne['matricule'], 'motif' => collect($e->errors())->flatten()->implode(' ')];
+            }
+        }
+
+        $total = count($p['etudiants'] ?? []);
+
+        return [
+            'ok' => $crees > 0 || $total === 0,
+            'message' => sprintf('%d étudiant%s inscrit%s sur %d%s.', $crees, $crees > 1 ? 's' : '', $crees > 1 ? 's' : '', $total,
+                $echecs ? ', '.count($echecs).' ligne'.(count($echecs) > 1 ? 's' : '').' en échec' : ''),
+            'details' => [
+                'crees' => $crees,
+                'total' => $total,
+                'echecs' => array_slice($echecs, 0, self::MAX_ECHECS_DETAILLES),
+                'echecs_total' => count($echecs),
+                // Remis à l'admin une fois (export CSV) : supprimer la conversation les efface.
+                'identifiants' => $identifiants,
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $p
+     * @return array{ok: bool, message: string, details: array<string, mixed>}
+     */
+    private function importerCours(array $p): array
+    {
+        $crees = 0;
+        $seances = 0;
+        $echecs = [];
+
+        foreach ($p['cours'] ?? [] as $i => $ligne) {
+            $libelle = sprintf('%s %s %s–%s (%s)', $ligne['matiere_nom'] ?? '?', $ligne['jour'] ?? '?', $ligne['heure_debut'] ?? '?', $ligne['heure_fin'] ?? '?', $ligne['salle_nom'] ?? 'salle ?');
+
+            if (($ligne['anomalie'] ?? null) !== null) {
+                $echecs[] = ['source' => $ligne['source'] ?? $i + 1, 'cours' => $libelle, 'motif' => $ligne['anomalie']];
+
+                continue;
+            }
+
+            try {
+                $r = DB::transaction(fn () => $this->creerCours([
+                    'salle_id' => $ligne['salle_id'],
+                    'matiere_id' => $ligne['matiere_id'] ?? null, 'matiere_nom' => $ligne['matiere_nom'] ?? null, 'matiere_code' => $ligne['matiere_code'] ?? null,
+                    'enseignant_id' => $ligne['enseignant_id'] ?? null, 'enseignant_nom' => $ligne['enseignant_nom'] ?? null,
+                    'jour' => $ligne['jour'], 'heure_debut' => $ligne['heure_debut'], 'heure_fin' => $ligne['heure_fin'],
+                    'date_debut' => $ligne['date_debut'] ?? null, 'date_fin' => $ligne['date_fin'] ?? null,
+                ]));
+                $crees++;
+                $seances += $r['seances_creees'];
+            } catch (ValidationException $e) {
+                $echecs[] = ['source' => $ligne['source'] ?? $i + 1, 'cours' => $libelle, 'motif' => collect($e->errors())->flatten()->implode(' ')];
+            }
+        }
+
+        $total = count($p['cours'] ?? []);
+
+        return [
+            'ok' => $crees > 0 || $total === 0,
+            'message' => sprintf('%d cours créé%s sur %d (%d séances)%s.', $crees, $crees > 1 ? 's' : '', $total, $seances,
+                $echecs ? ', '.count($echecs).' en échec' : ''),
+            'details' => [
+                'crees' => $crees,
+                'seances_creees' => $seances,
+                'total' => $total,
+                'echecs' => array_slice($echecs, 0, self::MAX_ECHECS_DETAILLES),
+                'echecs_total' => count($echecs),
+            ],
+        ];
     }
 
     /**

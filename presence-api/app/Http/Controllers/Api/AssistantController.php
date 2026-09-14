@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\TraiterMessageIA;
 use App\Models\ConversationIA;
 use App\Services\Assistant\Assistant;
 use App\Services\Assistant\ExecuteurActions;
+use App\Services\Assistant\PiecesJointes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * L'assistant IA du back-office : des conversations par admin, un message
@@ -17,15 +20,14 @@ use Illuminate\Validation\Rule;
  */
 class AssistantController extends Controller
 {
-    /** Taille maximale d'une pièce jointe décodée (octets). */
-    private const TAILLE_MAX_FICHIER = 8 * 1024 * 1024;
-
     public function etat(Assistant $assistant): JsonResponse
     {
         return response()->json([
             'disponible' => $assistant->disponible(),
             'modele' => config('services.anthropic.model'),
-            'types_fichiers' => array_keys(Assistant::TYPES_FICHIERS),
+            'types_fichiers' => array_keys(PiecesJointes::TYPES),
+            'extensions' => PiecesJointes::EXTENSIONS,
+            'taille_max_mo' => (int) config('services.anthropic.taille_max_fichier_mo', 25),
         ]);
     }
 
@@ -60,20 +62,21 @@ class AssistantController extends Controller
         return response()->json($this->presenter($conversation));
     }
 
-    public function destroy(Request $request, ConversationIA $conversation): JsonResponse
+    public function destroy(Request $request, ConversationIA $conversation, PiecesJointes $pieces): JsonResponse
     {
         $this->assertProprietaire($request, $conversation);
+        $pieces->supprimerTout($conversation);
         $conversation->delete();
 
         return response()->json(null, 204);
     }
 
     /**
-     * Un message de l'admin, avec éventuellement des fichiers (PDF, images)
-     * encodés en base64. La boucle avec le modèle peut durer : on laisse à
-     * PHP le temps de la finir.
+     * Un message de l'admin, avec éventuellement des fichiers (PDF, images,
+     * tableurs, texte). Le traitement part en file d'attente : l'interface
+     * suit `traitement` sur la conversation jusqu'à « termine ».
      */
-    public function envoyer(Request $request, ConversationIA $conversation, Assistant $assistant): JsonResponse
+    public function envoyer(Request $request, ConversationIA $conversation, Assistant $assistant, PiecesJointes $pieces): JsonResponse
     {
         $this->assertProprietaire($request, $conversation);
 
@@ -81,37 +84,66 @@ class AssistantController extends Controller
             return response()->json(['message' => "L'assistant n'est pas configuré : renseignez ANTHROPIC_API_KEY côté serveur."], 503);
         }
 
-        $data = $request->validate([
-            'texte' => ['nullable', 'string', 'max:20000', 'required_without:fichiers'],
-            'fichiers' => ['sometimes', 'array', 'max:3'],
-            'fichiers.*.nom' => ['required', 'string', 'max:200'],
-            'fichiers.*.type' => ['required', Rule::in(array_keys(Assistant::TYPES_FICHIERS))],
-            'fichiers.*.base64' => ['required', 'string'],
-        ], [
-            'texte.required_without' => 'Écrivez un message ou joignez un fichier.',
-        ]);
-
-        foreach ($data['fichiers'] ?? [] as $i => $fichier) {
-            $decode = base64_decode($fichier['base64'], true);
-            if ($decode === false || strlen($decode) === 0) {
-                return response()->json(['message' => "Le fichier « {$fichier['nom']} » est illisible."], 422);
-            }
-            if (strlen($decode) > self::TAILLE_MAX_FICHIER) {
-                return response()->json(['message' => "Le fichier « {$fichier['nom']} » dépasse 8 Mo."], 422);
-            }
+        if ($conversation->enTraitement()) {
+            return response()->json(['message' => "L'assistant traite encore le message précédent."], 409);
         }
 
-        set_time_limit(300);
+        $tailleMaxKo = (int) config('services.anthropic.taille_max_fichier_mo', 25) * 1024;
 
-        $resultat = $assistant->repondre($conversation, (string) ($data['texte'] ?? ''), $data['fichiers'] ?? []);
-
-        return response()->json([
-            'reponse' => $resultat['texte'],
-            'actions' => $resultat['actions'],
-            'nouvelles' => $resultat['nouvelles'],
-            'conversation' => $this->presenter($conversation->fresh()),
-            'jetons' => $resultat['jetons'],
+        $data = $request->validate([
+            'texte' => ['nullable', 'string', 'max:20000', 'required_without:fichiers'],
+            'fichiers' => ['sometimes', 'array', 'max:5'],
+            'fichiers.*' => ['file', 'extensions:'.implode(',', PiecesJointes::EXTENSIONS), "max:{$tailleMaxKo}"],
+        ], [
+            'texte.required_without' => 'Écrivez un message ou joignez un fichier.',
+            'fichiers.*.extensions' => 'Formats acceptés : PDF, image, tableur (xlsx, xls, csv) ou texte.',
+            'fichiers.*.max' => 'Un fichier ne peut pas dépasser '.($tailleMaxKo / 1024).' Mo.',
         ]);
+
+        $ids = [];
+        foreach ($request->file('fichiers', []) as $fichier) {
+            $ids[] = $pieces->enregistrer($conversation, $fichier)['id'];
+        }
+
+        $conversation->forceFill(['traitement' => [
+            'statut' => 'en_cours',
+            'etape' => "En file d'attente",
+            'progression' => null,
+            'erreur' => null,
+            'demarre_le' => now()->toIso8601String(),
+        ]])->save();
+
+        TraiterMessageIA::dispatch($conversation->id, (string) ($data['texte'] ?? ''), $ids);
+
+        return response()->json(['conversation' => $this->presenter($conversation->fresh())], 202);
+    }
+
+    /**
+     * Identifiants des comptes créés par un import (matricule, mot de passe
+     * initial), en CSV pour Excel : c'est ce que l'admin distribue.
+     */
+    public function identifiants(Request $request, ConversationIA $conversation, string $actionId): StreamedResponse|JsonResponse
+    {
+        $this->assertProprietaire($request, $conversation);
+
+        $action = collect($conversation->actions ?? [])->firstWhere('id', $actionId);
+        $identifiants = $action['resultat']['details']['identifiants'] ?? null;
+
+        if (! $action || ! is_array($identifiants)) {
+            return response()->json(['message' => 'Aucun identifiant pour cette action.'], 404);
+        }
+
+        $nom = 'identifiants_'.Str::slug($action['resume'] ?? 'import').'.csv';
+
+        return response()->streamDownload(function () use ($identifiants) {
+            $sortie = fopen('php://output', 'w');
+            fwrite($sortie, "\xEF\xBB\xBF"); // BOM : Excel ouvre l'UTF-8 correctement
+            fputcsv($sortie, ['Nom et prénoms', 'Matricule (identifiant)', 'Mot de passe initial', 'Salle'], ';');
+            foreach ($identifiants as $i) {
+                fputcsv($sortie, [$i['nom'] ?? '', $i['matricule'] ?? '', $i['mot_de_passe'] ?? '', $i['salle'] ?? ''], ';');
+            }
+            fclose($sortie);
+        }, $nom, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /**
@@ -161,7 +193,7 @@ class AssistantController extends Controller
         return response()->json([
             'appliquees' => $appliquees,
             'echouees' => $echouees,
-            'actions' => $actions,
+            'actions' => array_map([$this, 'allegerAction'], $actions),
         ]);
     }
 
@@ -182,7 +214,7 @@ class AssistantController extends Controller
 
         $conversation->fill(['actions' => $actions])->save();
 
-        return response()->json(['actions' => $actions]);
+        return response()->json(['actions' => array_map([$this, 'allegerAction'], $actions)]);
     }
 
     /**
@@ -217,9 +249,38 @@ class AssistantController extends Controller
             'id' => $conversation->id,
             'titre' => $conversation->titre,
             'messages' => $transcription,
-            'actions' => $conversation->actions ?? [],
+            'actions' => array_map([$this, 'allegerAction'], $conversation->actions ?? []),
+            'traitement' => $conversation->traitement,
+            'fichiers' => array_map(fn ($f) => [
+                'id' => $f['id'], 'nom' => $f['nom'], 'genre' => $f['genre'], 'taille' => $f['taille'],
+                'pages' => $f['pages'] ?? null, 'feuilles' => array_column($f['feuilles'] ?? [], 'nom'),
+            ], $conversation->fichiers ?? []),
             'mise_a_jour' => $conversation->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Un import de 2 000 lignes ne transite pas dans chaque réponse : l'admin
+     * voit le total, l'aperçu et les anomalies ; les identifiants créés
+     * partent par l'export CSV.
+     *
+     * @param  array<string, mixed>  $action
+     * @return array<string, mixed>
+     */
+    private function allegerAction(array $action): array
+    {
+        if (in_array($action['type'], ['importer_etudiants', 'importer_cours'], true)) {
+            $p = $action['parametres'];
+            unset($p['etudiants'], $p['cours']);
+            $action['parametres'] = $p;
+
+            if (isset($action['resultat']['details']['identifiants'])) {
+                $action['resultat']['details']['identifiants_count'] = count($action['resultat']['details']['identifiants']);
+                unset($action['resultat']['details']['identifiants']);
+            }
+        }
+
+        return $action;
     }
 
     private function assertProprietaire(Request $request, ConversationIA $conversation): void
