@@ -1,1 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#087953"/><path d="M12 12h24v6L21 30h15v6H12v-6l15-12H12z" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Ziris">
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a9d6b"/>
+      <stop offset="1" stop-color="#066848"/>
+    </linearGradient>
+    <mask id="a" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="13.055" cy="17.7" r="7.6" fill="none" stroke="#000" stroke-width="6.7"/>
+    </mask>
+    <mask id="b" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="16" cy="12.6" r="7.6" fill="none" stroke="#000" stroke-width="6.7"/>
+    </mask>
+    <mask id="c" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+      <rect width="32" height="32" fill="#fff"/>
+      <circle cx="18.945" cy="17.7" r="7.6" fill="none" stroke="#000" stroke-width="6.7"/>
+    </mask>
+  </defs>
+  <rect width="48" height="48" rx="11.5" fill="url(#fond)"/>
+  <g transform="translate(6.72 6.72) scale(1.08)" fill="none" stroke="#fff" stroke-width="2.9">
+    <circle cx="16" cy="12.6" r="7.6" mask="url(#a)"/>
+    <circle cx="18.945" cy="17.7" r="7.6" mask="url(#b)"/>
+    <circle cx="13.055" cy="17.7" r="7.6" mask="url(#c)"/>
+  </g>
+</svg>
