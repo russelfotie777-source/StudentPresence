@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Assistant\Modele;
+use App\Services\Assistant\ModeleClaude;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -15,7 +17,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Le fournisseur du modèle de l'assistant IA : Claude en production,
+        // remplaçable par un scénario dans les tests (voir Assistant\Modele).
+        $this->app->singleton(Modele::class, fn () => new ModeleClaude(
+            cle: config('services.anthropic.key'),
+            modele: config('services.anthropic.model', 'claude-opus-5'),
+        ));
     }
 
     /**
