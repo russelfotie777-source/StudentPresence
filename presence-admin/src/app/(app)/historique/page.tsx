@@ -9,7 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -17,7 +19,7 @@ import { apiFetch } from "@/lib/api-client";
 import { salleHooks } from "@/hooks/use-catalog";
 import type { Seance } from "@/types/api";
 import { cn } from "@/lib/utils";
-import { libelleSalle } from "@/lib/catalogue";
+import { grouperSalles, libelleSalle, libelleSalleDansDepartement } from "@/lib/catalogue";
 
 interface PageHistorique {
   data: Seance[];
@@ -75,10 +77,15 @@ export default function HistoriquePage() {
               {/* Sans cette entrée, un filtre posé ne pouvait plus être retiré :
                   le texte « Toutes les salles » n'était qu'un libellé de repli. */}
               <SelectItem value={TOUTES}>Toutes les salles</SelectItem>
-              {salles?.map((s) => (
-                <SelectItem key={s.id} value={String(s.id)}>
-                  {libelleSalle(s)}
-                </SelectItem>
+              {grouperSalles(salles ?? []).map((g) => (
+                <SelectGroup key={g.cle}>
+                  <SelectLabel>{g.titre}</SelectLabel>
+                  {g.salles.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {libelleSalleDansDepartement(s)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>

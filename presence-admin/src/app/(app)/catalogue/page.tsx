@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Plus, Trash2, Search, Layers, DoorOpen, BookOpen, GraduationCap } from "lucide-react";
+import { PanneauDepartements } from "@/components/catalogue/panneau-departements";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   type Consequence,
 } from "@/components/catalogue/suppression-dialog";
 import {
+  departementHooks,
   filiereHooks,
   matiereHooks,
   niveauHooks,
@@ -28,14 +30,26 @@ import {
   type Niveau,
   type Salle,
 } from "@/hooks/use-catalog";
+import { libelleSalle } from "@/lib/catalogue";
 
-type Onglet = "niveaux" | "filieres" | "salles" | "matieres";
+type Onglet = "departements" | "niveaux" | "filieres" | "salles" | "matieres";
 
 /** Valeur du choix « tous » — un Select ne peut pas porter une option vide. */
 const TOUS = "tous";
 
+/** « ?departement_id=3&niveau_id=2 » à partir des filtres posés — rien pour « tous ». */
+function requete(filtres: Record<string, string>): string {
+  const params = new URLSearchParams();
+  for (const [cle, valeur] of Object.entries(filtres)) {
+    if (valeur !== TOUS) params.set(cle, valeur);
+  }
+  const chaine = params.toString();
+
+  return chaine ? `?${chaine}` : "";
+}
+
 export default function CataloguePage() {
-  const [onglet, setOnglet] = useState<Onglet>("niveaux");
+  const [onglet, setOnglet] = useState<Onglet>("departements");
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,13 +58,14 @@ export default function CataloguePage() {
           Catalogue académique
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          La structure sur laquelle tout repose : un niveau contient des filières, qui
-          contiennent des salles, où se tiennent les séances.
+          La structure sur laquelle tout repose : un département existe à chaque niveau, y
+          ouvre des filières, qui contiennent des salles, où se tiennent les séances.
         </p>
       </div>
 
       <Tabs value={onglet} onValueChange={(v) => setOnglet(v as Onglet)}>
         <TabsList>
+          <TabsTrigger value="departements">Départements</TabsTrigger>
           <TabsTrigger value="niveaux">Niveaux</TabsTrigger>
           <TabsTrigger value="filieres">Filières</TabsTrigger>
           <TabsTrigger value="salles">Salles</TabsTrigger>
@@ -58,6 +73,7 @@ export default function CataloguePage() {
         </TabsList>
       </Tabs>
 
+      {onglet === "departements" && <PanneauDepartements />}
       {onglet === "niveaux" && <PanneauNiveaux />}
       {onglet === "filieres" && <PanneauFilieres />}
       {onglet === "salles" && <PanneauSalles />}
@@ -140,10 +156,12 @@ function PanneauNiveaux() {
 }
 
 function PanneauFilieres() {
+  const { data: departements } = departementHooks.useList();
   const { data: niveaux } = niveauHooks.useList();
+  const [departementId, setDepartementId] = useState(TOUS);
   const [niveauId, setNiveauId] = useState(TOUS);
   const { data: filieres } = filiereHooks.useList(
-    niveauId !== TOUS ? `?niveau_id=${niveauId}` : "",
+    requete({ departement_id: departementId, niveau_id: niveauId }),
   );
   const { data: salles } = salleHooks.useList();
   const creer = filiereHooks.useCreate();
@@ -154,34 +172,56 @@ function PanneauFilieres() {
   const [aSupprimer, setASupprimer] = useState<Filiere | null>(null);
 
   const visibles = useFiltrage(filieres, recherche, (f) => f.nom);
+  const pretACreer = departementId !== TOUS && niveauId !== TOUS;
 
   return (
     <Panneau
       icon={GraduationCap}
       filtre={
-        <Select value={niveauId} onValueChange={(v) => setNiveauId(v ?? TOUS)}>
-          <SelectTrigger className="h-10 w-full rounded-lg sm:w-56">
-            {/* Sans cette fonction, le déclencheur affiche la valeur brute
-                sélectionnée ("tous" ou l'id numérique) au lieu de son libellé —
-                c'est le comportement par défaut de ce composant, pas un choix. */}
-            <SelectValue placeholder="Tous les niveaux">
-              {() => (niveauId === TOUS ? "Tous les niveaux" : niveaux?.find((n) => String(n.id) === niveauId)?.nom)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TOUS}>Tous les niveaux</SelectItem>
-            {niveaux?.map((n) => (
-              <SelectItem key={n.id} value={String(n.id)}>
-                {n.nom}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Select value={departementId} onValueChange={(v) => setDepartementId(v ?? TOUS)}>
+            <SelectTrigger className="h-10 w-full rounded-lg sm:w-64">
+              <SelectValue placeholder="Tous les départements">
+                {() =>
+                  departementId === TOUS
+                    ? "Tous les départements"
+                    : departements?.find((d) => String(d.id) === departementId)?.nom
+                }
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TOUS}>Tous les départements</SelectItem>
+              {departements?.map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {d.code} — {d.nom}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={niveauId} onValueChange={(v) => setNiveauId(v ?? TOUS)}>
+            <SelectTrigger className="h-10 w-full rounded-lg sm:w-48">
+              {/* Sans cette fonction, le déclencheur affiche la valeur brute
+                  sélectionnée ("tous" ou l'id numérique) au lieu de son libellé —
+                  c'est le comportement par défaut de ce composant, pas un choix. */}
+              <SelectValue placeholder="Tous les niveaux">
+                {() => (niveauId === TOUS ? "Tous les niveaux" : niveaux?.find((n) => String(n.id) === niveauId)?.nom)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TOUS}>Tous les niveaux</SelectItem>
+              {niveaux?.map((n) => (
+                <SelectItem key={n.id} value={String(n.id)}>
+                  {n.nom}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       }
       formulaire={
         <>
           <Input
-            placeholder="Nom de la filière"
+            placeholder="Nom de la filière — ex : ASR, Cybersécurité"
             value={nom}
             onChange={(e) => setNom(e.target.value)}
             className="h-10 flex-1 rounded-lg"
@@ -189,9 +229,12 @@ function PanneauFilieres() {
           <Button
             className="h-10 gap-1.5"
             onClick={() =>
-              creer.mutate({ nom, niveau_id: Number(niveauId) }, { onSuccess: () => setNom("") })
+              creer.mutate(
+                { nom, niveau_id: Number(niveauId), departement_id: Number(departementId) },
+                { onSuccess: () => setNom("") },
+              )
             }
-            disabled={!nom || niveauId === TOUS || creer.isPending}
+            disabled={!nom || !pretACreer || creer.isPending}
           >
             <Plus className="size-4" />
             Ajouter
@@ -199,9 +242,9 @@ function PanneauFilieres() {
         </>
       }
       aide={
-        niveauId === TOUS
-          ? "Choisissez d'abord un niveau : une filière lui appartient nécessairement."
-          : undefined
+        pretACreer
+          ? undefined
+          : "Choisissez un département et un niveau : une filière (option) appartient nécessairement aux deux. La filière tronc commun de chaque département existe déjà à chaque niveau."
       }
       recherche={
         filieres && filieres.length > 6 ? { valeur: recherche, set: setRecherche } : undefined
@@ -212,7 +255,8 @@ function PanneauFilieres() {
         <Ligne
           key={f.id}
           titre={f.nom}
-          detail={niveaux?.find((n) => n.id === f.niveau_id)?.nom}
+          badge={f.departement?.code}
+          detail={f.niveau?.nom}
           onSupprimer={() => setASupprimer(f)}
         />
       ))}
@@ -240,10 +284,12 @@ function PanneauFilieres() {
 }
 
 function PanneauSalles() {
-  const { data: filieres } = filiereHooks.useList();
+  const { data: departements } = departementHooks.useList();
+  const [departementId, setDepartementId] = useState(TOUS);
+  const { data: filieres } = filiereHooks.useList(requete({ departement_id: departementId }));
   const [filiereId, setFiliereId] = useState(TOUS);
   const { data: salles } = salleHooks.useList(
-    filiereId !== TOUS ? `?filiere_id=${filiereId}` : "",
+    requete({ departement_id: departementId, filiere_id: filiereId }),
   );
   const creer = salleHooks.useCreate();
   const supprimer = salleHooks.useRemove();
@@ -253,28 +299,61 @@ function PanneauSalles() {
   const [recherche, setRecherche] = useState("");
   const [aSupprimer, setASupprimer] = useState<Salle | null>(null);
 
-  const visibles = useFiltrage(salles, recherche, (s) => s.nom);
+  const visibles = useFiltrage(salles, recherche, (s) => libelleSalle(s));
+
+  // Une filière choisie appartient au département filtré ; changer de
+  // département la rend caduque.
+  function choisirDepartement(v: string) {
+    setDepartementId(v);
+    setFiliereId(TOUS);
+  }
+
+  const libelleFiliere = (f: Filiere) =>
+    [f.departement?.code, f.nom, f.niveau?.nom].filter(Boolean).join(" · ");
 
   return (
     <Panneau
       icon={DoorOpen}
       filtre={
-        <Select value={filiereId} onValueChange={(v) => setFiliereId(v ?? TOUS)}>
-          <SelectTrigger className="h-10 w-full rounded-lg sm:w-64">
-            <SelectValue placeholder="Toutes les filières">
-              {() => (filiereId === TOUS ? "Toutes les filières" : filieres?.find((f) => String(f.id) === filiereId)?.nom)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TOUS}>Toutes les filières</SelectItem>
-            {filieres?.map((f) => (
-              <SelectItem key={f.id} value={String(f.id)}>
-                {f.nom}
-                {f.niveau?.nom ? ` — ${f.niveau.nom}` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Select value={departementId} onValueChange={(v) => choisirDepartement(v ?? TOUS)}>
+            <SelectTrigger className="h-10 w-full rounded-lg sm:w-64">
+              <SelectValue placeholder="Tous les départements">
+                {() =>
+                  departementId === TOUS
+                    ? "Tous les départements"
+                    : departements?.find((d) => String(d.id) === departementId)?.nom
+                }
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TOUS}>Tous les départements</SelectItem>
+              {departements?.map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {d.code} — {d.nom}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filiereId} onValueChange={(v) => setFiliereId(v ?? TOUS)}>
+            <SelectTrigger className="h-10 w-full rounded-lg sm:w-72">
+              <SelectValue placeholder="Toutes les filières">
+                {() => {
+                  const f = filieres?.find((f) => String(f.id) === filiereId);
+                  return filiereId === TOUS ? "Toutes les filières" : f && libelleFiliere(f);
+                }}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TOUS}>Toutes les filières</SelectItem>
+              {filieres?.map((f) => (
+                <SelectItem key={f.id} value={String(f.id)}>
+                  {libelleFiliere(f)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       }
       formulaire={
         <>
@@ -310,7 +389,7 @@ function PanneauSalles() {
       }
       aide={
         filiereId === TOUS
-          ? "Choisissez d'abord une filière : une même salle physique existe en FI et en FA comme deux entrées distinctes."
+          ? "Choisissez d'abord une filière (département · filière · niveau) : une même salle physique existe en FI et en FA comme deux entrées distinctes."
           : undefined
       }
       recherche={salles && salles.length > 6 ? { valeur: recherche, set: setRecherche } : undefined}
@@ -320,7 +399,7 @@ function PanneauSalles() {
         <Ligne
           key={s.id}
           titre={s.nom}
-          detail={[s.filiere?.nom, s.filiere?.niveau?.nom].filter(Boolean).join(" · ")}
+          detail={[s.filiere?.departement?.code, s.filiere?.nom, s.filiere?.niveau?.nom].filter(Boolean).join(" · ")}
           badge={s.formation}
           onSupprimer={() => setASupprimer(s)}
         />

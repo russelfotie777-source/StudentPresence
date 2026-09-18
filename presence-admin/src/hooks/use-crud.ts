@@ -10,7 +10,12 @@ import { apiFetch, ApiError } from "@/lib/api-client";
  * même schéma REST côté API (apiResource Laravel), pas la peine de
  * dupliquer les mêmes 4 hooks pour chacune.
  */
-export function makeCrudHooks<T extends { id: number }>(endpoint: string, queryKey: string) {
+export function makeCrudHooks<T extends { id: number }>(
+  endpoint: string,
+  queryKey: string,
+  /** Autres clés à périmer : les listes qui embarquent cette entité (une salle porte sa filière et son département). */
+  cles_liees: string[] = [],
+) {
   function useList(query = "") {
     return useQuery({
       queryKey: [queryKey, query],
@@ -27,8 +32,9 @@ export function makeCrudHooks<T extends { id: number }>(endpoint: string, queryK
     const queryClient = useQueryClient();
 
     return () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      for (const cle of [queryKey, ...cles_liees, "dashboard"]) {
+        queryClient.invalidateQueries({ queryKey: [cle] });
+      }
     };
   }
 
