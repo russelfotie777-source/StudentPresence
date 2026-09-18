@@ -2,12 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { Plus, Trash2, Search, Layers, DoorOpen, BookOpen, GraduationCap } from "lucide-react";
+import { ArrowLeftRight, Plus, Trash2, Search, Layers, DoorOpen, BookOpen, GraduationCap } from "lucide-react";
 import { PanneauDepartements } from "@/components/catalogue/panneau-departements";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -170,6 +178,7 @@ function PanneauFilieres() {
   const [nom, setNom] = useState("");
   const [recherche, setRecherche] = useState("");
   const [aSupprimer, setASupprimer] = useState<Filiere | null>(null);
+  const [aDeplacer, setADeplacer] = useState<Filiere | null>(null);
 
   const visibles = useFiltrage(filieres, recherche, (f) => f.nom);
   const pretACreer = departementId !== TOUS && niveauId !== TOUS;
@@ -257,9 +266,26 @@ function PanneauFilieres() {
           titre={f.nom}
           badge={f.departement?.code}
           detail={f.niveau?.nom}
+          actions={
+            (departements?.length ?? 0) > 1 && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setADeplacer(f)}
+                aria-label={`Changer ${f.nom} de département`}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeftRight className="size-4" />
+              </Button>
+            )
+          }
           onSupprimer={() => setASupprimer(f)}
         />
       ))}
+
+      {aDeplacer && (
+        <DialogueDeplacement filiere={aDeplacer} onFermer={() => setADeplacer(null)} />
+      )}
 
       {aSupprimer && (
         <SuppressionDialog
@@ -280,6 +306,69 @@ function PanneauFilieres() {
         />
       )}
     </Panneau>
+  );
+}
+
+/**
+ * Rattacher une filière à un autre département — ses salles, leurs séances
+ * et leurs étudiants suivent. C'est ainsi qu'on répartit une structure
+ * héritée où tout était sous un seul département.
+ */
+function DialogueDeplacement({ filiere, onFermer }: { filiere: Filiere; onFermer: () => void }) {
+  const { data: departements } = departementHooks.useList();
+  const modifier = filiereHooks.useUpdate();
+  const [cible, setCible] = useState("");
+  const destination = departements?.find((d) => String(d.id) === cible);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onFermer()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Changer « {filiere.nom} » de département</DialogTitle>
+          <DialogDescription>
+            Actuellement en {filiere.departement?.code} ({filiere.niveau?.nom}). Ses salles, leurs
+            séances et leurs étudiants suivent ; les listes de présence sortiront au nom du nouveau
+            département.
+          </DialogDescription>
+        </DialogHeader>
+        <Select value={cible} onValueChange={(v) => setCible(v ?? "")}>
+          <SelectTrigger className="h-10 w-full rounded-lg">
+            <SelectValue placeholder="Nouveau département…">
+              {() => (destination ? `${destination.code} — ${destination.nom}` : "Nouveau département…")}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {departements
+              ?.filter((d) => d.id !== filiere.departement_id)
+              .map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {d.code} — {d.nom}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <DialogFooter>
+          <Button variant="outline" onClick={onFermer}>
+            Annuler
+          </Button>
+          <Button
+            disabled={!destination || modifier.isPending}
+            onClick={() =>
+              destination &&
+              modifier.mutate(
+                {
+                  id: filiere.id,
+                  data: { nom: filiere.nom, niveau_id: filiere.niveau_id, departement_id: destination.id },
+                },
+                { onSuccess: onFermer },
+              )
+            }
+          >
+            {modifier.isPending ? "Déplacement…" : "Déplacer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -550,11 +639,13 @@ function Ligne({
   titre,
   detail,
   badge,
+  actions,
   onSupprimer,
 }: {
   titre: string;
   detail?: string;
   badge?: string;
+  actions?: React.ReactNode;
   onSupprimer: () => void;
 }) {
   return (
@@ -573,15 +664,18 @@ function Ligne({
         )}
         {detail && <span className="truncate text-xs text-muted-foreground">{detail}</span>}
       </div>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={onSupprimer}
-        aria-label={`Supprimer ${titre}`}
-        className="shrink-0 text-muted-foreground hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </Button>
+      <div className="flex shrink-0 items-center gap-0.5">
+        {actions}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onSupprimer}
+          aria-label={`Supprimer ${titre}`}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
     </motion.div>
   );
 }
