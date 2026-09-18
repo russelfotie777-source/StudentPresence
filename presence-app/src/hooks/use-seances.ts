@@ -85,7 +85,13 @@ export function useMarkDelegue(seanceId: number) {
       }),
     onSuccess: (_data, input) => {
       invalidate();
-      toast.success(input.etat === "present" ? "Enseignant marqué présent." : "Enseignant marqué absent.");
+      toast.success(
+        input.set_fin_reelle
+          ? "Fin du cours enregistrée."
+          : input.etat === "present"
+            ? "Enseignant marqué présent."
+            : "Enseignant marqué absent.",
+      );
     },
     onError: (error) => toast.error(errorMessage(error, "Le marquage a échoué.")),
   });

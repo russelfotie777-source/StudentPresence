@@ -93,6 +93,28 @@ class Seance extends Model
     }
 
     /**
+     * Crédite au quota de l'enseignant les heures réellement faites, une
+     * seule fois par séance (quota_credited_at) — l'ancienne app
+     * ré-incrémentait à chaque re-soumission « présent » du délégué. Ne fait
+     * rien tant que début et fin réels ne sont pas tous deux connus.
+     */
+    public function crediterQuotaEnseignant(): void
+    {
+        if (! $this->debut_reel || ! $this->fin_reelle
+            || $this->etat_delegue !== PresenceState::Present
+            || $this->quota_credited_at) {
+            return;
+        }
+
+        // abs() est indispensable : Carbon 3 renvoie un diff *signé* par
+        // défaut (contrairement à Carbon 2) — sans ça, le sens de calcul
+        // peut donner un nombre de minutes négatif.
+        $minutes = abs(Carbon::parse($this->fin_reelle)->diffInMinutes(Carbon::parse($this->debut_reel)));
+        $this->enseignant->increment('quota', (int) round($minutes / 60));
+        $this->forceFill(['quota_credited_at' => now()])->save();
+    }
+
+    /**
      * Horodatage complet de heure_debut/heure_fin sur la date de la séance
      * (les colonnes DB ne stockent que l'heure).
      */
