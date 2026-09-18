@@ -49,8 +49,10 @@ Les deux applications lisent l'URL de l'API dans `NEXT_PUBLIC_API_URL`
 
 ## Modèle de données
 
-`users` (rôles `Etudiant`, `Delegue`, `Enseignant`, `Admin`) — `salles` (une
-classe : nom, filière, niveau, formation FI ou FA) — `filieres` / `niveaux` —
+`users` (rôles `Etudiant`, `Delegue`, `Enseignant`, `Admin`) — `departements`
+(GI, GRT… : sommet de la structure, chacun existe à tous les niveaux) —
+`filieres` (une par département et par niveau au minimum, plus les options) —
+`salles` (une classe : nom, filière, formation FI ou FA) — `niveaux` —
 `matieres` — `course_templates` (cours récurrent : matière, enseignant, salle,
 jour, horaires, période de validité) — `seances` (une occurrence par semaine du
 semestre) — `semaines` (calendrier du semestre) — `presences_etudiants` —

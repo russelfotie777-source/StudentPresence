@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FormationType;
 use App\Enums\Weekday;
+use App\Models\Departement;
 use App\Models\Parametre;
 use App\Models\Salle;
 use App\Models\Seance;
@@ -16,10 +17,14 @@ use Illuminate\Support\Str;
  * Assemble les données de la liste de présence hebdomadaire officielle
  * d'une salle, au format du département (en-tête bilingue, tableau des
  * étudiants avec une colonne par jour, tableau des séances de la semaine).
+ *
+ * L'en-tête porte le département de la salle — celui de sa filière — et non
+ * plus un nom fixé dans la configuration : la liste d'une salle GRT sort au
+ * nom du GRT, celle d'une salle GI au nom du Génie Informatique.
  */
 class ListeHebdomadaire
 {
-    public function __construct(private FeuilleDePresence $feuille) {}
+    public function __construct(private FeuilleDePresence $feuille, private StructureDepartement $structure) {}
 
     /** Mots vides ignorés pour former le sigle d'une filière. */
     private const MOTS_VIDES = ['de', 'des', 'du', 'et', 'la', 'le', 'les', 'l', 'd', 'en', 'a', 'à'];
@@ -36,14 +41,17 @@ class ListeHebdomadaire
      */
     public function pour(Salle $salle, Semaine $semaine, ?int $semestre = null, ?string $annee = null, ?string $symboles = null): array
     {
-        $salle->loadMissing('filiere.niveau');
+        $salle->loadMissing(['filiere.niveau', 'filiere.departement']);
+        $departement = $salle->filiere->departement;
         $niveauChiffre = $this->chiffreDuNiveau($salle->filiere->niveau->nom);
-        $option = $this->sigle($salle->filiere->nom);
+        $option = $this->option($salle);
         $donnees = $this->feuille->pour($salle, $semaine);
 
         return [
             'etablissement' => config('presence.etablissement'),
             'logo' => $this->logoEnDataUri(),
+            'departement_fr' => $departement->enteteFr(),
+            'departement_en' => $departement->enteteEn(),
             'option' => $option,
             'niveau_romain' => self::ROMAINS[$niveauChiffre] ?? (string) $niveauChiffre,
             'annee_academique' => $annee ?? $this->anneeAcademiqueCourante(),
@@ -59,6 +67,40 @@ class ListeHebdomadaire
             'contient_fm' => $salle->formation === FormationType::FI,
             'contient_marques' => $donnees['seances']->contains(fn (Seance $s) => $this->feuille->statut($s) === 'tenue'),
         ];
+    }
+
+    /**
+     * Les listes de toutes les salles d'un département pour une semaine, dans
+     * l'ordre d'impression (niveau, filière, FI puis FA, nom) : une page par
+     * salle dans un seul document, c'est ce que le secrétariat affiche au
+     * tableau du département en début de semaine.
+     *
+     * @return array<string, mixed>
+     */
+    public function pourDepartement(Departement $departement, Semaine $semaine, ?int $semestre = null, ?string $annee = null, ?string $symboles = null): array
+    {
+        $listes = $this->structure->salles($departement)
+            ->map(fn (Salle $salle) => $this->pour($salle, $semaine, $semestre, $annee, $symboles));
+
+        return [
+            'departement' => $departement,
+            'semaine' => $semaine,
+            'listes' => $listes,
+        ];
+    }
+
+    /**
+     * L'option imprimée en en-tête : le sigle de la filière, sauf pour la
+     * filière "tronc commun" ouverte au nom du département, où c'est le code
+     * du département lui-même qui fait foi ("GI", pas un sigle recalculé).
+     */
+    private function option(Salle $salle): string
+    {
+        $filiere = $salle->filiere;
+
+        return $filiere->nom === $filiere->departement->nom
+            ? $filiere->departement->code
+            : $this->sigle($filiere->nom);
     }
 
     /**
@@ -120,20 +162,23 @@ class ListeHebdomadaire
         return $jours;
     }
 
-    /** "Génie Informatique" → "GI", "Génie des Réseaux et Télécoms" → "GRT". */
+    /**
+     * "Génie Informatique" → "GI", "Génie des Réseaux et Télécoms" → "GRT",
+     * "Informatique" → "INF" : un nom d'un seul mot garde ses trois premières
+     * lettres plutôt qu'une initiale seule, illisible en tête de liste.
+     */
     public function sigle(string $nom): string
     {
-        $mots = preg_split("/[\s'’-]+/u", Str::ascii($nom)) ?: [];
-        $initiales = collect($mots)
+        $mots = collect(preg_split("/[\s'’-]+/u", Str::ascii($nom)) ?: [])
             ->filter(fn ($m) => $m !== '' && ! in_array(Str::lower($m), self::MOTS_VIDES, true))
-            ->map(fn ($m) => Str::upper(Str::substr($m, 0, 1)));
+            ->values();
 
-        // Un nom déjà en sigle ("GRT") n'a pas à être réduit à sa lettre.
-        if ($initiales->count() === 1 && Str::upper($nom) === $nom) {
-            return $nom;
+        if ($mots->count() === 1) {
+            // Un nom déjà en sigle ("GRT") n'a pas à être réduit.
+            return Str::upper($nom) === $nom ? $nom : Str::upper(Str::substr($mots[0], 0, 3));
         }
 
-        return $initiales->implode('');
+        return $mots->map(fn ($m) => Str::upper(Str::substr($m, 0, 1)))->implode('');
     }
 
     /** "L2" → 2, "DUT2" → 2, "Niveau 3" → 3. */

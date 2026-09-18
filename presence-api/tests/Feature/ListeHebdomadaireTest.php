@@ -45,6 +45,9 @@ class ListeHebdomadaireTest extends TestCase
         $this->assertSame('GRT', $this->liste->sigle('GRT'));
         // Les mots vides (de, l') ne comptent pas, l'apostrophe non plus.
         $this->assertSame('GOL', $this->liste->sigle("Génie de l'Organisation Logistique"));
+        // Un seul mot : trois lettres plutôt qu'une initiale seule.
+        $this->assertSame('INF', $this->liste->sigle('Informatique'));
+        $this->assertSame('CYB', $this->liste->sigle('Cybersécurité'));
     }
 
     public function test_niveau_digit_becomes_a_roman_numeral(): void

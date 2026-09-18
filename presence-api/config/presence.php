@@ -46,13 +46,12 @@ return [
     /*
      * En-tête institutionnel des documents officiels (liste de présence
      * hebdomadaire). Le logo se remplace en déposant le fichier officiel à
-     * l'emplacement indiqué ; les textes suivent la maquette du département
-     * et se surchargent par l'environnement pour un autre département.
+     * l'emplacement indiqué ; les coordonnées sont celles de l'établissement.
+     * Le nom du département, lui, n'est plus ici : chaque liste porte celui
+     * de la salle imprimée (voir App\Models\Departement::enteteFr).
      */
     'etablissement' => [
         'logo' => env('PRESENCE_LOGO', resource_path('images/iut-douala.png')),
-        'departement_fr' => env('PRESENCE_DEPARTEMENT_FR', 'DEPARTEMENT DE GENIE INFORMATIQUE'),
-        'departement_en' => env('PRESENCE_DEPARTEMENT_EN', 'DEPARTMENT OF COMPUTERS SCIENCES'),
         'bp' => env('PRESENCE_BP', '8698 DOUALA'),
         'tel' => env('PRESENCE_TEL', '(237) 233 40 24 82'),
         'email' => env('PRESENCE_EMAIL', 'infos.iut@univ-douala.com'),
