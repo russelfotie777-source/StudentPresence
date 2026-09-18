@@ -19,6 +19,7 @@ import {
   ArrowRight,
   CalendarCheck2,
   GraduationCap,
+  UserCheck,
 } from "lucide-react";
 import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 import styles from "./dashboard.module.css";
@@ -36,6 +37,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { useAttendanceStats } from "@/hooks/use-attendance-stats";
 import { FUSEAU, useHeureDouala } from "@/hooks/use-heure";
 import {
+  useConfirmerEnseignant,
   useMarkDelegue,
   useMarkProf,
   useTodaySeances,
@@ -524,8 +526,18 @@ function DelegateActions({
   onConfirmRoster: () => void;
 }) {
   const mark = useMarkDelegue(seance.id);
+  const confirmer = useConfirmerEnseignant(seance.id);
   const disabled =
     !seance.is_active || seance.presences_locked || mark.isPending;
+  // Règle admin : quand l'enseignant n'utilise pas l'app, le délégué peut
+  // confirmer sa présence à sa place — tant que l'enseignant n'a pas
+  // répondu lui-même et que le délégué ne l'a pas marqué absent.
+  const peutConfirmer =
+    seance.confirmation_enseignant_par_delegue === true &&
+    seance.etat_prof === null &&
+    seance.etat_delegue !== "absent" &&
+    seance.is_active &&
+    !seance.presences_locked;
   return (
     <div className="role-actions">
       {seance.is_active && !seance.presences_locked && (
@@ -550,6 +562,21 @@ function DelegateActions({
       >
         <X size={16} /> Absent
       </Button>
+      {peutConfirmer && (
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={confirmer.isPending}
+          onClick={() => confirmer.mutate()}
+        >
+          <UserCheck size={16} /> Confirmer pour l’enseignant
+        </Button>
+      )}
+      {seance.etat_prof_par_delegue && (
+        <span className="attendance-status confirmed">
+          <UserCheck size={16} /> Présence de l’enseignant confirmée à sa place
+        </span>
+      )}
       {!seance.presences_locked && (
         <Button
           variant="secondary"
