@@ -298,9 +298,9 @@ class Outils
         $r = ['aujourdhui' => now()->toDateString(), 'jour' => now()->locale('fr')->dayName];
 
         if ($tout || $partie === 'salles') {
-            $r['salles'] = Salle::with('filiere.niveau')->orderBy('nom')->get()->map(fn (Salle $s) => [
+            $r['salles'] = Salle::with(['filiere.niveau', 'filiere.departement'])->orderBy('nom')->get()->map(fn (Salle $s) => [
                 'id' => $s->id, 'nom' => $s->nom, 'formation' => $s->formation->value,
-                'filiere' => $s->filiere?->nom, 'niveau' => $s->filiere?->niveau?->nom,
+                'departement' => $s->filiere?->departement?->code, 'filiere' => $s->filiere?->nom, 'niveau' => $s->filiere?->niveau?->nom,
                 'formations_accueillies' => $s->formationsAccueillies(),
             ])->values();
         }

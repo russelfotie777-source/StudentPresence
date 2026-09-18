@@ -13,11 +13,13 @@ class FiliereController extends Controller
     public function index(Request $request)
     {
         $niveauId = $request->integer('niveau_id');
+        $departementId = $request->integer('departement_id');
 
         return CatalogueCache::souvenir(
-            "filieres:niveau:{$niveauId}",
-            fn () => Filiere::with('niveau')
+            "filieres:niveau:{$niveauId}:departement:{$departementId}",
+            fn () => Filiere::with(['niveau', 'departement'])
                 ->when($niveauId, fn ($q) => $q->where('niveau_id', $niveauId))
+                ->when($departementId, fn ($q) => $q->where('departement_id', $departementId))
                 ->orderBy('nom')
                 ->get()
                 ->toArray()
@@ -28,12 +30,12 @@ class FiliereController extends Controller
     {
         $data = $this->validated($request);
 
-        return response()->json(Filiere::create($data)->load('niveau'), 201);
+        return response()->json(Filiere::create($data)->load(['niveau', 'departement']), 201);
     }
 
     public function show(Filiere $filiere)
     {
-        return $filiere->load(['niveau', 'salles', 'groupes']);
+        return $filiere->load(['niveau', 'departement', 'salles', 'groupes']);
     }
 
     public function update(Request $request, Filiere $filiere)
@@ -42,7 +44,7 @@ class FiliereController extends Controller
 
         $filiere->update($data);
 
-        return $filiere->load('niveau');
+        return $filiere->load(['niveau', 'departement']);
     }
 
     public function destroy(Filiere $filiere)
@@ -57,9 +59,13 @@ class FiliereController extends Controller
         return $request->validate([
             'nom' => [
                 'required', 'string', 'max:50',
-                Rule::unique('filieres', 'nom')->where('niveau_id', $request->input('niveau_id'))->ignore($ignoreId),
+                Rule::unique('filieres', 'nom')
+                    ->where('niveau_id', $request->input('niveau_id'))
+                    ->where('departement_id', $request->input('departement_id'))
+                    ->ignore($ignoreId),
             ],
             'niveau_id' => ['required', 'exists:niveaux,id'],
+            'departement_id' => ['required', 'exists:departements,id'],
         ]);
     }
 }

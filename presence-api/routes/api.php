@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DepartementController;
 use App\Http\Controllers\Api\EmploiDuTempsController;
 use App\Http\Controllers\Api\EnseignantController;
 use App\Http\Controllers\Api\EtudiantController;
@@ -54,7 +55,7 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// Lecture publique du catalogue (niveaux/filières/salles) : nécessaire pour
+// Lecture publique du catalogue (départements/niveaux/filières/salles) : nécessaire pour
 // peupler le formulaire d'inscription (register.php le faisait déjà côté
 // ancienne app, sans authentification). Uniquement index/show — la
 // création/modification reste réservée à l'admin ci-dessous.
@@ -64,6 +65,7 @@ Route::middleware([])->group(function () {
     Route::get('/heure', HeureController::class);
     Route::get('/push/cle-publique', [PushSubscriptionController::class, 'clePublique']);
 
+    Route::apiResource('departements', DepartementController::class)->only(['index', 'show']);
     Route::apiResource('niveaux', NiveauController::class)->only(['index', 'show']);
     Route::apiResource('filieres', FiliereController::class)->only(['index', 'show']);
     Route::apiResource('salles', SalleController::class)->only(['index', 'show']);
@@ -71,6 +73,7 @@ Route::middleware([])->group(function () {
 
 // Catalogue académique + planification — réservé au back-office admin.
 Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])->group(function () {
+    Route::apiResource('departements', DepartementController::class)->except(['index', 'show']);
     Route::apiResource('niveaux', NiveauController::class)->except(['index', 'show']);
     Route::apiResource('filieres', FiliereController::class)->except(['index', 'show']);
     Route::apiResource('salles', SalleController::class)->except(['index', 'show']);
@@ -130,8 +133,10 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::post('/etudiants/{etudiant}/retablir', [EtudiantController::class, 'retablir']);
     Route::delete('/etudiants/{etudiant}', [EtudiantController::class, 'destroy']);
 
-    // Liste de présence hebdomadaire officielle d'une salle.
+    // Liste de présence hebdomadaire officielle d'une salle — ou de toutes
+    // les salles d'un département, une page par salle.
     Route::get('/salles/{salle}/liste-presence.pdf', [PdfController::class, 'listeHebdomadaire']);
+    Route::get('/departements/{departement}/liste-presence.pdf', [PdfController::class, 'listeDepartement']);
     Route::get('/salles/{salle}/feuille-presence', [FeuillePresenceController::class, 'semaine']);
     Route::get('/parametres/liste-presence', [ListePresenceSettingController::class, 'show']);
     Route::put('/parametres/liste-presence', [ListePresenceSettingController::class, 'update']);

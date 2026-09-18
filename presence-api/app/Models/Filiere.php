@@ -9,10 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['nom', 'niveau_id'])]
+#[Fillable(['nom', 'niveau_id', 'departement_id'])]
 class Filiere extends Model
 {
     use HasFactory, InvalideLeCacheCatalogue;
+
+    public function departement(): BelongsTo
+    {
+        return $this->belongsTo(Departement::class);
+    }
 
     public function niveau(): BelongsTo
     {

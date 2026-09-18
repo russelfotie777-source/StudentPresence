@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\FormationType;
 use App\Models\Concerns\InvalideLeCacheCatalogue;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,12 @@ class Salle extends Model
     public function filiere(): BelongsTo
     {
         return $this->belongsTo(Filiere::class);
+    }
+
+    /** Les salles d'un département, quelle que soit leur filière — le rattachement passe par la filière. */
+    public function scopeDuDepartement(Builder $query, int $departementId): Builder
+    {
+        return $query->whereHas('filiere', fn (Builder $q) => $q->where('departement_id', $departementId));
     }
 
     public function courseTemplates(): HasMany

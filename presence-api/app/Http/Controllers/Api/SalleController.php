@@ -14,11 +14,13 @@ class SalleController extends Controller
     public function index(Request $request)
     {
         $filiereId = $request->integer('filiere_id');
+        $departementId = $request->integer('departement_id');
 
         return CatalogueCache::souvenir(
-            "salles:filiere:{$filiereId}",
-            fn () => Salle::with('filiere.niveau')
+            "salles:filiere:{$filiereId}:departement:{$departementId}",
+            fn () => Salle::with(['filiere.niveau', 'filiere.departement'])
                 ->when($filiereId, fn ($q) => $q->where('filiere_id', $filiereId))
+                ->when($departementId, fn ($q) => $q->duDepartement($departementId))
                 ->orderBy('formation')
                 ->orderBy('nom')
                 ->get()
@@ -30,12 +32,12 @@ class SalleController extends Controller
     {
         $data = $this->validated($request);
 
-        return response()->json(Salle::create($data)->load('filiere'), 201);
+        return response()->json(Salle::create($data)->load('filiere.departement'), 201);
     }
 
     public function show(Salle $salle)
     {
-        return $salle->load('filiere.niveau');
+        return $salle->load(['filiere.niveau', 'filiere.departement']);
     }
 
     public function update(Request $request, Salle $salle)
@@ -44,7 +46,7 @@ class SalleController extends Controller
 
         $salle->update($data);
 
-        return $salle->load('filiere');
+        return $salle->load('filiere.departement');
     }
 
     public function destroy(Salle $salle)

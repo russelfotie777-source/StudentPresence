@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileDown } from "lucide-react";
+import { Building2, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,44 +13,85 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Semaine } from "@/hooks/use-catalog";
-import { useTelechargerListe } from "@/hooks/use-etudiants";
+import type { Departement, Semaine } from "@/hooks/use-catalog";
+import { useTelechargerListe, useTelechargerListesDepartement } from "@/hooks/use-etudiants";
 import type { SalleFeuille, Symboles } from "@/hooks/use-feuille-presence";
 import { plageSemaine } from "@/lib/dates";
 import { SelecteurSymboles } from "./selecteur-symboles";
 
+/** Ce qu'on imprime : une salle, ou toutes les salles d'un département d'un coup. */
+export type CibleListe =
+  | { type: "salle"; salle: SalleFeuille }
+  | { type: "departement"; departement: Departement; salles: number };
+
 interface Props {
-  salle: SalleFeuille;
+  cible: CibleListe;
   semaine: Semaine;
   symboles: Symboles;
   onFermer: () => void;
 }
 
 /**
- * Le PDF officiel de la salle et de la semaine affichées — exactement ce
- * que la grille montre, dans la notation choisie. Semestre et année sont
- * déduits ; on ne les demande que s'ils diffèrent.
+ * Le PDF officiel de la semaine affichée — exactement ce que la grille
+ * montre, dans la notation choisie, pour une salle ou pour tout un
+ * département (une page par salle). Semestre et année sont déduits ; on
+ * ne les demande que s'ils diffèrent.
  */
-export function DialogueListe({ salle, semaine, symboles, onFermer }: Props) {
-  const telecharger = useTelechargerListe();
+export function DialogueListe({ cible, semaine, symboles, onFermer }: Props) {
+  const telechargerSalle = useTelechargerListe();
+  const telechargerDepartement = useTelechargerListesDepartement();
   const [semestre, setSemestre] = useState("");
   const [annee, setAnnee] = useState("");
+
+  const enCours = telechargerSalle.isPending || telechargerDepartement.isPending;
+  const departement = cible.type === "departement";
+
+  function telecharger() {
+    const options = {
+      semaineId: semaine.id,
+      semestre: semestre ? Number(semestre) : undefined,
+      annee: annee || undefined,
+      symboles,
+    };
+    if (cible.type === "salle") telechargerSalle.mutate({ ...options, salleId: cible.salle.id });
+    else telechargerDepartement.mutate({ ...options, departementId: cible.departement.id });
+  }
 
   return (
     <Dialog open onOpenChange={(o) => !o && onFermer()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileDown className="size-4 text-primary" />
-            Liste de présence officielle
+            {departement ? <Building2 className="size-4 text-primary" /> : <FileDown className="size-4 text-primary" />}
+            {departement ? "Listes de présence du département" : "Liste de présence officielle"}
           </DialogTitle>
           <DialogDescription>
-            Salle <span className="font-medium text-foreground">{salle.nom}</span>, semaine{" "}
+            {cible.type === "salle" ? (
+              <>
+                Salle <span className="font-medium text-foreground">{cible.salle.nom}</span>
+                {cible.salle.departement && (
+                  <>
+                    {" "}
+                    ({cible.salle.departement.code})
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="font-medium text-foreground">
+                  {cible.departement.code} — {cible.departement.nom}
+                </span>
+                , {cible.salles} salle{cible.salles > 1 ? "s" : ""} — une page par salle, dans l&apos;ordre des
+                niveaux
+              </>
+            )}
+            , semaine{" "}
             <span className="font-medium text-foreground">
               S{semaine.numero} · {plageSemaine(semaine.date_debut, semaine.date_fin)}
             </span>
-            . Format du département, en-tête bilingue, une colonne par jour avec les présences
-            relevées, séances de la semaine préremplies, étudiants FM signalés.
+{" "}
+            — en-tête bilingue au nom du département, une colonne par jour avec les présences relevées,
+            séances de la semaine préremplies, étudiants FM signalés.
           </DialogDescription>
         </DialogHeader>
 
@@ -98,21 +139,9 @@ export function DialogueListe({ salle, semaine, symboles, onFermer }: Props) {
           <Button variant="outline" onClick={onFermer}>
             Fermer
           </Button>
-          <Button
-            className="gap-1.5"
-            disabled={telecharger.isPending}
-            onClick={() =>
-              telecharger.mutate({
-                salleId: salle.id,
-                semaineId: semaine.id,
-                semestre: semestre ? Number(semestre) : undefined,
-                annee: annee || undefined,
-                symboles,
-              })
-            }
-          >
+          <Button className="gap-1.5" disabled={enCours} onClick={telecharger}>
             <FileDown className="size-4" />
-            {telecharger.isPending ? "Génération…" : "Télécharger le PDF"}
+            {enCours ? "Génération…" : departement ? "Télécharger toutes les listes" : "Télécharger le PDF"}
           </Button>
         </DialogFooter>
       </DialogContent>
