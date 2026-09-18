@@ -9,3 +9,11 @@ Schedule::command('presence:rappels')
     ->everyMinute()
     ->withoutOverlapping()
     ->runInBackground();
+
+// Clôture des séances présentes sans fin réelle enregistrée, une fois leur
+// fenêtre de pointage fermée — sans elle, ces séances n'entrent jamais dans
+// la paie (voir App\Services\ClotureSeances).
+Schedule::command('presence:cloturer')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();

@@ -11,7 +11,6 @@ use App\Http\Resources\SeanceResource;
 use App\Models\Parametre;
 use App\Models\Seance;
 use App\Models\Semaine;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -130,20 +129,7 @@ class SeanceController extends Controller
 
         $seance->update($updates);
         $seance->refresh();
-
-        // Crédit d'heures idempotent : une seule fois par séance, marquée par
-        // quota_credited_at. Corrige le bug de l'ancienne app, qui
-        // incrémentait `quota` à chaque re-soumission "présent" du délégué.
-        if ($seance->debut_reel && $seance->fin_reelle
-            && $seance->etat_delegue === PresenceState::Present
-            && ! $seance->quota_credited_at) {
-            // abs() est indispensable : Carbon 3 renvoie un diff *signé* par
-            // défaut (contrairement à Carbon 2) — sans ça, le sens de calcul
-            // peut donner un nombre de minutes négatif.
-            $minutes = abs(Carbon::parse($seance->fin_reelle)->diffInMinutes(Carbon::parse($seance->debut_reel)));
-            $seance->enseignant->increment('quota', (int) round($minutes / 60));
-            $seance->forceFill(['quota_credited_at' => now()])->save();
-        }
+        $seance->crediterQuotaEnseignant();
 
         return new SeanceResource($seance->fresh(['salle', 'enseignant']));
     }
