@@ -70,6 +70,27 @@ class ConfirmationEnseignantTest extends TestCase
         $this->assertNotNull($seance->debut_reel, "Confirmer vaut constat d'arrivée de l'enseignant.");
     }
 
+    /**
+     * Le « Présent » ordinaire du délégué ne parle que pour lui : même règle
+     * activée, c'est un geste distinct et volontaire qui confirme pour
+     * l'enseignant — lequel peut très bien venir répondre lui-même.
+     */
+    public function test_marking_present_as_delegue_never_answers_for_the_teacher(): void
+    {
+        Parametre::setDelegueConfirmeEnseignant(true);
+        $seance = $this->seanceActive();
+
+        $this->actingAs($this->delegue(), 'sanctum')
+            ->postJson("/api/seances/{$seance->id}/mark-delegue", ['etat' => 'present', 'set_debut_reel' => true])
+            ->assertOk()
+            ->assertJsonPath('etat_delegue', 'present')
+            ->assertJsonPath('etat_prof', null)
+            ->assertJsonPath('etat_prof_par_delegue', false)
+            ->assertJsonPath('etat_final', 'absent');
+
+        $this->assertNull($seance->fresh()->etat_prof_marque_par_id);
+    }
+
     public function test_the_teacher_who_answers_takes_over_the_delegue_confirmation(): void
     {
         Parametre::setDelegueConfirmeEnseignant(true);
