@@ -42,6 +42,7 @@ export interface SalleFeuille {
   formation: "FI" | "FA";
   filiere: string | null;
   niveau: string | null;
+  departement: { id: number; nom: string; code: string } | null;
 }
 
 export interface FeuillePresence {

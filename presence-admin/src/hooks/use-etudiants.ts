@@ -105,16 +105,39 @@ export function useForcerPresence() {
   });
 }
 
+export interface OptionsListe {
+  semaineId: number;
+  semestre?: number;
+  annee?: string;
+  symboles?: string;
+}
+
+function parametresListe(v: OptionsListe): URLSearchParams {
+  const params = new URLSearchParams({ semaine_id: String(v.semaineId) });
+  if (v.semestre) params.set("semestre", String(v.semestre));
+  if (v.annee) params.set("annee", v.annee);
+  if (v.symboles) params.set("symboles", v.symboles);
+  return params;
+}
+
 export function useTelechargerListe() {
   return useMutation({
-    mutationFn: (v: { salleId: number; semaineId: number; semestre?: number; annee?: string; symboles?: string }) => {
-      const params = new URLSearchParams({ semaine_id: String(v.semaineId) });
-      if (v.semestre) params.set("semestre", String(v.semestre));
-      if (v.annee) params.set("annee", v.annee);
-      if (v.symboles) params.set("symboles", v.symboles);
-      return telechargerFichier(`/api/salles/${v.salleId}/liste-presence.pdf?${params}`, "liste-presence.pdf");
-    },
+    mutationFn: (v: OptionsListe & { salleId: number }) =>
+      telechargerFichier(`/api/salles/${v.salleId}/liste-presence.pdf?${parametresListe(v)}`, "liste-presence.pdf"),
     onSuccess: () => toast.success("Liste de présence téléchargée."),
+    onError: (e) => toast.error(message(e, "La génération a échoué.")),
+  });
+}
+
+/** Toutes les salles d'un département dans un seul PDF, une page par salle. */
+export function useTelechargerListesDepartement() {
+  return useMutation({
+    mutationFn: (v: OptionsListe & { departementId: number }) =>
+      telechargerFichier(
+        `/api/departements/${v.departementId}/liste-presence.pdf?${parametresListe(v)}`,
+        "listes-presence-departement.pdf",
+      ),
+    onSuccess: () => toast.success("Listes du département téléchargées."),
     onError: (e) => toast.error(message(e, "La génération a échoué.")),
   });
 }

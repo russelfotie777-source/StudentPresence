@@ -2,17 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CalendarX2, Crown, DoorOpen, FileDown, ShieldBan, ShieldOff, Users } from "lucide-react";
+import { Building2, CalendarX2, Crown, DoorOpen, FileDown, ShieldBan, ShieldOff, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { salleHooks, semaineHooks, type Salle } from "@/hooks/use-catalog";
+import { departementHooks, salleHooks, semaineHooks, type Salle } from "@/hooks/use-catalog";
 import {
   useChangerSalle,
   useChangerStatut,
@@ -27,15 +20,21 @@ import {
   type SeanceFeuille,
 } from "@/hooks/use-feuille-presence";
 import { useHeureDouala } from "@/hooks/use-heure";
-import { libelleSalle } from "@/lib/catalogue";
 import { cn } from "@/lib/utils";
 import type { PresenceState, User } from "@/types/api";
 import { HorlogeDouala } from "@/components/horloge-douala";
 import { NavigateurSemaine } from "@/components/navigateur-semaine";
+import {
+  SelecteurDepartement,
+  SelecteurSalle,
+  salleAffichee,
+  sallesDuDepartement,
+  TOUS_DEPARTEMENTS,
+} from "@/components/selecteurs-structure";
 import { GrillePresences, tauxDeLaSemaine } from "@/components/etudiants/grille-presences";
 import { PanneauEtudiant } from "@/components/etudiants/panneau-etudiant";
 import { RechercheGlobale } from "@/components/etudiants/recherche-globale";
-import { DialogueListe } from "@/components/etudiants/dialogue-liste";
+import { DialogueListe, type CibleListe } from "@/components/etudiants/dialogue-liste";
 import { SelecteurSymboles } from "@/components/etudiants/selecteur-symboles";
 import {
   DialogueConfirmation,
@@ -46,20 +45,25 @@ import {
 
 export default function EtudiantsPage() {
   const { data: salles } = salleHooks.useList();
+  const { data: departements } = departementHooks.useList();
   const { data: semaines } = semaineHooks.useList();
   const heure = useHeureDouala();
   const reglage = useSymboles();
 
+  const [departementId, setDepartementId] = useState(TOUS_DEPARTEMENTS);
   const [salleChoisie, setSalleChoisie] = useState<number | null>(null);
   const [semaineChoisie, setSemaineChoisie] = useState<number | null>(null);
   const [filtre, setFiltre] = useState("");
   const [etudiantOuvertId, setEtudiantOuvertId] = useState<number | null>(null);
   const [action, setAction] = useState<ActionEtudiant | null>(null);
-  const [dialogueListe, setDialogueListe] = useState(false);
+  const [dialogueListe, setDialogueListe] = useState<CibleListe | null>(null);
   const [enCours, setEnCours] = useState<{ etudiantId: number; seanceId: number } | null>(null);
 
-  // Par défaut la première salle : l'onglet montre tout de suite une classe.
-  const salleId = salleChoisie ?? salles?.[0]?.id ?? null;
+  // Par défaut la première salle du département filtré : l'onglet montre
+  // tout de suite une classe, et change de classe avec le département.
+  const salleId = salleAffichee(salles, departementId, salleChoisie);
+  const departementAffiche = departements?.find((d) => String(d.id) === departementId) ?? null;
+  const sallesDuFiltre = sallesDuDepartement(salles, departementId).length;
   const requete = useFeuillePresence(salleId, semaineChoisie);
   const feuille = requete.data;
   const semaine = feuille?.semaine ?? null;
@@ -101,7 +105,14 @@ export default function EtudiantsPage() {
   }
 
   function ouvrirDepuisRecherche(u: User) {
-    if (u.salle) setSalleChoisie(u.salle.id);
+    if (u.salle) {
+      const salle = salles?.find((s) => s.id === u.salle?.id);
+      const sonDepartement = salle?.filiere?.departement?.id;
+      if (departementId !== TOUS_DEPARTEMENTS && sonDepartement && String(sonDepartement) !== departementId) {
+        setDepartementId(String(sonDepartement));
+      }
+      setSalleChoisie(u.salle.id);
+    }
     setFiltre("");
     setEtudiantOuvertId(u.id);
   }
@@ -122,10 +133,21 @@ export default function EtudiantsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <HorlogeDouala heure={heure} />
           <SelecteurSymboles valeur={symboles} compact />
+          {departementAffiche && (
+            <Button
+              variant="outline"
+              className="gap-1.5"
+              disabled={!semaine || sallesDuFiltre === 0}
+              onClick={() => setDialogueListe({ type: "departement", departement: departementAffiche, salles: sallesDuFiltre })}
+            >
+              <Building2 className="size-4" />
+              Toutes les listes du {departementAffiche.code}
+            </Button>
+          )}
           <Button
             className="gap-1.5"
             disabled={!feuille || !semaine}
-            onClick={() => setDialogueListe(true)}
+            onClick={() => feuille && setDialogueListe({ type: "salle", salle: feuille.salle })}
           >
             <FileDown className="size-4" />
             Liste de présence
@@ -135,35 +157,25 @@ export default function EtudiantsPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={salleId ? String(salleId) : ""}
-            onValueChange={(v) => {
-              setSalleChoisie(v ? Number(v) : null);
+          <SelecteurDepartement
+            valeur={departementId}
+            onChange={(v) => {
+              setDepartementId(v);
               setFiltre("");
               setEtudiantOuvertId(null);
             }}
-          >
-            <SelectTrigger className="h-9 w-full rounded-lg sm:w-80">
-              <SelectValue placeholder="Choisir une salle…">
-                {() => {
-                  const s = salles?.find((s) => s.id === salleId);
-                  return s && `${libelleSalle(s)} · ${s.formation}`;
-                }}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {salles?.length === 0 && (
-                <p className="px-2.5 py-2 text-xs text-muted-foreground">
-                  Aucune salle : créez-en une dans le catalogue.
-                </p>
-              )}
-              {salles?.map((s: Salle) => (
-                <SelectItem key={s.id} value={String(s.id)}>
-                  {libelleSalle(s)} · {s.formation}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
+          <SelecteurSalle
+            salles={salles}
+            departementId={departementId}
+            valeur={salleId}
+            avecFormation
+            onChange={(id) => {
+              setSalleChoisie(id);
+              setFiltre("");
+              setEtudiantOuvertId(null);
+            }}
+          />
           <RechercheGlobale
             valeur={filtre}
             onChange={setFiltre}
@@ -236,12 +248,12 @@ export default function EtudiantsPage() {
         />
       )}
 
-      {dialogueListe && feuille && semaine && (
+      {dialogueListe && semaine && (
         <DialogueListe
-          salle={feuille.salle}
+          cible={dialogueListe}
           semaine={semaine}
           symboles={symboles}
-          onFermer={() => setDialogueListe(false)}
+          onFermer={() => setDialogueListe(null)}
         />
       )}
     </div>
@@ -272,7 +284,10 @@ function ResumeSalle({ feuille }: { feuille: FeuillePresence }) {
       <span className="flex items-center gap-1.5">
         <DoorOpen className="size-4" />
         <span className="font-medium text-foreground">{feuille.salle.nom}</span>
-        {feuille.salle.filiere && <span>· {feuille.salle.filiere}</span>}
+        {feuille.salle.departement && <span>· {feuille.salle.departement.nom}</span>}
+        {feuille.salle.filiere && feuille.salle.filiere !== feuille.salle.departement?.nom && (
+          <span>· {feuille.salle.filiere}</span>
+        )}
         {feuille.salle.niveau && <span>· {feuille.salle.niveau}</span>}
       </span>
       <span className="flex items-center gap-1.5">

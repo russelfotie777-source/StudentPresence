@@ -19,6 +19,7 @@ export interface DashboardStats {
     taux_presence: number | null;
   };
   catalogue: {
+    departements: number;
     niveaux: number;
     filieres: number;
     salles: number;

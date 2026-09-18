@@ -28,7 +28,7 @@ class FeuillePresenceController extends Controller
             ? Semaine::findOrFail($data['semaine_id'])
             : Semaine::current();
 
-        $salle->loadMissing('filiere.niveau');
+        $salle->loadMissing(['filiere.niveau', 'filiere.departement']);
 
         if (! $semaine) {
             return response()->json([
@@ -88,6 +88,9 @@ class FeuillePresenceController extends Controller
             'formation' => $salle->formation->value,
             'filiere' => $salle->filiere?->nom,
             'niveau' => $salle->filiere?->niveau?->nom,
+            'departement' => $salle->filiere?->departement
+                ? ['id' => $salle->filiere->departement->id, 'nom' => $salle->filiere->departement->nom, 'code' => $salle->filiere->departement->code]
+                : null,
         ];
     }
 }

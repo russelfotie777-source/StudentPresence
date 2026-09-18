@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Enums\ValidationStatus;
 use App\Enums\Weekday;
 use App\Models\CourseTemplate;
+use App\Models\Departement;
 use App\Models\Filiere;
 use App\Models\Matiere;
 use App\Models\Niveau;
@@ -52,8 +53,13 @@ class DemoDataSeeder extends Seeder
         Niveau::updateOrCreate(['nom' => 'L2']);
         $niveau = Niveau::updateOrCreate(['nom' => 'L3']);
 
-        $filiereGI = Filiere::updateOrCreate(['nom' => 'Génie Informatique', 'niveau_id' => $niveau->id]);
-        $filiereGRT = Filiere::updateOrCreate(['nom' => 'GRT', 'niveau_id' => $niveau->id]);
+        // Deux départements réels de l'IUT : chacun a sa filière tronc commun
+        // en L3, d'où sortent les deux salles de démonstration.
+        $gi = Departement::updateOrCreate(['code' => 'GI'], ['nom' => 'Génie Informatique', 'nom_en' => 'Computer Sciences']);
+        $grt = Departement::updateOrCreate(['code' => 'GRT'], ['nom' => 'Génie des Réseaux et Télécommunications', 'nom_en' => 'Networks and Telecommunications Engineering']);
+
+        $filiereGI = Filiere::updateOrCreate(['nom' => 'Génie Informatique', 'niveau_id' => $niveau->id, 'departement_id' => $gi->id]);
+        $filiereGRT = Filiere::updateOrCreate(['nom' => 'GRT', 'niveau_id' => $niveau->id, 'departement_id' => $grt->id]);
 
         // Noms de salles réels de l'ancienne base (pas des libellés inventés).
         $salleA = Salle::updateOrCreate(['nom' => 'A23-FI'], ['filiere_id' => $filiereGI->id, 'formation' => 'FI']);

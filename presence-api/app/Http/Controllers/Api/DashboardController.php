@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Enums\ValidationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\DemandeFormation;
+use App\Models\Departement;
 use App\Models\Filiere;
 use App\Models\Matiere;
 use App\Models\Niveau;
@@ -101,6 +102,7 @@ class DashboardController extends Controller
     private function catalogue(): array
     {
         return [
+            'departements' => Departement::count(),
             'niveaux' => Niveau::count(),
             'filieres' => Filiere::count(),
             'salles' => Salle::count(),

@@ -13,6 +13,7 @@ import {
   GraduationCap,
   DoorOpen,
   BookOpen,
+  Building2,
   CheckCircle2,
   AlertTriangle,
   TrendingDown,
@@ -293,6 +294,7 @@ function CarteCatalogue({ catalogue }: { catalogue: DashboardStats["catalogue"] 
   const lignes = [
     { icon: GraduationCap, label: "Étudiants", valeur: catalogue.etudiants },
     { icon: Users, label: "Enseignants", valeur: catalogue.enseignants },
+    { icon: Building2, label: "Départements", valeur: catalogue.departements },
     { icon: DoorOpen, label: "Salles", valeur: catalogue.salles },
     { icon: BookOpen, label: "Matières", valeur: catalogue.matieres },
   ];

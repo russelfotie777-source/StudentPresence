@@ -16,12 +16,17 @@ import { matiereHooks, salleHooks, semaineHooks } from "@/hooks/use-catalog";
 import { useEnseignants } from "@/hooks/use-scheduling";
 import { useEmploiDuTemps, type ModeGrille } from "@/hooks/use-emploi-du-temps";
 import { useHeureDouala } from "@/hooks/use-heure";
-import { libelleSalle } from "@/lib/catalogue";
 import { minutes, type Ymd } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { Seance, Weekday } from "@/types/api";
 import { HorlogeDouala } from "@/components/horloge-douala";
 import { NavigateurSemaine, semaineCouvrant } from "@/components/navigateur-semaine";
+import {
+  SelecteurDepartement,
+  SelecteurSalle,
+  salleAffichee,
+  TOUS_DEPARTEMENTS,
+} from "@/components/selecteurs-structure";
 import { GrilleSemaine } from "@/components/emploi-du-temps/grille-semaine";
 import { DialogueCours, type PreremplissageCours } from "@/components/emploi-du-temps/dialogue-cours";
 import { DialogueSemestre } from "@/components/emploi-du-temps/dialogue-semestre";
@@ -36,13 +41,15 @@ export default function EmploisDuTempsPage() {
   const heure = useHeureDouala();
 
   const [mode, setMode] = useState<ModeGrille>("salle");
+  const [departementId, setDepartementId] = useState(TOUS_DEPARTEMENTS);
   const [salleChoisie, setSalleChoisie] = useState<number | null>(null);
   const [enseignantChoisi, setEnseignantChoisi] = useState<number | null>(null);
   const [semaineChoisie, setSemaineChoisie] = useState<number | null>(null);
 
-  // Par défaut la première salle : l'onglet montre tout de suite quelque
-  // chose au lieu d'un sélecteur vide à remplir.
-  const salleId = salleChoisie ?? salles?.[0]?.id ?? null;
+  // Par défaut la première salle du département filtré : l'onglet montre
+  // tout de suite quelque chose au lieu d'un sélecteur vide à remplir, et
+  // l'admin programme les salles d'un département l'une après l'autre.
+  const salleId = salleAffichee(salles, departementId, salleChoisie);
   const enseignantId = enseignantChoisi ?? enseignants?.[0]?.id ?? null;
   const cibleId = mode === "salle" ? salleId : enseignantId;
 
@@ -134,31 +141,16 @@ export default function EmploisDuTempsPage() {
               </Tabs>
 
               {mode === "salle" ? (
-                <Select
-                  value={salleId ? String(salleId) : ""}
-                  onValueChange={(v) => setSalleChoisie(v ? Number(v) : null)}
-                >
-                  <SelectTrigger className="h-9 w-full rounded-lg sm:w-80">
-                    <SelectValue placeholder="Choisir une salle…">
-                      {() => {
-                        const s = salles?.find((s) => s.id === salleId);
-                        return s && libelleSalle(s);
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {salles?.length === 0 && (
-                      <p className="px-2.5 py-2 text-xs text-muted-foreground">
-                        Aucune salle : créez-en une dans le catalogue.
-                      </p>
-                    )}
-                    {salles?.map((s) => (
-                      <SelectItem key={s.id} value={String(s.id)}>
-                        {libelleSalle(s)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <>
+                  <SelecteurDepartement valeur={departementId} onChange={setDepartementId} />
+                  <SelecteurSalle
+                    salles={salles}
+                    departementId={departementId}
+                    valeur={salleId}
+                    avecFormation
+                    onChange={setSalleChoisie}
+                  />
+                </>
               ) : (
                 <Select
                   value={enseignantId ? String(enseignantId) : ""}

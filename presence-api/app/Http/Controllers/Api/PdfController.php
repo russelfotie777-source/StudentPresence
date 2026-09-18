@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\PresenceState;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\Departement;
 use App\Models\Parametre;
 use App\Models\Salle;
 use App\Models\Seance;
@@ -58,13 +59,7 @@ class PdfController extends Controller
      */
     public function listeHebdomadaire(Request $request, Salle $salle, ListeHebdomadaire $liste)
     {
-        $data = $request->validate([
-            'semaine_id' => ['required', 'integer', 'exists:semaines,id'],
-            'semestre' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:6'],
-            'annee' => ['sometimes', 'nullable', 'regex:/^\d{4}-\d{4}$/'],
-            // Sans valeur : le réglage enregistré par l'admin (Parametre::symbolesPresence).
-            'symboles' => ['sometimes', 'nullable', Rule::in(Parametre::SYMBOLES_PRESENCE_CHOIX)],
-        ]);
+        $data = $this->optionsDeListe($request);
 
         $semaine = Semaine::findOrFail($data['semaine_id']);
         $donnees = $liste->pour($salle, $semaine, $data['semestre'] ?? null, $data['annee'] ?? null, $data['symboles'] ?? null);
@@ -74,5 +69,40 @@ class PdfController extends Controller
         $nom = 'liste_presence_'.Str::slug($salle->nom).'_S'.$semaine->numero.'.pdf';
 
         return $pdf->download($nom);
+    }
+
+    /**
+     * Les listes de toutes les salles d'un département en un seul PDF, une
+     * page par salle — ce que l'admin imprime pour tout le GI (ou tout le
+     * GRT) d'un coup, au lieu de salle par salle.
+     */
+    public function listeDepartement(Request $request, Departement $departement, ListeHebdomadaire $liste)
+    {
+        $data = $this->optionsDeListe($request);
+
+        $semaine = Semaine::findOrFail($data['semaine_id']);
+        $donnees = $liste->pourDepartement($departement, $semaine, $data['semestre'] ?? null, $data['annee'] ?? null, $data['symboles'] ?? null);
+
+        abort_if($donnees['listes']->isEmpty(), 422, "Aucune salle n'est rattachée au département {$departement->nom}.");
+
+        $pdf = Pdf::loadView('pdf.liste-departement', $donnees)->setPaper('a4', 'landscape');
+
+        $nom = 'listes_presence_'.Str::slug($departement->code).'_S'.$semaine->numero.'.pdf';
+
+        return $pdf->download($nom);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function optionsDeListe(Request $request): array
+    {
+        return $request->validate([
+            'semaine_id' => ['required', 'integer', 'exists:semaines,id'],
+            'semestre' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:6'],
+            'annee' => ['sometimes', 'nullable', 'regex:/^\d{4}-\d{4}$/'],
+            // Sans valeur : le réglage enregistré par l'admin (Parametre::symbolesPresence).
+            'symboles' => ['sometimes', 'nullable', Rule::in(Parametre::SYMBOLES_PRESENCE_CHOIX)],
+        ]);
     }
 }
