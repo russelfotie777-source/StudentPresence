@@ -538,6 +538,15 @@ function DelegateActions({
     seance.etat_delegue !== "absent" &&
     seance.is_active &&
     !seance.presences_locked;
+  // La fin réelle du cours conditionne la paie de l'enseignant : elle se
+  // relève une fois le cours commencé, tant qu'elle n'est pas posée. Si le
+  // délégué oublie, la séance est clôturée à l'heure prévue par le serveur.
+  const peutTerminer =
+    seance.etat_delegue === "present" &&
+    seance.debut_reel !== null &&
+    seance.fin_reelle === null &&
+    seance.is_active &&
+    !seance.presences_locked;
   return (
     <div className="role-actions">
       {seance.is_active && !seance.presences_locked && (
@@ -558,10 +567,28 @@ function DelegateActions({
       <Button
         variant={seance.etat_delegue === "absent" ? "destructive" : "outline"}
         disabled={disabled || seance.etat_delegue === "absent"}
-        onClick={() => mark.mutate({ etat: "absent", set_fin_reelle: true })}
+        onClick={() => mark.mutate({ etat: "absent" })}
       >
         <X size={16} /> Absent
       </Button>
+      {peutTerminer && (
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={mark.isPending}
+          onClick={() => mark.mutate({ etat: "present", set_fin_reelle: true })}
+        >
+          <Clock3 size={16} /> Fin du cours
+        </Button>
+      )}
+      {seance.debut_reel && (
+        <span className="attendance-status">
+          <Clock3 size={15} /> Arrivée {seance.debut_reel.slice(0, 5)}
+          {seance.fin_reelle
+            ? ` · fin ${seance.fin_reelle.slice(0, 5)}`
+            : " · fin non relevée"}
+        </span>
+      )}
       {peutConfirmer && (
         <Button
           variant="outline"
