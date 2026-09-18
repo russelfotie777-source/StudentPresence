@@ -14,6 +14,7 @@ import {
   History,
   Users,
   ScanFace,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,8 +51,9 @@ const SECTIONS: NavSection[] = [
     ],
   },
   {
-    titre: "Finances & sécurité",
+    titre: "Règles & sécurité",
     items: [
+      { href: "/pointage", label: "Règles de pointage", icon: UserCheck },
       { href: "/tarifs", label: "Tarifs horaires", icon: Wallet },
       { href: "/reconnaissance-faciale", label: "Reconnaissance faciale", icon: ScanFace },
     ],
