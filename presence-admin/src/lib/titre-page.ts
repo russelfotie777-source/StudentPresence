@@ -13,6 +13,7 @@ const TITRES: Record<string, string> = {
   "/demandes-formation": "Migrations FA → FI",
   "/tarifs": "Tarifs horaires",
   "/historique": "Historique des séances",
+  "/pointage": "Règles de pointage",
   "/reconnaissance-faciale": "Reconnaissance faciale",
 };
 

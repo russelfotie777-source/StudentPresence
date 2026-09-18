@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 #[Fillable([
     'course_template_id', 'semaine_id', 'salle_id', 'enseignant_id', 'groupe',
     'date_seance', 'jour', 'heure_debut', 'heure_fin', 'debut_reel', 'fin_reelle',
-    'etat_delegue', 'etat_prof', 'presences_locked', 'commentaires',
+    'etat_delegue', 'etat_prof', 'etat_prof_marque_par_id', 'presences_locked', 'commentaires',
     'rappel_delegue_at', 'rappel_ouverture_at', 'rappel_cloture_at',
 ])]
 class Seance extends Model
@@ -57,6 +57,12 @@ class Seance extends Model
     public function enseignant(): BelongsTo
     {
         return $this->belongsTo(User::class, 'enseignant_id');
+    }
+
+    /** Qui a posé `etat_prof` à la place de l'enseignant — null quand c'est lui. */
+    public function etatProfMarquePar(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'etat_prof_marque_par_id');
     }
 
     public function presences(): HasMany

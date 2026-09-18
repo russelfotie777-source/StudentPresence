@@ -163,6 +163,11 @@ export function PanneauSeance({ seance, enseignants, onFermer }: Props) {
                       <Lock className="size-3" /> Appel verrouillé
                     </Badge>
                   )}
+                  {seance.etat_prof_par_delegue && (
+                    <Badge variant="outline" className="text-warning-foreground">
+                      Enseignant confirmé par le délégué
+                    </Badge>
+                  )}
                   {(seance.presences_count ?? 0) > 0 && (
                     <span className="text-muted-foreground">
                       {seance.presences_count} pointage(s)

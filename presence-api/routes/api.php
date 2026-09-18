@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\PdfController;
+use App\Http\Controllers\Api\PointageSettingController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\PromotionController;
@@ -98,6 +99,8 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
 
     Route::get('/parametres/face-auth', [FaceAuthSettingController::class, 'show']);
     Route::put('/parametres/face-auth', [FaceAuthSettingController::class, 'update']);
+    Route::get('/parametres/pointage', [PointageSettingController::class, 'show']);
+    Route::put('/parametres/pointage', [PointageSettingController::class, 'update']);
 
     Route::get('/validations', [AccountValidationController::class, 'index']);
     Route::post('/validations/{user}/approve', [AccountValidationController::class, 'approve']);
@@ -160,6 +163,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/me/notifications/{id}/lue', [NotificationController::class, 'marquerLue']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);
+    Route::post('/seances/{seance}/confirmer-enseignant', [SeanceController::class, 'confirmerEnseignant']);
     Route::post('/seances/{seance}/push', [SeanceController::class, 'push']);
 
     Route::post('/seances/{seance}/position', [PositionController::class, 'store'])->middleware('throttle:20,1');

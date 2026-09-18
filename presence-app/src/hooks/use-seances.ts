@@ -91,6 +91,25 @@ export function useMarkDelegue(seanceId: number) {
   });
 }
 
+/**
+ * Le délégué confirme la présence de l'enseignant à sa place — pour les
+ * enseignants qui n'utilisent pas l'application. N'existe que si l'admin
+ * a activé la règle (`seance.confirmation_enseignant_par_delegue`).
+ */
+export function useConfirmerEnseignant(seanceId: number) {
+  const invalidate = useInvalidateToday();
+
+  return useMutation({
+    mutationFn: () =>
+      apiFetch(`/api/seances/${seanceId}/confirmer-enseignant`, { method: "POST" }),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Présence de l'enseignant confirmée à sa place.");
+    },
+    onError: (error) => toast.error(errorMessage(error, "La confirmation a échoué.")),
+  });
+}
+
 export function useMarkProf(seanceId: number) {
   const invalidate = useInvalidateToday();
 

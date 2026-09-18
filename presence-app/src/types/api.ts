@@ -58,6 +58,10 @@ export interface Seance {
   fin_reelle: string | null;
   etat_delegue: PresenceState | null;
   etat_prof: PresenceState | null;
+  /** L'état enseignant a été donné par le délégué à sa place. */
+  etat_prof_par_delegue?: boolean;
+  /** Règle admin : le délégué peut confirmer la présence de l'enseignant à sa place. */
+  confirmation_enseignant_par_delegue?: boolean;
   etat_final: PresenceState;
   presences_locked: boolean;
   is_active: boolean;

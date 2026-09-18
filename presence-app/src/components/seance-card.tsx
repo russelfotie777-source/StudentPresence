@@ -62,7 +62,9 @@ export function SeanceCard({
             </span>
             <span className="session-presence">
               {seance.etat_prof === "present"
-                ? "Enseignant présent"
+                ? seance.etat_prof_par_delegue
+                  ? "Enseignant présent (confirmé par le délégué)"
+                  : "Enseignant présent"
                 : seance.etat_prof === "absent"
                   ? "Enseignant absent"
                   : "En attente de l’enseignant"}
