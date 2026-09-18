@@ -43,6 +43,17 @@ class Parametre extends Model
 
     public const SYMBOLES_PRESENCE_DEFAUT = 'coche';
 
+    /**
+     * Le délégué peut-il confirmer la présence de l'enseignant à sa place ?
+     * Certains enseignants n'ouvrent jamais l'application : sans ce réglage,
+     * leurs séances restent « non tenues » faute de leur réponse, quoi
+     * qu'ait constaté le délégué. Désactivé par défaut : c'est un pouvoir
+     * qui pèse sur la paie, l'admin l'accorde sciemment.
+     */
+    public const DELEGUE_CONFIRME_ENSEIGNANT = 'pointage.delegue_confirme_enseignant';
+
+    public const DELEGUE_CONFIRME_ENSEIGNANT_DEFAUT = false;
+
     protected function casts(): array
     {
         return ['valeur' => 'array'];
@@ -67,6 +78,25 @@ class Parametre extends Model
         Cache::forget(self::cacheKey(self::SYMBOLES_PRESENCE));
 
         return self::symbolesPresence();
+    }
+
+    public static function delegueConfirmeEnseignant(): bool
+    {
+        $valeur = Cache::rememberForever(
+            self::cacheKey(self::DELEGUE_CONFIRME_ENSEIGNANT),
+            fn () => self::where('cle', self::DELEGUE_CONFIRME_ENSEIGNANT)->value('valeur') ?? [self::DELEGUE_CONFIRME_ENSEIGNANT_DEFAUT]
+        );
+
+        // La colonne est castée en tableau : un booléen y est stocké comme [true].
+        return (bool) (is_array($valeur) ? ($valeur[0] ?? false) : $valeur);
+    }
+
+    public static function setDelegueConfirmeEnseignant(bool $actif): bool
+    {
+        self::updateOrCreate(['cle' => self::DELEGUE_CONFIRME_ENSEIGNANT], ['valeur' => [$actif]]);
+        Cache::forget(self::cacheKey(self::DELEGUE_CONFIRME_ENSEIGNANT));
+
+        return self::delegueConfirmeEnseignant();
     }
 
     /**

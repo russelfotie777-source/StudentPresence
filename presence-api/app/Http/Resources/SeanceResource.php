@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Parametre;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -44,6 +45,12 @@ class SeanceResource extends JsonResource
             'fin_reelle' => $this->fin_reelle,
             'etat_delegue' => $this->etat_delegue?->value,
             'etat_prof' => $this->etat_prof?->value,
+            // L'état enseignant a-t-il été donné par le délégué à sa place ?
+            'etat_prof_par_delegue' => $this->etat_prof_marque_par_id !== null,
+            // Réglage global, répété par séance : c'est là que l'app le lit
+            // pour afficher ou non le bouton au délégué (mis en cache, donc
+            // sans requête).
+            'confirmation_enseignant_par_delegue' => Parametre::delegueConfirmeEnseignant(),
             'etat_final' => $this->etat_final->value,
             'presences_locked' => $this->presences_locked,
             'is_active' => $this->is_active,
