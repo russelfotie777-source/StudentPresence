@@ -57,7 +57,8 @@ export default function MigrationPage() {
             <DemandeEnAttente situation={situation.data} />
           ) : situation.data.eligible ? (
             <Formulaire situation={situation.data} />
-          ) : situation.data.formation === "FA" && auSommet(situation.data) ? (
+          ) : auSommet(situation.data) ? (
+            // Troisième année, quelle que soit la formation : le sommet.
             <Sommet situation={situation.data} />
           ) : (
             situation.data.formation === "FA" && (
@@ -151,7 +152,7 @@ function Situation({ situation: s }: { situation: SituationMigration }) {
           l’administration.
         </p>
       )}
-      {s.formation === "FI" && (
+      {s.formation === "FI" && !auSommet(s) && (
         <p className="text-sm leading-relaxed text-ink-500">
           Vous suivez déjà les cours de jour : la migration concerne les étudiants en
           alternance.
