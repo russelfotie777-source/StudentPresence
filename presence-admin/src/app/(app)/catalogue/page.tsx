@@ -512,7 +512,13 @@ function PanneauSalles() {
 }
 
 function PanneauMatieres() {
-  const { data: matieres } = matiereHooks.useList();
+  const { data: departements } = departementHooks.useList();
+  const [departementId, setDepartementId] = useState(TOUS);
+  const { data: filieres } = filiereHooks.useList(requete({ departement_id: departementId }));
+  const [filiereId, setFiliereId] = useState(TOUS);
+  const { data: matieres } = matiereHooks.useList(
+    requete({ departement_id: departementId, filiere_id: filiereId }),
+  );
   const creer = matiereHooks.useCreate();
   const supprimer = matiereHooks.useRemove();
 
@@ -522,10 +528,58 @@ function PanneauMatieres() {
   const [aSupprimer, setASupprimer] = useState<Matiere | null>(null);
 
   const visibles = useFiltrage(matieres, recherche, (m) => `${m.nom} ${m.code}`);
+  const libelleFiliere = (f: Filiere) =>
+    [f.departement?.code, f.nom, f.niveau?.nom].filter(Boolean).join(" · ");
+
+  function choisirDepartement(v: string) {
+    setDepartementId(v);
+    setFiliereId(TOUS);
+  }
 
   return (
     <Panneau
       icon={BookOpen}
+      filtre={
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Select value={departementId} onValueChange={(v) => choisirDepartement(v ?? TOUS)}>
+            <SelectTrigger className="h-10 w-full rounded-lg sm:w-64">
+              <SelectValue placeholder="Tous les départements">
+                {() =>
+                  departementId === TOUS
+                    ? "Tous les départements"
+                    : departements?.find((d) => String(d.id) === departementId)?.nom
+                }
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TOUS}>Tous les départements</SelectItem>
+              {departements?.map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {d.code} — {d.nom}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filiereId} onValueChange={(v) => setFiliereId(v ?? TOUS)}>
+            <SelectTrigger className="h-10 w-full rounded-lg sm:w-72">
+              <SelectValue placeholder="Toutes les filières">
+                {() => {
+                  const f = filieres?.find((f) => String(f.id) === filiereId);
+                  return filiereId === TOUS ? "Toutes les filières" : f && libelleFiliere(f);
+                }}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TOUS}>Toutes les filières</SelectItem>
+              {filieres?.map((f) => (
+                <SelectItem key={f.id} value={String(f.id)}>
+                  {libelleFiliere(f)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      }
       formulaire={
         <>
           <Input
@@ -544,7 +598,7 @@ function PanneauMatieres() {
             className="h-10 gap-1.5"
             onClick={() =>
               creer.mutate(
-                { nom, code },
+                { nom, code, filiere_id: filiereId === TOUS ? null : Number(filiereId) },
                 {
                   onSuccess: () => {
                     setNom("");
@@ -560,13 +614,28 @@ function PanneauMatieres() {
           </Button>
         </>
       }
+      aide={
+        filiereId === TOUS
+          ? "Chaque filière a ses matières, niveau par niveau. Choisissez une filière pour y créer la matière ; sans filière, elle sera commune à toutes (l'anglais, par exemple). L'assistant IA crée lui-même celles qu'un emploi du temps cite et que le catalogue n'a pas."
+          : undefined
+      }
       recherche={
         matieres && matieres.length > 6 ? { valeur: recherche, set: setRecherche } : undefined
       }
       vide={visibles?.length === 0 ? "Aucune matière." : undefined}
     >
       {visibles?.map((m) => (
-        <Ligne key={m.id} titre={m.nom} badge={m.code} onSupprimer={() => setASupprimer(m)} />
+        <Ligne
+          key={m.id}
+          titre={m.nom}
+          badge={m.code}
+          detail={
+            m.filiere
+              ? [m.filiere.departement?.code, m.filiere.nom, m.filiere.niveau?.nom].filter(Boolean).join(" · ")
+              : "Commune à toutes les filières"
+          }
+          onSupprimer={() => setASupprimer(m)}
+        />
       ))}
 
       {aSupprimer && (
