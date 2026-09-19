@@ -9,24 +9,39 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\DemandeFormationResource;
 use App\Models\DemandeFormation;
 use App\Models\Salle;
+use App\Services\MigrationFI;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Demande d'un étudiant FA pour rejoindre l'emploi du temps FI (statut FM à
- * l'approbation). Contrairement à l'ancienne implémentation de
- * l'inscription, FM n'est jamais un choix de l'étudiant lui-même : il ne
- * fait qu'exprimer une demande, c'est l'admin qui choisit la salle FI
- * cible et bascule effectivement le compte.
+ * l'approbation). L'étudiant choisit la salle FI qu'il vise — parmi celles
+ * de son département et de son niveau (voir MigrationFI) — mais FM n'est
+ * jamais un choix de l'étudiant lui-même : c'est l'admin qui valide, peut
+ * retenir une autre salle, et bascule effectivement le compte.
  */
 class FormationRequestController extends Controller
 {
-    public function store(Request $request)
+    /**
+     * Ce que l'étudiant voit sur l'onglet Migration : sa situation, s'il
+     * peut demander, vers quelles salles, et sa demande en attente s'il en a une.
+     */
+    public function situation(Request $request, MigrationFI $migration)
+    {
+        abort_unless($request->user()->role === UserRole::Etudiant, 403);
+
+        return response()->json($migration->situation($request->user()));
+    }
+
+    public function store(Request $request, MigrationFI $migration)
     {
         $user = $request->user();
         abort_unless($user->role === UserRole::Etudiant, 403);
-        abort_unless($user->formation === FormationType::FA, 422, 'Seuls les étudiants en Formation Alternance (FA) peuvent demander à rejoindre la Formation Initiale (FI).');
+
+        if ($empechement = $migration->empechement($user)) {
+            throw ValidationException::withMessages(['demande' => [$empechement]]);
+        }
 
         $existing = DemandeFormation::where('etudiant_id', $user->id)
             ->where('statut', RequestStatus::EnAttente)
@@ -37,17 +52,36 @@ class FormationRequestController extends Controller
         }
 
         $data = $request->validate([
+            'salle_cible_id' => ['required', 'integer'],
             'motif' => ['sometimes', 'nullable', 'string', 'max:500'],
         ]);
 
+        if (! $migration->sallesEligibles($user)->contains('id', (int) $data['salle_cible_id'])) {
+            throw ValidationException::withMessages([
+                'salle_cible_id' => ['Choisissez une salle de formation initiale de votre département et de votre niveau.'],
+            ]);
+        }
+
         $demande = DemandeFormation::create([
             'etudiant_id' => $user->id,
+            'salle_cible_id' => (int) $data['salle_cible_id'],
             'motif' => $data['motif'] ?? null,
             'statut' => RequestStatus::EnAttente,
             'date_creation' => now(),
         ]);
 
-        return response()->json(new DemandeFormationResource($demande), 201);
+        return response()->json(new DemandeFormationResource($demande->load('salleCible.filiere.niveau')), 201);
+    }
+
+    /** L'étudiant retire sa demande tant qu'elle n'a pas été traitée. */
+    public function destroy(Request $request, DemandeFormation $demande)
+    {
+        abort_unless($demande->etudiant_id === $request->user()->id, 403);
+        $this->assertPending($demande);
+
+        $demande->delete();
+
+        return response()->noContent();
     }
 
     public function mine(Request $request)
@@ -55,7 +89,7 @@ class FormationRequestController extends Controller
         abort_unless($request->user()->role === UserRole::Etudiant, 403);
 
         return DemandeFormationResource::collection(
-            DemandeFormation::with(['salleCible', 'etudiant.niveau', 'etudiant.filiere'])
+            DemandeFormation::with(['salleCible.filiere.niveau', 'etudiant.niveau', 'etudiant.filiere'])
                 ->where('etudiant_id', $request->user()->id)
                 ->latest('date_creation')
                 ->get()
@@ -70,7 +104,7 @@ class FormationRequestController extends Controller
         $data = $request->validate(['statut' => ['sometimes', 'in:en_attente,acceptee,rejetee']]);
 
         return DemandeFormationResource::collection(
-            DemandeFormation::with(['etudiant.salle', 'etudiant.niveau', 'etudiant.filiere', 'salleCible'])
+            DemandeFormation::with(['etudiant.salle', 'etudiant.niveau', 'etudiant.filiere', 'salleCible.filiere.niveau'])
                 ->when($data['statut'] ?? null, fn ($q, $statut) => $q->where('statut', $statut))
                 ->latest('date_creation')
                 ->get()
@@ -78,16 +112,19 @@ class FormationRequestController extends Controller
     }
 
     /**
-     * Approbation admin : choisit la salle FI cible, bascule l'étudiant en
-     * FM et le rattache à cette salle (donc à son niveau/filière).
+     * Approbation admin : retient la salle FI demandée par l'étudiant — ou
+     * une autre, si l'admin en décide ainsi —, bascule l'étudiant en FM et le
+     * rattache à cette salle (donc à son niveau/filière).
      */
     public function approve(Request $request, DemandeFormation $demande)
     {
         $this->assertPending($demande);
 
-        $data = $request->validate(['salle_id' => ['required', 'exists:salles,id']]);
+        $data = $request->validate(['salle_id' => ['sometimes', 'nullable', 'exists:salles,id']]);
+        $salleId = $data['salle_id'] ?? $demande->salle_cible_id;
+        abort_unless($salleId, 422, "Aucune salle d'accueil : choisissez la salle FI qui recevra l'étudiant.");
 
-        $salle = Salle::with('filiere')->findOrFail($data['salle_id']);
+        $salle = Salle::with('filiere')->findOrFail($salleId);
         abort_unless($salle->formation === FormationType::FI, 422, 'La salle cible doit être une salle en Formation Initiale (FI).');
 
         DB::transaction(function () use ($demande, $salle) {
