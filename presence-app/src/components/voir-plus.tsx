@@ -4,9 +4,10 @@ import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Bouton de chargement incrémental des listes paginées. Affiche toujours où
- * on en est ("20 sur 57") : sur mobile, une liste tronquée sans repère laisse
- * croire qu'on a tout vu.
+ * Bouton de chargement incrémental des listes paginées. Dit ce qu'il reste
+ * (« 37 de plus ») plutôt que « 20 sur 57 » : sur mobile, une liste tronquée
+ * sans repère laisse croire qu'on a tout vu, mais le compte de ce qui est
+ * déjà affiché n'apprend rien à qui la lit.
  */
 export function VoirPlus({
   affiches,
@@ -34,7 +35,7 @@ export function VoirPlus({
         </Button>
       </motion.div>
       <span className="text-xs text-ink-300">
-        {affiches} sur {total}
+        {total - affiches} de plus
       </span>
     </div>
   );

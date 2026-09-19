@@ -160,14 +160,14 @@ export default function DashboardPage() {
       >
         <div className="welcome-copy">
           <p className={`eyebrow ${styles.role}`}>
-            <span /> {roleLabel}
+            {roleLabel}
             {me?.user.salle?.nom && (
               <span className={styles.classLabel}> · {me.user.salle.nom}</span>
             )}
           </p>
           <h1>
             Bonjour, {me?.user.name && prenom(me.user.name)}
-            <span className="brand-period">.</span>
+            <span>.</span>
           </h1>
         </div>
         <div className={`date-stamp ${styles.date}`} title={`Heure de ${FUSEAU.split("/")[1]}`}>

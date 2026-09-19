@@ -14,6 +14,7 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 
 const REGLES_CSS = [
   [/font-size:\s*[0-9.]+(px|rem|em)/g, "taille en dur — utiliser var(--text-13…56)"],
+  [/\bfont:\s*[^;]*[0-9.]+(px|rem|em)/g, "taille en dur dans la forme abrégée font: — utiliser var(--text-13…56)"],
   [/font-weight:\s*[0-9]{3}\b/g, "graisse numérique — utiliser var(--w-regular|semibold|bold)"],
   [/letter-spacing:(?!\s*var\(--tracking-title\))/g, "letter-spacing — seul var(--tracking-title) est permis, sur un titre"],
   [/font-style:\s*italic/g, "italique — aucune voix italique dans l'application"],

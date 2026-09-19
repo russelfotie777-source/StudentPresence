@@ -479,9 +479,6 @@ a {
   border-radius: 8px;
   margin-right: 9px;
 }
-.brand-period {
-  color: var(--primary);
-}
 .topbar-tools {
   display: flex;
   gap: 8px;
@@ -756,6 +753,26 @@ a {
   flex-direction: column;
   font-variant-numeric: tabular-nums;
   padding-right: 10px;
+}
+/* La ligne de la frise passe par le centre des points (voir .timeline-dot :
+   9 px de large, décalé de 10 px à droite de la colonne). */
+.session-time::before {
+  content: "";
+  position: absolute;
+  top: -22px;
+  bottom: -22px;
+  right: -5px;
+  width: 1px;
+  background: var(--line);
+}
+/* Chaque ligne est enveloppée par son animation d'entrée : c'est donc au
+   niveau de la liste que se lisent la première et la dernière. */
+.agenda-list > :first-child .session-time::before {
+  top: 4px;
+}
+.agenda-list > :last-child .session-time::before {
+  bottom: auto;
+  height: 4px;
 }
 .session-time strong {
   font-size: var(--text-13);

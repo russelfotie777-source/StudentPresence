@@ -61,13 +61,6 @@
   font-size: var(--text-13);
   font-weight: var(--w-semibold);
 }
-.role > span:first-child {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--dash-accent);
-  margin-right: 2px;
-}
 .classLabel {
   color: var(--dash-blue);
 }
@@ -300,6 +293,7 @@
 .dashboard :global(.timeline-dot) {
   width: 7px;
   height: 7px;
+  right: -9px;
   border-width: 1px;
   border-color: var(--ink-300);
 }

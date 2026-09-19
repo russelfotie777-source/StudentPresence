@@ -29,7 +29,6 @@ export function SeanceCard({
               </>
             )}
           </span>
-          <span className="session-code">Groupe {seance.groupe}</span>
         </div>
       ) : (
         <div className="session-time">

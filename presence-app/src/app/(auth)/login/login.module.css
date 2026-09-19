@@ -207,9 +207,6 @@
   font-weight: var(--w-semibold);
   line-height: 1.12;
 }
-.formInner h2 > span {
-  color: #0f9d68;
-}
 .formIntro {
   color: var(--login-muted);
   font-size: var(--text-13);
