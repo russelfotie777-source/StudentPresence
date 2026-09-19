@@ -212,7 +212,7 @@ export default function HistoriquePage() {
           <h2>Aucune séance correspondante.</h2>
           <p>
             {hasNextPage
-              ? "Aucun résultat dans les séances déjà chargées."
+              ? "Aucun résultat dans les séances déjà affichées."
               : "Aucun résultat pour cette recherche ou ce statut."}
           </p>
           <button onClick={resetFilters}>
