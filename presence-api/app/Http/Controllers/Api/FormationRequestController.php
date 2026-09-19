@@ -131,6 +131,9 @@ class FormationRequestController extends Controller
             $demande->update([
                 'statut' => RequestStatus::Acceptee,
                 'salle_cible_id' => $salle->id,
+                // D'où il vient : sa salle courante devient celle d'accueil,
+                // l'origine ne se lirait plus nulle part sans cette trace.
+                'salle_origine_id' => $demande->etudiant->salle_id,
                 'date_traitement' => now(),
             ]);
 

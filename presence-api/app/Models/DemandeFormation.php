@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['etudiant_id', 'salle_cible_id', 'motif', 'statut', 'date_creation', 'date_traitement', 'commentaire_admin'])]
+#[Fillable(['etudiant_id', 'salle_cible_id', 'salle_origine_id', 'motif', 'statut', 'date_creation', 'date_traitement', 'commentaire_admin'])]
 class DemandeFormation extends Model
 {
     // Convention Eloquent par défaut ("demande_formations") ne pluralise que
@@ -31,5 +31,11 @@ class DemandeFormation extends Model
     public function salleCible(): BelongsTo
     {
         return $this->belongsTo(Salle::class, 'salle_cible_id');
+    }
+
+    /** La salle que l'étudiant a quittée — figée à l'approbation. */
+    public function salleOrigine(): BelongsTo
+    {
+        return $this->belongsTo(Salle::class, 'salle_origine_id');
     }
 }

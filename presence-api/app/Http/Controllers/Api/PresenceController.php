@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Seance;
 use App\Models\User;
 use App\Services\GeoDistance;
+use App\Services\PresenceAutomatique;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -182,7 +183,7 @@ class PresenceController extends Controller
      * la séance, et approuve le push en attente s'il y en a un. Reprend
      * exactement la logique transactionnelle de liste.php.
      */
-    public function confirmRoster(Request $request, Seance $seance)
+    public function confirmRoster(Request $request, Seance $seance, PresenceAutomatique $automatique)
     {
         $user = $this->authorizeDelegue($request, $seance);
 
@@ -213,17 +214,20 @@ class PresenceController extends Controller
 
         $roster = $this->rosterQuery($seance, $user)->pluck('id');
 
-        DB::transaction(function () use ($seance, $roster, $confirmedIds, $push) {
+        DB::transaction(function () use ($seance, $roster, $confirmedIds, $push, $automatique) {
             foreach ($roster as $etudiantId) {
                 $seance->presences()->updateOrCreate(
                     ['etudiant_id' => $etudiantId],
-                    ['etat' => PresenceState::Absent, 'date_marquage' => now()],
+                    ['etat' => PresenceState::Absent, 'date_marquage' => now(), 'automatique' => false],
                 );
             }
 
             $seance->presences()
                 ->whereIn('etudiant_id', $confirmedIds->intersect($roster))
                 ->update(['etat' => PresenceState::Present->value, 'date_marquage' => now()]);
+
+            // Les étudiants « toujours présents » le restent, cochés ou non.
+            $automatique->appliquer($seance);
 
             $seance->update(['presences_locked' => true]);
 

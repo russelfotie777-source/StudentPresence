@@ -62,11 +62,12 @@ class PdfController extends Controller
         $data = $this->optionsDeListe($request);
 
         $semaine = Semaine::findOrFail($data['semaine_id']);
-        $donnees = $liste->pour($salle, $semaine, $data['semestre'] ?? null, $data['annee'] ?? null, $data['symboles'] ?? null);
+        $migrants = $request->boolean('migrants');
+        $donnees = $liste->pour($salle, $semaine, $data['semestre'] ?? null, $data['annee'] ?? null, $data['symboles'] ?? null, $migrants);
 
         $pdf = Pdf::loadView('pdf.liste-hebdomadaire', $donnees)->setPaper('a4', 'landscape');
 
-        $nom = 'liste_presence_'.Str::slug($salle->nom).'_S'.$semaine->numero.'.pdf';
+        $nom = 'liste_presence_'.($migrants ? 'migrants_' : '').Str::slug($salle->nom).'_S'.$semaine->numero.'.pdf';
 
         return $pdf->download($nom);
     }
@@ -103,6 +104,8 @@ class PdfController extends Controller
             'annee' => ['sometimes', 'nullable', 'regex:/^\d{4}-\d{4}$/'],
             // Sans valeur : le réglage enregistré par l'admin (Parametre::symbolesPresence).
             'symboles' => ['sometimes', 'nullable', Rule::in(Parametre::SYMBOLES_PRESENCE_CHOIX)],
+            // Vrai : seuls les étudiants migrants (FM) de la salle figurent sur la liste.
+            'migrants' => ['sometimes', 'boolean'],
         ]);
     }
 }

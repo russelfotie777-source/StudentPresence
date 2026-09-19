@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountValidationController;
 use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ComptabiliteController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartementController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Api\FormationRequestController;
 use App\Http\Controllers\Api\HeureController;
 use App\Http\Controllers\Api\ListePresenceSettingController;
 use App\Http\Controllers\Api\MatiereController;
+use App\Http\Controllers\Api\MigrantController;
 use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayrollController;
@@ -127,6 +129,13 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::post('/assistant/conversations/{conversation}/appliquer', [AssistantController::class, 'appliquer']);
     Route::post('/assistant/conversations/{conversation}/ignorer', [AssistantController::class, 'ignorer']);
     Route::get('/assistant/conversations/{conversation}/actions/{actionId}/identifiants.csv', [AssistantController::class, 'identifiants']);
+
+    // Gestion des étudiants : les migrants par salle d'accueil, le privilège
+    // « toujours présent », la comptabilité générale.
+    Route::get('/migrants', [MigrantController::class, 'index']);
+    Route::get('/etudiants/presence-automatique', [MigrantController::class, 'privilegies']);
+    Route::post('/etudiants/{etudiant}/presence-automatique', [MigrantController::class, 'presenceAutomatique']);
+    Route::get('/comptabilite', [ComptabiliteController::class, 'index']);
 
     // Gestion des comptes étudiants (délégués compris : ce sont des étudiants).
     Route::get('/etudiants', [EtudiantController::class, 'index']);
