@@ -178,7 +178,9 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/requetes', [RequeteController::class, 'store']);
     Route::get('/requetes/mine', [RequeteController::class, 'mine']);
 
+    Route::get('/me/migration', [FormationRequestController::class, 'situation']);
     Route::post('/formation-requests', [FormationRequestController::class, 'store']);
+    Route::delete('/formation-requests/{demande}', [FormationRequestController::class, 'destroy']);
     Route::get('/me/formation-requests', [FormationRequestController::class, 'mine']);
 
     Route::get('/students/search', [StudentSearchController::class, 'index']);
