@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 #[Fillable([
     'course_template_id', 'semaine_id', 'salle_id', 'enseignant_id', 'groupe',
     'date_seance', 'jour', 'heure_debut', 'heure_fin', 'debut_reel', 'fin_reelle',
-    'etat_delegue', 'etat_prof', 'presences_locked', 'commentaires',
+    'etat_delegue', 'etat_prof', 'etat_prof_marque_par_id', 'presences_locked', 'commentaires',
     'rappel_delegue_at', 'rappel_ouverture_at', 'rappel_cloture_at',
 ])]
 class Seance extends Model
@@ -59,6 +59,12 @@ class Seance extends Model
         return $this->belongsTo(User::class, 'enseignant_id');
     }
 
+    /** Qui a posé `etat_prof` à la place de l'enseignant — null quand c'est lui. */
+    public function etatProfMarquePar(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'etat_prof_marque_par_id');
+    }
+
     public function presences(): HasMany
     {
         return $this->hasMany(PresenceEtudiant::class);
@@ -84,6 +90,28 @@ class Seance extends Model
     public function requetes(): HasMany
     {
         return $this->hasMany(RequeteEnseignant::class);
+    }
+
+    /**
+     * Crédite au quota de l'enseignant les heures réellement faites, une
+     * seule fois par séance (quota_credited_at) — l'ancienne app
+     * ré-incrémentait à chaque re-soumission « présent » du délégué. Ne fait
+     * rien tant que début et fin réels ne sont pas tous deux connus.
+     */
+    public function crediterQuotaEnseignant(): void
+    {
+        if (! $this->debut_reel || ! $this->fin_reelle
+            || $this->etat_delegue !== PresenceState::Present
+            || $this->quota_credited_at) {
+            return;
+        }
+
+        // abs() est indispensable : Carbon 3 renvoie un diff *signé* par
+        // défaut (contrairement à Carbon 2) — sans ça, le sens de calcul
+        // peut donner un nombre de minutes négatif.
+        $minutes = abs(Carbon::parse($this->fin_reelle)->diffInMinutes(Carbon::parse($this->debut_reel)));
+        $this->enseignant->increment('quota', (int) round($minutes / 60));
+        $this->forceFill(['quota_credited_at' => now()])->save();
     }
 
     /**

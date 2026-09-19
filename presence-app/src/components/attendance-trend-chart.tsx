@@ -24,7 +24,7 @@ function TrendTooltip({
 
   return (
     <div className="rounded-xl border border-line bg-popover px-3 py-2 shadow-lg">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-300">
+      <p className="text-xs font-semibold text-ink-300">
         Semaine {point.semaine}
       </p>
       <p className="font-display text-base font-bold text-ink-900">{point.taux}%</p>
@@ -59,12 +59,12 @@ export function AttendanceTrendChart({ data }: { data: AttendanceTrendPoint[] })
 
       <div className="relative mb-0.5 flex items-baseline justify-between">
         <div>
-          <h3 className="font-display text-[15px] font-bold tracking-tight text-ink-900">
+          <h3 className="font-display text-sm font-bold tracking-tight text-ink-900">
             Ma progression
           </h3>
           <p className="text-xs text-ink-500">Taux de présence, 8 dernières semaines</p>
         </div>
-        <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-semibold text-indigo-600">
+        <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-600">
           moy. {average}%
         </span>
       </div>

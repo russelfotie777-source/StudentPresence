@@ -8,11 +8,13 @@ const TITRES: Record<string, string> = {
   "/catalogue": "Catalogue",
   "/emplois-du-temps": "Emplois du temps",
   "/etudiants": "Étudiants",
+  "/gestion": "Gestion des étudiants",
   "/validations": "Validations",
   "/requetes": "Requêtes enseignants",
   "/demandes-formation": "Migrations FA → FI",
   "/tarifs": "Tarifs horaires",
   "/historique": "Historique des séances",
+  "/pointage": "Règles de pointage",
   "/reconnaissance-faciale": "Reconnaissance faciale",
 };
 

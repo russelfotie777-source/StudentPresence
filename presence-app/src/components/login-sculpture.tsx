@@ -48,7 +48,7 @@ export function LoginSculpture({ paused }: { paused: boolean }) {
       roughness: 0.26,
     });
     const enamel = new THREE.MeshPhysicalMaterial({
-      color: 0x13714e,
+      color: 0x0f9d68,
       metalness: 0.5,
       roughness: 0.19,
       clearcoat: 1,

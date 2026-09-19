@@ -25,7 +25,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 25px;
+  font-size: var(--text-24);
 }
 .brand > span:first-child {
   display: grid;
@@ -38,8 +38,8 @@
 }
 .identityLabel {
   font-family: var(--font-body), sans-serif;
-  font-size: 9px;
-  font-weight: 500;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   margin-left: 12px;
   padding-left: 18px;
   border-left: 1px solid #c4d2d0;
@@ -49,7 +49,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--face-muted);
 }
 .content {
@@ -72,38 +72,38 @@
   padding: 0;
   margin: 0 0 44px;
   list-style: none;
-  font-size: 10px;
+  font-size: var(--text-13);
 }
 .steps li {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #187958;
+  color: #0f9d68;
 }
 .steps li + li {
-  color: #376696;
+  color: #0f9d68;
   border-left: 1px solid var(--face-line);
   padding-left: 20px;
 }
 .steps li > span {
-  font-size: 9px;
+  font-size: var(--text-13);
   font-variant-numeric: tabular-nums;
 }
 .intro h1 {
   font-family: var(--font-display), sans-serif;
-  font-size: 58px;
-  font-weight: 600;
+  font-size: var(--text-56);
+  font-weight: var(--w-semibold);
   line-height: 1.08;
 }
 .intro h1 em {
-  color: #087953;
+  color: #0f9d68;
   font-style: normal;
 }
 .description {
   max-width: 320px;
   min-height: 52px;
   color: var(--face-muted);
-  font-size: 14px;
+  font-size: var(--text-15);
   line-height: 1.85;
   margin: 23px 0 0;
 }
@@ -118,10 +118,10 @@
   place-items: center;
   width: 45px;
   height: 45px;
-  color: #3977a9;
-  border: 1px solid #d3e1ec;
+  color: #0f9d68;
+  border: 1px solid #d6f4e6;
   border-radius: 8px;
-  background: #f5f8fc;
+  background: #ebf9f2;
 }
 .desktopIdentity > div {
   display: flex;
@@ -130,11 +130,11 @@
 }
 .desktopIdentity > div > span {
   color: var(--face-muted);
-  font-size: 9px;
+  font-size: var(--text-13);
 }
 .desktopIdentity strong {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .assurance {
   display: flex;
@@ -147,16 +147,16 @@
 }
 .assurance > svg {
   flex: none;
-  color: #087953;
+  color: #0f9d68;
   margin-top: 2px;
 }
 .assurance strong {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .assurance p {
   color: var(--face-muted);
-  font-size: 10px;
+  font-size: var(--text-13);
   line-height: 1.8;
   margin-top: 6px;
 }
@@ -230,7 +230,7 @@
   top: 2%;
   font-family: var(--font-body), sans-serif;
   color: var(--face-muted);
-  font-size: 8px;
+  font-size: var(--text-13);
   display: flex;
   align-items: center;
   gap: 7px;
@@ -257,10 +257,10 @@
   gap: 10px;
   align-items: center;
   color: var(--face-muted);
-  font-size: 7px;
+  font-size: var(--text-13);
 }
 .opticsLabel > span:first-child {
-  font-weight: 700;
+  font-weight: var(--w-bold);
   color: var(--face-ink);
 }
 .motionToggle {
@@ -299,14 +299,14 @@
 }
 .cameraPlaceholder span {
   max-width: 145px;
-  font-size: 11px;
+  font-size: var(--text-13);
   line-height: 1.7;
 }
 .scanLine {
   position: absolute;
   inset: 0 10% auto;
   height: 1px;
-  background: #95f5d0;
+  background: #2ee59d;
   box-shadow: 0 -5px 16px 4px #81e7c341;
   animation: scan 2.2s ease-in-out infinite alternate;
 }
@@ -314,7 +314,7 @@
   position: absolute;
   inset: 0;
   background: #e6f5ef;
-  color: #087953;
+  color: #0f9d68;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -322,8 +322,8 @@
   gap: 14px;
 }
 .success span {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .controls {
   max-width: 370px;
@@ -347,16 +347,16 @@
   padding-left: 12px;
 }
 .telemetry span {
-  font-size: 7px;
+  font-size: var(--text-13);
   color: var(--face-muted);
 }
 .telemetry strong {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .page[data-status="ready"] .telemetry > div:nth-child(2) strong,
 .page[data-status="success"] .telemetry strong {
-  color: #087953;
+  color: #0f9d68;
 }
 .feedback {
   min-height: 82px;
@@ -370,11 +370,11 @@
 }
 .feedback > strong {
   font-family: var(--font-display), sans-serif;
-  font-weight: 600;
-  font-size: 17px;
+  font-weight: var(--w-semibold);
+  font-size: var(--text-17);
 }
 .feedback > p {
-  font-size: 11px;
+  font-size: var(--text-13);
   line-height: 1.7;
   color: var(--face-muted);
 }
@@ -383,7 +383,7 @@
   align-items: flex-start;
   gap: 9px;
   text-align: left;
-  font-size: 11px;
+  font-size: var(--text-13);
   line-height: 1.7;
   background: #fff3ef;
   color: #963a2d;
@@ -402,26 +402,26 @@
   width: 100%;
   min-height: 56px;
   border-radius: 8px;
-  background: #087953;
+  background: #0f9d68;
   color: #fff;
   padding: 10px 17px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   cursor: pointer;
   box-shadow:
     inset 0 1px 0 #ffffff30,
-    0 5px 10px #08795318;
-  border: 1px solid #066d4a;
+    0 5px 10px #0f9d6818;
+  border: 1px solid #0b7a4f;
   transition:
     background 0.2s,
     box-shadow 0.2s,
     transform 0.2s;
 }
 .captureButton:hover:not(:disabled) {
-  background: #066443;
+  background: #0b7a4f;
   box-shadow:
     inset 0 1px 0 #ffffff30,
-    0 7px 18px #0879532a;
+    0 7px 18px #0f9d682a;
 }
 .captureButton:active:not(:disabled) {
   transform: translateY(1px);
@@ -450,7 +450,7 @@
   justify-content: center;
   gap: 7px;
   color: var(--face-muted);
-  font-size: 9px;
+  font-size: var(--text-13);
   margin-top: 14px;
 }
 .footer {
@@ -464,36 +464,36 @@
 }
 .footerSignature {
   font-family: var(--font-display), sans-serif;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--text-13);
+  font-weight: var(--w-bold);
   display: flex;
   align-items: center;
   gap: 14px;
 }
 .footerSignature > span {
   font-family: var(--font-body), sans-serif;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--face-muted);
-  font-weight: 400;
+  font-weight: var(--w-regular);
 }
 .footer button {
   display: flex;
   align-items: center;
   gap: 7px;
   color: var(--face-muted);
-  font-size: 10px;
+  font-size: var(--text-13);
   min-height: 44px;
   cursor: pointer;
 }
 .footer button:hover:not(:disabled) {
-  color: #087953;
+  color: #0f9d68;
 }
 .footer button:disabled {
   opacity: 0.5;
   cursor: default;
 }
 .page button:focus-visible {
-  outline: 2px solid #3977a9;
+  outline: 2px solid #0f9d68;
   outline-offset: 4px;
 }
 .spinner {
@@ -526,22 +526,22 @@
   background: #111b17;
 }
 :global(.dark) .identityGlyph {
-  background: #1b2b32;
-  border-color: #345665;
-  color: #87b6d9;
+  background: #12291f;
+  border-color: #1f4a3a;
+  color: #7fd8b3;
 }
 :global(.dark) .intro h1 em {
-  color: #72d9b0;
+  color: #2ee59d;
 }
 :global(.dark) .steps li {
-  color: #72d9b0;
+  color: #2ee59d;
 }
 :global(.dark) .steps li + li {
-  color: #98bddd;
+  color: #7fd8b3;
 }
 :global(.dark) .page[data-status="ready"] .telemetry > div:nth-child(2) strong,
 :global(.dark) .page[data-status="success"] .telemetry strong {
-  color: #72d9b0;
+  color: #2ee59d;
 }
 :global(.dark) .cameraPlaceholder {
   color: var(--face-muted);
@@ -555,7 +555,7 @@
     gap: 80px;
   }
   .intro h1 {
-    font-size: 68px;
+    font-size: var(--text-56);
   }
 }
 @media (min-width: 761px) and (max-width: 1050px) {
@@ -569,7 +569,7 @@
     padding-left: 0;
   }
   .intro h1 {
-    font-size: 43px;
+    font-size: var(--text-38);
   }
   .identityLabel {
     display: none;
@@ -586,7 +586,7 @@
     height: 68px;
   }
   .brand {
-    font-size: 23px;
+    font-size: var(--text-24);
     gap: 8px;
   }
   .brand > span:first-child {
@@ -596,10 +596,10 @@
   .identityLabel {
     margin-left: 2px;
     padding-left: 10px;
-    font-size: 7px;
+    font-size: var(--text-13);
   }
   .headerRight {
-    font-size: 9px;
+    font-size: var(--text-13);
   }
   .headerRight > span {
     display: none;
@@ -618,19 +618,19 @@
   }
   .steps {
     margin-bottom: 16px;
-    font-size: 9px;
+    font-size: var(--text-13);
     gap: 14px;
   }
   .steps li + li {
     padding-left: 14px;
   }
   .intro h1 {
-    font-size: 35px;
+    font-size: var(--text-38);
     line-height: 1.07;
   }
   .description {
     margin-top: 12px;
-    font-size: 11px;
+    font-size: var(--text-13);
     line-height: 1.7;
     max-width: 285px;
     min-height: 38px;
@@ -647,11 +647,11 @@
   .stageLabel,
   .stageIndex {
     top: 0;
-    font-size: 7px;
+    font-size: var(--text-13);
   }
   .opticsLabel {
     bottom: 0;
-    font-size: 6px;
+    font-size: var(--text-13);
   }
   .motionToggle {
     bottom: -6px;
@@ -669,7 +669,7 @@
     padding: 15px 0;
   }
   .feedback > strong {
-    font-size: 16px;
+    font-size: var(--text-17);
   }
   .captureButton {
     min-height: 54px;
@@ -685,7 +685,7 @@
     padding: 20px;
   }
   .cameraPlaceholder span {
-    font-size: 9px;
+    font-size: var(--text-13);
   }
 }
 @media (max-width: 760px) and (max-height: 850px) {
@@ -694,7 +694,7 @@
     padding-bottom: 20px;
   }
   .intro h1 {
-    font-size: 32px;
+    font-size: var(--text-30);
   }
   .intro h1 br {
     display: none;
@@ -724,7 +724,7 @@
     padding-inline: 20px;
   }
   .intro h1 {
-    font-size: 29px;
+    font-size: var(--text-30);
   }
   .stage {
     width: calc(100% + 24px);
@@ -739,7 +739,7 @@
     min-height: 68px;
   }
   .captureButton {
-    font-size: 11px;
+    font-size: var(--text-13);
     gap: 8px;
   }
   .telemetry {

@@ -58,6 +58,16 @@ return [
     ],
 
     /*
+     * Migration FA → FI : un étudiant en alternance peut demander à suivre
+     * les cours de jour dans une salle FI de son département et de son
+     * niveau. Ouverte aux premières années seulement — en troisième année,
+     * les parcours sont trop différents pour changer de formation en route.
+     */
+    'migration' => [
+        'niveau_max' => env('PRESENCE_MIGRATION_NIVEAU_MAX', 2),
+    ],
+
+    /*
      * Rappels de pointage (notification dans l'app + push si des clés VAPID
      * sont configurées). Envoyés par `php artisan presence:rappels`, lancé
      * chaque minute par le planificateur (voir routes/console.php).

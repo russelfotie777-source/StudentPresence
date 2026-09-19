@@ -1,20 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, Lora } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppToaster } from "@/components/app-toaster";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({
+// Deux voix humaines plutôt que les grotesques géométriques que tout le
+// monde reconnaît : Lora, une serif aux racines calligraphiques, pour ce
+// qui s'adresse à la personne (bonjour, titres) ; Atkinson Hyperlegible
+// Next, dessinée pour rester lisible aux plus petites tailles, pour tout
+// le reste. Chargées en police variable : un seul fichier par famille.
+const display = Lora({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  display: "swap",
 });
 
-const body = Plus_Jakarta_Sans({
+const body = Atkinson_Hyperlegible_Next({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

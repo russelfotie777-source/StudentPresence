@@ -1,9 +1,9 @@
 .history {
-  --history-blue: #326aab;
-  --history-blue-soft: #f2f7fb;
-  --history-green-soft: #e7f5ed;
-  --history-red: #b54857;
-  --history-red-soft: #fcf0f1;
+  --history-blue: var(--primary);
+  --history-blue-soft: var(--indigo-50);
+  --history-green-soft: var(--indigo-100);
+  --history-red: var(--destructive);
+  --history-red-soft: var(--rose-100);
   min-width: 0;
 }
 .topbar {
@@ -17,7 +17,7 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-size: 26px;
+  font-size: var(--text-24);
   color: var(--ink-900);
 }
 .brand > span:first-child {
@@ -26,8 +26,8 @@
   width: 32px;
   height: 32px;
   border-radius: 7px;
-  background: #183e31;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 .topbar > button {
   margin-left: auto;
@@ -37,12 +37,12 @@
 }
 .context {
   display: none;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   gap: 12px;
 }
 .context > span {
-  color: #b0c1ba;
+  color: var(--ink-300);
 }
 .heading {
   display: flex;
@@ -58,7 +58,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
 }
 .eyebrow > span {
@@ -69,43 +69,25 @@
   background: var(--primary);
 }
 .heading h1 {
-  font:
-    600 34px/1.2 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-38);
+  font-weight: var(--w-semibold);
+  line-height: 1.2;
   margin-top: 9px;
   overflow-wrap: anywhere;
 }
-.heading h1 > span {
-  color: var(--primary);
-}
 .subtitle {
-  font-size: 11px;
+  font-size: var(--text-13);
   line-height: 1.7;
   color: var(--ink-500);
   margin-top: 8px;
   max-width: 240px;
 }
 .total {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
   flex: none;
-  padding-left: 16px;
-  border-left: 1px solid var(--line);
-}
-.total > strong {
-  font:
-    500 30px/1.1 var(--font-display),
-    sans-serif;
-  font-variant-numeric: tabular-nums;
-  color: var(--history-blue);
-}
-.total > span {
-  text-align: right;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--ink-500);
-  line-height: 1.5;
-  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
 }
 .toolbar {
   display: flex;
@@ -129,8 +111,8 @@
   min-height: 44px;
   padding: 6px;
   color: var(--ink-500);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   border-radius: 4px;
   cursor: pointer;
   transition:
@@ -141,7 +123,7 @@
 .filters button[aria-pressed="true"] {
   color: var(--ink-900);
   background: var(--card);
-  box-shadow: 0 1px 4px #18272314;
+  box-shadow: var(--relief);
 }
 .filters button:hover {
   color: var(--ink-900);
@@ -168,7 +150,7 @@
   width: 100%;
   min-width: 0;
   outline: none;
-  font-size: 16px;
+  font-size: var(--text-17);
   color: var(--ink-900);
   background: transparent;
   min-height: 44px;
@@ -189,7 +171,7 @@
   cursor: pointer;
 }
 .resultCount {
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   line-height: 1.6;
   margin-top: 13px;
@@ -209,9 +191,10 @@
   border-bottom: 1px solid var(--line);
 }
 .dayNumber {
-  font:
-    500 28px/1 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-30);
+  font-weight: var(--w-semibold);
+  line-height: 1;
   color: var(--ink-900);
   font-variant-numeric: tabular-nums;
 }
@@ -221,19 +204,13 @@
   gap: 3px;
 }
 .dateWords > strong {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   text-transform: capitalize;
 }
 .dateWords > span {
   color: var(--ink-500);
-  font-size: 9px;
-}
-.dayCount {
-  margin-left: auto;
-  color: var(--ink-500);
-  font-size: 9px;
-  font-weight: 400;
+  font-size: var(--text-13);
 }
 .sessions {
   list-style: none;
@@ -253,13 +230,14 @@
   align-items: flex-start;
   flex-direction: column;
   color: var(--ink-500);
-  font-size: 10px;
+  font-size: var(--text-13);
   font-variant-numeric: tabular-nums;
 }
 .time time:first-child {
-  font:
-    600 14px/1.5 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-15);
+  font-weight: var(--w-semibold);
+  line-height: 1.5;
   color: var(--ink-900);
 }
 .time > span {
@@ -272,13 +250,14 @@
   min-width: 0;
 }
 .sessionBody h3 {
-  font:
-    600 16px/1.45 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-17);
+  font-weight: var(--w-semibold);
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .teacher {
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   line-height: 1.6;
   margin-top: 4px;
@@ -290,7 +269,7 @@
   flex-wrap: wrap;
   gap: 7px 12px;
   margin-top: 11px;
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
 }
 .sessionMeta > span {
@@ -309,8 +288,8 @@
 .sessionMeta .status {
   padding: 4px 7px;
   border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   line-height: 1.4;
 }
 .present {
@@ -335,7 +314,7 @@
   margin-top: 20px;
 }
 .more > span {
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
 }
 .more button,
@@ -346,8 +325,8 @@
   gap: 8px;
   padding: 0 18px;
   min-height: 44px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   color: var(--ink-900);
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -367,7 +346,7 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   padding: 25px 0 5px;
 }
@@ -388,12 +367,13 @@
   margin-bottom: 20px;
 }
 .empty h2 {
-  font:
-    600 21px/1.4 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-20);
+  font-weight: var(--w-semibold);
+  line-height: 1.4;
 }
 .empty p {
-  font-size: 12px;
+  font-size: var(--text-13);
   line-height: 1.8;
   color: var(--ink-500);
   margin-top: 10px;
@@ -403,8 +383,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   min-height: 44px;
   margin-top: 17px;
   color: var(--primary);
@@ -419,15 +399,15 @@
   margin-top: 24px;
   border-left: 2px solid var(--history-red);
   background: var(--history-red-soft);
-  font-size: 12px;
+  font-size: var(--text-13);
 }
 .error p {
-  font-size: 11px;
+  font-size: var(--text-13);
   margin-top: 6px;
   line-height: 1.6;
 }
 .pageError {
-  font-size: 12px;
+  font-size: var(--text-13);
   line-height: 1.6;
   color: var(--history-red);
   padding: 20px 0 0;
@@ -445,13 +425,6 @@
     transform: rotate(360deg);
   }
 }
-:global(.dark) .history {
-  --history-blue: #95bfdc;
-  --history-blue-soft: #1c2b32;
-  --history-green-soft: #234433;
-  --history-red: #ef9aa8;
-  --history-red-soft: #38272b;
-}
 @media (min-width: 640px) {
   .toolbar {
     flex-direction: row;
@@ -467,30 +440,20 @@
     max-width: 350px;
   }
   .search input {
-    font-size: 13px;
+    font-size: var(--text-13);
   }
   .heading h1 {
-    font-size: 40px;
+    font-size: var(--text-38);
   }
   .subtitle {
     max-width: none;
-    font-size: 12px;
+    font-size: var(--text-13);
   }
   .heading {
     padding: 34px 0;
   }
   .total {
-    flex-direction: row;
-    gap: 12px;
-    align-items: center;
-    padding-left: 24px;
-  }
-  .total > strong {
-    font-size: 38px;
-  }
-  .total > span {
-    text-align: left;
-    margin-top: 0;
+    font-size: var(--text-15);
   }
   .day {
     display: grid;
@@ -509,17 +472,12 @@
     border-bottom: 0;
     padding-top: 21px;
   }
-  .dayCount {
-    width: 100%;
-    margin-left: 0;
-    padding-left: 47px;
-  }
   .row {
     grid-template-columns: 54px minmax(0, 1fr);
     gap: 24px;
   }
   .sessionBody h3 {
-    font-size: 18px;
+    font-size: var(--text-17);
   }
   .sessionMeta {
     margin-top: 13px;
@@ -537,7 +495,7 @@
     display: flex;
   }
   .brand {
-    font-size: 20px;
+    font-size: var(--text-20);
   }
   .heading {
     padding-bottom: 38px;
@@ -548,19 +506,13 @@
 }
 @media (max-width: 359px) {
   .heading h1 {
-    font-size: 29px;
-  }
-  .total > strong {
-    font-size: 25px;
+    font-size: var(--text-30);
   }
   .heading {
     gap: 10px;
   }
-  .total {
-    padding-left: 10px;
-  }
   .filters button {
-    font-size: 10px;
+    font-size: var(--text-13);
     gap: 4px;
   }
   .row {
@@ -568,7 +520,7 @@
     grid-template-columns: 43px minmax(0, 1fr);
   }
   .sessionBody h3 {
-    font-size: 15px;
+    font-size: var(--text-15);
   }
 }
 @media (prefers-reduced-motion: reduce) {

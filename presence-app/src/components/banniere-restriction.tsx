@@ -23,7 +23,7 @@ export function BanniereRestriction({ user }: { user: User }) {
       <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning/25">
         <ShieldOff className="size-[18px] text-warning-foreground" />
       </div>
-      <div className="min-w-0 text-[13.5px] leading-relaxed">
+      <div className="min-w-0 text-xs leading-relaxed">
         <p className="font-semibold text-ink-900">Votre compte est restreint</p>
         <p className="mt-0.5 text-ink-500">
           Le pointage de présence vous est refusé jusqu&apos;à nouvel ordre de

@@ -223,6 +223,14 @@ function LigneSeance({ seance: s }: { seance: Seance }) {
       >
         {present ? "Honorée" : "Non honorée"}
       </span>
+      {s.etat_prof_par_delegue && (
+        <span
+          className="shrink-0 rounded-full bg-warning/20 px-2 py-0.5 text-[10.5px] font-medium text-warning-foreground"
+          title="L'enseignant n'a pas répondu lui-même : le délégué a confirmé sa présence à sa place."
+        >
+          confirmée par le délégué
+        </span>
+      )}
     </motion.div>
   );
 }

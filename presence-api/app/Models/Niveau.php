@@ -18,6 +18,12 @@ class Niveau extends Model
     // français ("niveaux") du mot "niveau".
     protected $table = 'niveaux';
 
+    /** "L2" → 2, "DUT3" → 3, "Licence" → 1 : le rang du niveau dans le cursus. */
+    public function chiffre(): int
+    {
+        return preg_match('/(\d+)/', $this->nom, $m) ? (int) $m[1] : 1;
+    }
+
     public function filieres(): HasMany
     {
         return $this->hasMany(Filiere::class);

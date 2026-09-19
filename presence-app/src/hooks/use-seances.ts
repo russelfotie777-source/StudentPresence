@@ -85,9 +85,34 @@ export function useMarkDelegue(seanceId: number) {
       }),
     onSuccess: (_data, input) => {
       invalidate();
-      toast.success(input.etat === "present" ? "Enseignant marqué présent." : "Enseignant marqué absent.");
+      toast.success(
+        input.set_fin_reelle
+          ? "Fin du cours enregistrée."
+          : input.etat === "present"
+            ? "Enseignant marqué présent."
+            : "Enseignant marqué absent.",
+      );
     },
     onError: (error) => toast.error(errorMessage(error, "Le marquage a échoué.")),
+  });
+}
+
+/**
+ * Le délégué confirme la présence de l'enseignant à sa place — pour les
+ * enseignants qui n'utilisent pas l'application. N'existe que si l'admin
+ * a activé la règle (`seance.confirmation_enseignant_par_delegue`).
+ */
+export function useConfirmerEnseignant(seanceId: number) {
+  const invalidate = useInvalidateToday();
+
+  return useMutation({
+    mutationFn: () =>
+      apiFetch(`/api/seances/${seanceId}/confirmer-enseignant`, { method: "POST" }),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Présence de l'enseignant confirmée à sa place.");
+    },
+    onError: (error) => toast.error(errorMessage(error, "La confirmation a échoué.")),
   });
 }
 

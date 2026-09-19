@@ -19,6 +19,7 @@ import {
   ArrowRight,
   CalendarCheck2,
   GraduationCap,
+  UserCheck,
 } from "lucide-react";
 import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 import styles from "./dashboard.module.css";
@@ -36,6 +37,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { useAttendanceStats } from "@/hooks/use-attendance-stats";
 import { FUSEAU, useHeureDouala } from "@/hooks/use-heure";
 import {
+  useConfirmerEnseignant,
   useMarkDelegue,
   useMarkProf,
   useTodaySeances,
@@ -49,6 +51,20 @@ const AttendanceSculpture = dynamic(
     ),
   { ssr: false },
 );
+
+/**
+ * Le prénom tel qu'on le dit, pas tel qu'il a été tapé : « RUSSEL » ou
+ * « jean-paul » à l'inscription deviennent « Russel » et « Jean-Paul » dans
+ * le bonjour. Le nom complet reste intact partout ailleurs.
+ */
+function prenom(nomComplet: string): string {
+  const premier = nomComplet.trim().split(/\s+/)[0] ?? "";
+  return premier
+    .toLocaleLowerCase("fr")
+    .split("-")
+    .map((partie) => partie.charAt(0).toLocaleUpperCase("fr") + partie.slice(1))
+    .join("-");
+}
 
 export default function DashboardPage() {
   const { data: me } = useMe();
@@ -68,7 +84,6 @@ export default function DashboardPage() {
     isFetching: statsFetching,
   } = useAttendanceStats(role === "Etudiant");
   const { data: notifications } = useNotifications();
-  const [filter, setFilter] = useState<"all" | "remaining">("all");
   const [checkInSeance, setCheckInSeance] = useState<Seance | null>(null);
   const [rosterSeance, setRosterSeance] = useState<Seance | null>(null);
   const [pushSeance, setPushSeance] = useState<Seance | null>(null);
@@ -78,9 +93,7 @@ export default function DashboardPage() {
   const active = seances?.find((s) => s.is_active);
   const focus = active ?? seances?.find((s) => !s.is_past && !s.is_active);
   const remaining = seances?.filter((s) => !s.is_past).length ?? 0;
-  const shown = seances?.filter(
-    (s) => s.id !== focus?.id && (filter === "all" || !s.is_past),
-  );
+  const shown = seances?.filter((s) => s.id !== focus?.id);
   const roleLabel =
     role === "Delegue"
       ? "Délégué"
@@ -122,9 +135,6 @@ export default function DashboardPage() {
           </span>
           <ZirisWordmark />
         </Link>
-        <span className={styles.topbarContext}>
-          MON CAMPUS <span>/</span> ACCUEIL
-        </span>
         <div className="topbar-tools">
           <ThemeToggle />
           <Link
@@ -147,24 +157,15 @@ export default function DashboardPage() {
       >
         <div className="welcome-copy">
           <p className={`eyebrow ${styles.role}`}>
-            <span /> {roleLabel}
+            {roleLabel}
             {me?.user.salle?.nom && (
               <span className={styles.classLabel}> · {me.user.salle.nom}</span>
             )}
           </p>
           <h1>
-            Bonjour, {me?.user.name.trim().split(/\s+/)[0]}
-            <span className="brand-period">.</span>
+            Bonjour, {me?.user.name && prenom(me.user.name)}
+            <span>.</span>
           </h1>
-          <p className="welcome-subtitle">
-            {isLoading
-              ? "Votre journée se prépare."
-              : active
-                ? "Votre séance a commencé."
-                : remaining
-                  ? "Votre prochaine séance vous attend."
-                  : "Votre journée, à votre rythme."}
-          </p>
         </div>
         <div className={`date-stamp ${styles.date}`} title={`Heure de ${FUSEAU.split("/")[1]}`}>
           <span className={styles.dateNumber}>
@@ -243,10 +244,9 @@ export default function DashboardPage() {
                 <CalendarCheck2 size={25} strokeWidth={1.5} />
               </span>
               <div>
-                <h3>Une journée sans cours.</h3>
-                <p>Aucune séance programmée aujourd’hui.</p>
+                <h3>Pas de cours aujourd’hui.</h3>
                 <Link href="/historique">
-                  Retrouver mes dernières séances <ArrowRight size={14} />
+                  Voir mes dernières séances <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
@@ -261,24 +261,6 @@ export default function DashboardPage() {
             <>
               <div className="agenda-heading">
                 <h3>Au programme</h3>
-                <div
-                  className="agenda-filter"
-                  role="group"
-                  aria-label="Filtrer les séances"
-                >
-                  <button
-                    aria-pressed={filter === "all"}
-                    onClick={() => setFilter("all")}
-                  >
-                    Tout
-                  </button>
-                  <button
-                    aria-pressed={filter === "remaining"}
-                    onClick={() => setFilter("remaining")}
-                  >
-                    À venir
-                  </button>
-                </div>
               </div>
               <div className="agenda-list">
                 {shown?.map((seance, index) => (
@@ -288,13 +270,13 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <SeanceCard seance={seance}>{actions(seance)}</SeanceCard>
+                    <SeanceCard seance={seance}>
+                      {seance.is_active || seance.is_past ? actions(seance) : null}
+                    </SeanceCard>
                   </motion.div>
                 ))}
                 {shown?.length === 0 && (
-                  <p className="agenda-done">
-                    <Check size={16} /> Aucune autre séance à afficher.
-                  </p>
+                  <p className="agenda-done">Aucune autre séance aujourd’hui.</p>
                 )}
               </div>
             </>
@@ -306,9 +288,6 @@ export default function DashboardPage() {
               <h2>
                 {role === "Etudiant" ? "Votre assiduité" : "En un regard"}
               </h2>
-              <span className="eyebrow">
-                {role === "Etudiant" ? "BILAN GLOBAL" : "AUJOURD’HUI"}
-              </span>
             </div>
             {statsError && role === "Etudiant" ? (
               <div className={styles.statsError} role="alert">
@@ -404,7 +383,6 @@ export default function DashboardPage() {
                 height={42}
               />
               <div>
-                <p className="eyebrow">VOTRE CAMPUS</p>
                 <h3>IUT de Douala</h3>
               </div>
             </div>
@@ -433,7 +411,7 @@ export default function DashboardPage() {
       </div>
       <footer className="dashboard-footer">
         <ZirisWordmark />
-        <span>Chaque séance compte.</span>
+        <span>IUT de Douala</span>
       </footer>
       {checkInSeance && (
         <CheckInDialog
@@ -484,18 +462,7 @@ function StudentActions({
           : "Liste de présence validée"}
       </span>
     );
-  if (seance.is_past)
-    return (
-      <span className="attendance-status">
-        <Clock3 size={15} /> Séance terminée
-      </span>
-    );
-  if (!seance.is_active)
-    return (
-      <span className="attendance-status">
-        <Clock3 size={15} /> Pointage à l’ouverture de la séance
-      </span>
-    );
+  if (!seance.is_active) return null;
   if (restreint)
     return (
       <span className="attendance-status">
@@ -505,8 +472,7 @@ function StudentActions({
   if (!seance.position_envoyee)
     return (
       <span className="attendance-status">
-        <MapPin size={16} /> Position du délégué indisponible. Faites constater
-        votre présence lors de l’appel.
+        <MapPin size={16} /> Position du délégué indisponible.
       </span>
     );
   return (
@@ -524,8 +490,37 @@ function DelegateActions({
   onConfirmRoster: () => void;
 }) {
   const mark = useMarkDelegue(seance.id);
+  const confirmer = useConfirmerEnseignant(seance.id);
   const disabled =
     !seance.is_active || seance.presences_locked || mark.isPending;
+  // Règle admin : quand l'enseignant n'utilise pas l'app, le délégué peut
+  // confirmer sa présence à sa place — tant que l'enseignant n'a pas
+  // répondu lui-même et que le délégué ne l'a pas marqué absent.
+  const peutConfirmer =
+    seance.confirmation_enseignant_par_delegue === true &&
+    seance.etat_prof === null &&
+    seance.etat_delegue !== "absent" &&
+    seance.is_active &&
+    !seance.presences_locked;
+  // La fin réelle du cours conditionne la paie de l'enseignant : elle se
+  // relève une fois le cours commencé, tant qu'elle n'est pas posée. Si le
+  // délégué oublie, la séance est clôturée à l'heure prévue par le serveur.
+  const peutTerminer =
+    seance.etat_delegue === "present" &&
+    seance.debut_reel !== null &&
+    seance.fin_reelle === null &&
+    seance.is_active &&
+    !seance.presences_locked;
+  if (!seance.is_active) {
+    // Séance passée sans appel validé : il reste à confirmer la liste. Rien d'autre.
+    return seance.presences_locked ? null : (
+      <div className="role-actions">
+        <Button variant="secondary" className="w-full" onClick={onConfirmRoster}>
+          <Users size={16} /> Confirmer la liste
+        </Button>
+      </div>
+    );
+  }
   return (
     <div className="role-actions">
       {seance.is_active && !seance.presences_locked && (
@@ -546,10 +541,43 @@ function DelegateActions({
       <Button
         variant={seance.etat_delegue === "absent" ? "destructive" : "outline"}
         disabled={disabled || seance.etat_delegue === "absent"}
-        onClick={() => mark.mutate({ etat: "absent", set_fin_reelle: true })}
+        onClick={() => mark.mutate({ etat: "absent" })}
       >
         <X size={16} /> Absent
       </Button>
+      {peutTerminer && (
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={mark.isPending}
+          onClick={() => mark.mutate({ etat: "present", set_fin_reelle: true })}
+        >
+          <Clock3 size={16} /> Fin du cours
+        </Button>
+      )}
+      {seance.debut_reel && (
+        <span className="attendance-status">
+          <Clock3 size={15} /> Arrivée {seance.debut_reel.slice(0, 5)}
+          {seance.fin_reelle
+            ? ` · fin ${seance.fin_reelle.slice(0, 5)}`
+            : " · fin non relevée"}
+        </span>
+      )}
+      {peutConfirmer && (
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={confirmer.isPending}
+          onClick={() => confirmer.mutate()}
+        >
+          <UserCheck size={16} /> Confirmer pour l’enseignant
+        </Button>
+      )}
+      {seance.etat_prof_par_delegue && (
+        <span className="attendance-status confirmed">
+          <UserCheck size={16} /> Présence de l’enseignant confirmée à sa place
+        </span>
+      )}
       {!seance.presences_locked && (
         <Button
           variant="secondary"
@@ -571,6 +599,19 @@ function TeacherActions({
 }) {
   const mark = useMarkProf(seance.id);
   const disabled = !seance.is_active || mark.isPending;
+  if (!seance.is_active) {
+    // Hors séance, l'enseignant peut encore déclarer l'effectif — c'est tout.
+    return (
+      <div className="role-actions">
+        <Button variant="secondary" className="w-full" onClick={onPush}>
+          <Users size={16} />
+          {seance.push
+            ? `Effectif déclaré : ${seance.push.etudiants_presents}`
+            : "Déclarer l’effectif"}
+        </Button>
+      </div>
+    );
+  }
   return (
     <div className="role-actions">
       <Button

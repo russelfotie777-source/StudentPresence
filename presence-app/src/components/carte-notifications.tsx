@@ -34,11 +34,11 @@ export function CarteNotifications() {
 
   return (
     <div className="flex flex-col gap-2">
-      <h2 className="flex items-center gap-2 px-1 text-[12.5px] font-semibold uppercase tracking-wide text-ink-300">
+      <h2 className="flex items-center gap-2 px-1 text-xs font-semibold text-ink-300">
         <Bell className="size-3.5" />
         Notifications
         {data.non_lues > 0 && (
-          <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground tabular-nums">
+          <span className="rounded-full bg-primary px-1.5 py-0.5 text-xs font-bold text-primary-foreground tabular-nums">
             {data.non_lues}
           </span>
         )}
@@ -86,11 +86,11 @@ function LigneNotification({ notification: n, onLue }: { notification: Notificat
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <p className={cn("text-sm text-ink-900", !n.lue && "font-semibold")}>{n.titre}</p>
-          <span className="shrink-0 text-[11px] text-ink-300">{dateLisible(n.date)}</span>
+          <span className="shrink-0 text-xs text-ink-300">{dateLisible(n.date)}</span>
         </div>
-        <p className="mt-0.5 text-[13px] leading-relaxed text-ink-500">{n.message}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-ink-500">{n.message}</p>
         {n.motif && (
-          <p className="mt-1.5 rounded-lg bg-muted/60 px-2.5 py-1.5 text-[12.5px] text-ink-900">
+          <p className="mt-1.5 rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs text-ink-900">
             Motif&nbsp;: {n.motif}
           </p>
         )}
@@ -98,7 +98,7 @@ function LigneNotification({ notification: n, onLue }: { notification: Notificat
           <button
             type="button"
             onClick={onLue}
-            className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-primary"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary"
           >
             <Check className="size-3.5" />
             Marquer comme lue

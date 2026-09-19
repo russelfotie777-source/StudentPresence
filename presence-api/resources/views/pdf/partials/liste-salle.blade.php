@@ -37,7 +37,7 @@ données de App\Services\ListeHebdomadaire::pour().
                 NIVEAU : {{ $niveau_romain }}&nbsp;&nbsp;&nbsp;
                 ANNEE ACADEMIQUE : {{ $annee_academique }}
             </div>
-            <div class="titre">LISTE DE PRESENCE DES ETUDIANTS</div>
+            <div class="titre">{{ $titre ?? 'LISTE DE PRESENCE DES ETUDIANTS' }}</div>
             <div class="sous-titre">SEMESTRE {{ $semestre }}</div>
         </td>
         <td style="width: 27%;">

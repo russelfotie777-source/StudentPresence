@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 import { usePathname } from "next/navigation";
 import {
+  ArrowLeftRight,
   Home,
   History,
   Wallet,
@@ -42,6 +43,15 @@ const PROMOTION_ITEM: NavItem = {
   icon: UserPlus,
 };
 
+// Un étudiant en alternance peut demander à suivre les cours de jour ; un
+// délégué non, il porte sa salle. L'onglet existe pour tous les étudiants,
+// l'écran explique à chacun où il en est.
+const MIGRATION_ITEM: NavItem = {
+  href: "/migration",
+  label: "Migration",
+  icon: ArrowLeftRight,
+};
+
 const PROFILE_ITEM: NavItem = { href: "/profil", label: "Profil", icon: User };
 
 export function BottomNav({ role }: { role: UserRole }) {
@@ -54,6 +64,7 @@ export function BottomNav({ role }: { role: UserRole }) {
     ...BASE_ITEMS,
     ...(role === "Enseignant" ? TEACHER_ONLY_ITEMS : []),
     ...(role === "Enseignant" || role === "Delegue" ? [PROMOTION_ITEM] : []),
+    ...(role === "Etudiant" ? [MIGRATION_ITEM] : []),
     PROFILE_ITEM,
   ];
 
@@ -65,7 +76,6 @@ export function BottomNav({ role }: { role: UserRole }) {
         </span>
         <ZirisWordmark />
       </Link>
-      <p className="nav-caption">VOTRE ESPACE</p>
       <div
         className="nav-items"
         style={{ "--nav-count": items.length } as React.CSSProperties}
@@ -92,7 +102,7 @@ export function BottomNav({ role }: { role: UserRole }) {
                 />
                 {item.href === PROFILE_ITEM.href && nonLues > 0 && (
                   <span
-                    className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9.5px] font-bold text-white tabular-nums ring-2 ring-card"
+                    className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-white tabular-nums ring-2 ring-card"
                     aria-label={`${nonLues} notification(s) non lue(s)`}
                   >
                     {nonLues > 9 ? "9+" : nonLues}
@@ -106,8 +116,6 @@ export function BottomNav({ role }: { role: UserRole }) {
       </div>
       <div className="nav-footnote">
         <span className="metric-marker" /> IUT de Douala
-        <br />
-        <span>Année universitaire 2026</span>
       </div>
     </nav>
   );

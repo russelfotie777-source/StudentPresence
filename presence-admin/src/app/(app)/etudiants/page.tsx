@@ -38,10 +38,12 @@ import { DialogueListe, type CibleListe } from "@/components/etudiants/dialogue-
 import { SelecteurSymboles } from "@/components/etudiants/selecteur-symboles";
 import {
   DialogueConfirmation,
+  DialoguePresenceAuto,
   DialogueSalle,
   DialogueSanction,
   type ActionEtudiant,
 } from "@/components/etudiants/dialogues";
+import { usePresenceAutomatique } from "@/hooks/use-gestion";
 
 export default function EtudiantsPage() {
   const { data: salles } = salleHooks.useList();
@@ -395,6 +397,8 @@ function versUser(e: EtudiantFeuille, feuille: FeuillePresence): User {
     statut_compte: e.statut_compte,
     motif_statut: e.motif_statut,
     statut_modifie_le: null,
+    presence_automatique: e.presence_automatique,
+    presence_automatique_motif: e.presence_automatique_motif,
     formation: e.formation,
     salle: { id: feuille.salle.id, nom: feuille.salle.nom },
     niveau: null,
@@ -419,6 +423,7 @@ function Dialogues({
   const changerSalle = useChangerSalle();
   const changerStatut = useChangerStatut();
   const supprimer = useSupprimerEtudiant();
+  const presenceAuto = usePresenceAutomatique();
   const apres = { onSuccess: onTermine };
 
   switch (action.type) {
@@ -442,6 +447,15 @@ function Dialogues({
           onConfirmer={(motif) =>
             changerStatut.mutate({ id: action.etudiant.id, action: action.type, motif }, apres)
           }
+          onFermer={onFermer}
+        />
+      );
+    case "presence_auto":
+      return (
+        <DialoguePresenceAuto
+          etudiant={action.etudiant}
+          enCours={presenceAuto.isPending}
+          onConfirmer={(actif, motif) => presenceAuto.mutate({ id: action.etudiant.id, actif, motif }, apres)}
           onFermer={onFermer}
         />
       );

@@ -27,7 +27,7 @@ export function CarteRappels({ delegue }: { delegue: boolean }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <h2 className="px-1 text-[12.5px] font-semibold uppercase tracking-wide text-ink-300">
+      <h2 className="px-1 text-xs font-semibold text-ink-300">
         Rappels de pointage
       </h2>
       <div className="rounded-2xl border border-line bg-card px-4 py-3.5">
@@ -47,7 +47,7 @@ export function CarteRappels({ delegue }: { delegue: boolean }) {
           </div>
           <span
             className={cn(
-              "flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+              "flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
               badge.classe,
             )}
           >
@@ -74,7 +74,7 @@ export function CarteRappels({ delegue }: { delegue: boolean }) {
         )}
 
         {etat === "refuse" && (
-          <p className="mt-3 rounded-xl bg-muted/60 px-3 py-2.5 text-[12.5px] leading-relaxed text-ink-500">
+          <p className="mt-3 rounded-xl bg-muted/60 px-3 py-2.5 text-xs leading-relaxed text-ink-500">
             Les notifications ont été bloquées pour ce site. Réautorisez-les dans les réglages du
             navigateur (icône de cadenas ou ⓘ à côté de l&apos;adresse → Notifications), puis
             revenez ici.
@@ -82,7 +82,7 @@ export function CarteRappels({ delegue }: { delegue: boolean }) {
         )}
 
         {etat === "indisponible" && (
-          <p className="mt-3 flex items-start gap-2 rounded-xl bg-muted/60 px-3 py-2.5 text-[12.5px] leading-relaxed text-ink-500">
+          <p className="mt-3 flex items-start gap-2 rounded-xl bg-muted/60 px-3 py-2.5 text-xs leading-relaxed text-ink-500">
             <Smartphone className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               {ios && !installee
@@ -92,7 +92,7 @@ export function CarteRappels({ delegue }: { delegue: boolean }) {
           </p>
         )}
 
-        {erreur && <p className="mt-2 text-[12.5px] text-destructive">{erreur}</p>}
+        {erreur && <p className="mt-2 text-xs text-destructive">{erreur}</p>}
       </div>
     </div>
   );

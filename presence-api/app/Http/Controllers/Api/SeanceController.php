@@ -8,9 +8,9 @@ use App\Enums\UserRole;
 use App\Enums\Weekday;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SeanceResource;
+use App\Models\Parametre;
 use App\Models\Seance;
 use App\Models\Semaine;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -129,20 +129,7 @@ class SeanceController extends Controller
 
         $seance->update($updates);
         $seance->refresh();
-
-        // Crédit d'heures idempotent : une seule fois par séance, marquée par
-        // quota_credited_at. Corrige le bug de l'ancienne app, qui
-        // incrémentait `quota` à chaque re-soumission "présent" du délégué.
-        if ($seance->debut_reel && $seance->fin_reelle
-            && $seance->etat_delegue === PresenceState::Present
-            && ! $seance->quota_credited_at) {
-            // abs() est indispensable : Carbon 3 renvoie un diff *signé* par
-            // défaut (contrairement à Carbon 2) — sans ça, le sens de calcul
-            // peut donner un nombre de minutes négatif.
-            $minutes = abs(Carbon::parse($seance->fin_reelle)->diffInMinutes(Carbon::parse($seance->debut_reel)));
-            $seance->enseignant->increment('quota', (int) round($minutes / 60));
-            $seance->forceFill(['quota_credited_at' => now()])->save();
-        }
+        $seance->crediterQuotaEnseignant();
 
         return new SeanceResource($seance->fresh(['salle', 'enseignant']));
     }
@@ -161,9 +148,55 @@ class SeanceController extends Controller
             ]);
         }
 
-        $seance->update(['etat_prof' => $data['etat']]);
+        // L'enseignant qui répond lui-même reprend la main sur une
+        // confirmation posée par le délégué à sa place.
+        $seance->update(['etat_prof' => $data['etat'], 'etat_prof_marque_par_id' => null]);
 
         return new SeanceResource($seance->fresh());
+    }
+
+    /**
+     * Le délégué confirme la présence de l'enseignant à sa place — pour les
+     * enseignants qui n'utilisent pas l'application, dont les séances
+     * resteraient sinon « non tenues » faute de leur réponse. Soumis au
+     * réglage admin, à la fenêtre active, et à ce que le délégué n'ait pas
+     * lui-même constaté une absence. Un enseignant qui a déjà répondu garde
+     * le dernier mot.
+     */
+    public function confirmerEnseignant(Request $request, Seance $seance)
+    {
+        $this->authorizeDelegue($request, $seance);
+
+        abort_unless(Parametre::delegueConfirmeEnseignant(), 403, "La confirmation de l'enseignant par le délégué est désactivée.");
+
+        if (! $seance->is_active) {
+            throw ValidationException::withMessages([
+                'etat' => 'Impossible de modifier le statut en dehors des heures de cours (marge de 15 minutes).',
+            ]);
+        }
+
+        if ($seance->etat_delegue === PresenceState::Absent) {
+            throw ValidationException::withMessages([
+                'etat' => "Vous avez marqué l'enseignant absent : marquez-le d'abord présent.",
+            ]);
+        }
+
+        if ($seance->etat_prof !== null && $seance->etat_prof_marque_par_id === null) {
+            throw ValidationException::withMessages([
+                'etat' => "L'enseignant a déjà répondu lui-même.",
+            ]);
+        }
+
+        $seance->update([
+            'etat_prof' => PresenceState::Present,
+            'etat_prof_marque_par_id' => $request->user()->id,
+            // Un seul geste suffit : confirmer pour l'enseignant vaut aussi
+            // constat de sa présence par le délégué, heure d'arrivée comprise.
+            'etat_delegue' => PresenceState::Present,
+            'debut_reel' => $seance->debut_reel ?? now()->toTimeString(),
+        ]);
+
+        return new SeanceResource($seance->fresh(['salle', 'enseignant']));
     }
 
     /**

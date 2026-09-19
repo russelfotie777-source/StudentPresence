@@ -39,13 +39,17 @@ class ListeHebdomadaire
     /**
      * @return array<string, mixed>
      */
-    public function pour(Salle $salle, Semaine $semaine, ?int $semestre = null, ?string $annee = null, ?string $symboles = null): array
+    public function pour(Salle $salle, Semaine $semaine, ?int $semestre = null, ?string $annee = null, ?string $symboles = null, bool $uniquementMigrants = false): array
     {
         $salle->loadMissing(['filiere.niveau', 'filiere.departement']);
         $departement = $salle->filiere->departement;
         $niveauChiffre = $this->chiffreDuNiveau($salle->filiere->niveau->nom);
         $option = $this->option($salle);
         $donnees = $this->feuille->pour($salle, $semaine);
+        // La liste des seuls migrants : les mêmes séances, les étudiants FM seulement.
+        if ($uniquementMigrants) {
+            $donnees['etudiants'] = $donnees['etudiants']->filter(fn (User $u) => $u->formation === FormationType::FM)->values();
+        }
 
         return [
             'etablissement' => config('presence.etablissement'),
@@ -62,6 +66,7 @@ class ListeHebdomadaire
             'semaine_du' => $semaine->date_debut->format('d/m/Y'),
             'semaine_au' => $semaine->date_fin->format('d/m/Y'),
             'symboles' => $symboles ?? Parametre::symbolesPresence(),
+            'titre' => $uniquementMigrants ? 'LISTE DE PRESENCE DES ETUDIANTS MIGRANTS (FM)' : 'LISTE DE PRESENCE DES ETUDIANTS',
             'etudiants' => $this->etudiants($donnees['etudiants'], $donnees['seances']),
             'jours' => $this->seancesParJour($donnees['seances']),
             'contient_fm' => $salle->formation === FormationType::FI,

@@ -86,14 +86,14 @@ export function RosterDialog({
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 px-5 py-4 shadow-[0_20px_40px_-14px_rgba(79,70,229,.5)]">
           <GrainOverlay />
           <div className="relative">
-            <span className="text-[11.5px] font-bold uppercase tracking-wide text-white/70">
+            <span className="text-xs font-bold text-white/70">
               Effectif déclaré par l&apos;enseignant
             </span>
             <div className="my-1.5 flex items-end gap-2">
-              <span className="font-display text-[38px] font-extrabold leading-none tracking-tight text-white">
+              <span className="font-display text-3xl font-extrabold leading-none tracking-tight text-white">
                 {checked.size}
               </span>
-              <span className="pb-1 text-[15px] font-semibold text-white/65">
+              <span className="pb-1 text-sm font-semibold text-white/65">
                 / {attendu ?? "—"} présents
               </span>
             </div>

@@ -30,7 +30,7 @@ export default function SalairePage() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        className="font-display text-[26px] font-bold tracking-tight text-ink-900"
+        className="font-display text-xl font-bold tracking-tight text-ink-900"
       >
         Mon salaire
       </motion.h1>
@@ -49,7 +49,8 @@ export default function SalairePage() {
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-indigo-500 to-indigo-600 p-5 shadow-[0_24px_48px_-16px_rgba(79,70,229,.55)]"
+            className="relative overflow-hidden rounded-[26px] p-5 shadow-[0_24px_48px_-16px_rgba(15,157,104,.55)]"
+            style={{ background: "var(--hero)" }}
           >
             <GrainOverlay className="rounded-[26px]" />
             <div
@@ -60,9 +61,9 @@ export default function SalairePage() {
 
             <div className="relative flex items-center gap-2 text-white/80">
               <Wallet className="h-4 w-4" />
-              <span className="text-[11px] font-bold uppercase tracking-wider">Total gagné</span>
+              <span className="text-xs font-bold">Total gagné</span>
             </div>
-            <p className="relative mt-2 font-display text-[34px] font-extrabold leading-none text-white">
+            <p className="relative mt-2 font-display text-3xl font-extrabold leading-none text-white">
               <AnimatedNumber value={data.total_salaire} formatter={formatFcfa} />
             </p>
 
@@ -91,7 +92,7 @@ export default function SalairePage() {
                     {ligne.date} · {ligne.salle} · {ligne.heure_debut.slice(0, 5)}
                   </p>
                   {ligne.retard_minutes > 0 && (
-                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-medium text-warning-foreground">
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-xs font-medium text-warning-foreground">
                       <AlertTriangle className="h-3 w-3" />
                       {ligne.retard_minutes} min de retard
                     </span>

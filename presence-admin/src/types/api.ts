@@ -24,6 +24,9 @@ export interface User {
   statut_compte: StatutCompte;
   motif_statut: string | null;
   statut_modifie_le: string | null;
+  /** Privilège admin : compté présent à chaque séance de sa salle sans pointer. */
+  presence_automatique?: boolean;
+  presence_automatique_motif?: string | null;
   formation: FormationType | null;
   salle: { id: number; nom: string } | null;
   niveau: { id: number; nom: string } | null;
@@ -57,6 +60,8 @@ export interface Seance {
   fin_reelle: string | null;
   etat_delegue: PresenceState | null;
   etat_prof: PresenceState | null;
+  /** L'état enseignant a été donné par le délégué à sa place (règle de pointage admin). */
+  etat_prof_par_delegue?: boolean;
   etat_final: PresenceState;
   presences_locked: boolean;
   is_active: boolean;
@@ -100,8 +105,11 @@ export interface DemandeFormation {
     niveau: string | null;
     niveau_id: number | null;
     filiere: string | null;
+    departement_id?: number | null;
+    formation?: FormationType | null;
   };
-  salle_cible?: { id: number; nom: string } | null;
+  /** La salle FI demandée par l'étudiant — retenue à l'approbation sauf si l'admin en choisit une autre. */
+  salle_cible?: { id: number; nom: string; filiere?: string | null; niveau?: string | null } | null;
   motif: string | null;
   statut: RequestStatus;
   date_creation: string;

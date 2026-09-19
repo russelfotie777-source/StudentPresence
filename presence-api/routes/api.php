@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountValidationController;
 use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ComptabiliteController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartementController;
@@ -18,10 +19,12 @@ use App\Http\Controllers\Api\FormationRequestController;
 use App\Http\Controllers\Api\HeureController;
 use App\Http\Controllers\Api\ListePresenceSettingController;
 use App\Http\Controllers\Api\MatiereController;
+use App\Http\Controllers\Api\MigrantController;
 use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\PdfController;
+use App\Http\Controllers\Api\PointageSettingController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\PromotionController;
@@ -98,6 +101,8 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
 
     Route::get('/parametres/face-auth', [FaceAuthSettingController::class, 'show']);
     Route::put('/parametres/face-auth', [FaceAuthSettingController::class, 'update']);
+    Route::get('/parametres/pointage', [PointageSettingController::class, 'show']);
+    Route::put('/parametres/pointage', [PointageSettingController::class, 'update']);
 
     Route::get('/validations', [AccountValidationController::class, 'index']);
     Route::post('/validations/{user}/approve', [AccountValidationController::class, 'approve']);
@@ -124,6 +129,13 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::post('/assistant/conversations/{conversation}/appliquer', [AssistantController::class, 'appliquer']);
     Route::post('/assistant/conversations/{conversation}/ignorer', [AssistantController::class, 'ignorer']);
     Route::get('/assistant/conversations/{conversation}/actions/{actionId}/identifiants.csv', [AssistantController::class, 'identifiants']);
+
+    // Gestion des étudiants : les migrants par salle d'accueil, le privilège
+    // « toujours présent », la comptabilité générale.
+    Route::get('/migrants', [MigrantController::class, 'index']);
+    Route::get('/etudiants/presence-automatique', [MigrantController::class, 'privilegies']);
+    Route::post('/etudiants/{etudiant}/presence-automatique', [MigrantController::class, 'presenceAutomatique']);
+    Route::get('/comptabilite', [ComptabiliteController::class, 'index']);
 
     // Gestion des comptes étudiants (délégués compris : ce sont des étudiants).
     Route::get('/etudiants', [EtudiantController::class, 'index']);
@@ -160,6 +172,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/me/notifications/{id}/lue', [NotificationController::class, 'marquerLue']);
     Route::post('/seances/{seance}/mark-delegue', [SeanceController::class, 'markDelegue']);
     Route::post('/seances/{seance}/mark-prof', [SeanceController::class, 'markProf']);
+    Route::post('/seances/{seance}/confirmer-enseignant', [SeanceController::class, 'confirmerEnseignant']);
     Route::post('/seances/{seance}/push', [SeanceController::class, 'push']);
 
     Route::post('/seances/{seance}/position', [PositionController::class, 'store'])->middleware('throttle:20,1');
@@ -174,7 +187,9 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/requetes', [RequeteController::class, 'store']);
     Route::get('/requetes/mine', [RequeteController::class, 'mine']);
 
+    Route::get('/me/migration', [FormationRequestController::class, 'situation']);
     Route::post('/formation-requests', [FormationRequestController::class, 'store']);
+    Route::delete('/formation-requests/{demande}', [FormationRequestController::class, 'destroy']);
     Route::get('/me/formation-requests', [FormationRequestController::class, 'mine']);
 
     Route::get('/students/search', [StudentSearchController::class, 'index']);

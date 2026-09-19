@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['seance_id', 'etudiant_id', 'etat', 'date_marquage', 'distance_metres', 'precision_metres', 'forcee_par_id'])]
+#[Fillable(['seance_id', 'etudiant_id', 'etat', 'date_marquage', 'distance_metres', 'precision_metres', 'forcee_par_id', 'automatique'])]
 class PresenceEtudiant extends Model
 {
     use HasFactory;
@@ -23,6 +23,7 @@ class PresenceEtudiant extends Model
         return [
             'etat' => PresenceState::class,
             'date_marquage' => 'datetime',
+            'automatique' => 'boolean',
         ];
     }
 

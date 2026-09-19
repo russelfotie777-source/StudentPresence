@@ -90,10 +90,10 @@ export function CheckInDialog({
                   <MapPin className="h-7 w-7 text-white" strokeWidth={1.9} />
                 </div>
               </div>
-              <h2 className="font-display text-[19px] font-bold text-ink-900">
+              <h2 className="font-display text-lg font-bold text-ink-900">
                 Localisation en cours&hellip;
               </h2>
-              <p className="max-w-[270px] text-[13.5px] leading-relaxed text-ink-500">
+              <p className="max-w-[270px] text-xs leading-relaxed text-ink-500">
                 Nous vérifions votre position par rapport à celle du délégué
                 pour la salle {seance.salle}.
               </p>
@@ -135,10 +135,10 @@ export function CheckInDialog({
                   />
                 </div>
               </div>
-              <h2 className="font-display text-[20px] font-bold text-ink-900">
+              <h2 className="font-display text-lg font-bold text-ink-900">
                 Présence confirmée
               </h2>
-              <p className="text-[13.5px] text-ink-500">
+              <p className="text-xs text-ink-500">
                 À {checkIn.data?.distance}m du délégué &middot; {seance.matiere}
               </p>
             </>

@@ -64,9 +64,6 @@ export default function PromotionPage() {
       : null;
 
   const title = isDelegate ? "Désigner un remplaçant" : "Promotion temporaire";
-  const subtitle = isDelegate
-    ? "En cas d'absence, désignez un remplaçant parmi les étudiants de votre salle."
-    : "Donnez temporairement les droits de délégué à un étudiant d'une salle où vous enseignez.";
 
   const salleChoisie = teacherSalles?.find((s) => s.id === salleId);
 
@@ -77,10 +74,9 @@ export default function PromotionPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
       >
-        <h1 className="font-display text-[26px] font-bold tracking-tight text-ink-900">
+        <h1 className="font-display text-xl font-bold tracking-tight text-ink-900">
           {title}
         </h1>
-        <p className="mt-1 text-sm text-ink-500">{subtitle}</p>
       </motion.div>
 
       {isTeacher && !salleId && (
@@ -176,7 +172,7 @@ export default function PromotionPage() {
                   </p>
                 </div>
                 {s.has_active_promotion ? (
-                  <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
+                  <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
                     Déjà promu
                   </span>
                 ) : (

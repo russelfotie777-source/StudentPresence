@@ -18,10 +18,10 @@ const STARS = Array.from({ length: 32 }, (_, i) => {
 const BLOBS = [
   {
     id: "pod",
-    color: "#4f46e5",
-    highlight: "#b4bcfd",
-    shadow: "#241f6e",
-    glow: "rgba(99,91,255,.45)",
+    color: "#2ee59d",
+    highlight: "#c9fbe6",
+    shadow: "#0b4a3a",
+    glow: "rgba(46,229,157,.45)",
     top: "14%",
     left: "12%",
     size: 72,
@@ -83,20 +83,20 @@ export function SpaceEmptyState({
       <div
         aria-hidden
         className="absolute inset-0"
-        style={{ background: "linear-gradient(175deg, #100c30 0%, #1c1550 46%, #3a2ba8 100%)" }}
+        style={{ background: "linear-gradient(175deg, #07100d 0%, #0e2a21 46%, #12664f 100%)" }}
       />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-36"
         style={{
           background:
-            "radial-gradient(60% 100% at 50% 100%, rgba(168,142,255,.5) 0%, transparent 70%)",
+            "radial-gradient(60% 100% at 50% 100%, rgba(46,229,157,.4) 0%, transparent 70%)",
         }}
       />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ boxShadow: "inset 0 0 60px 10px rgba(6,4,24,.55)" }}
+        style={{ boxShadow: "inset 0 0 60px 10px rgba(3,10,8,.55)" }}
       />
 
       {STARS.map((s, i) => (
@@ -135,10 +135,10 @@ export function SpaceEmptyState({
               boxShadow: `inset -5px -7px 10px ${b.shadow}99, 0 12px 26px -6px rgba(0,0,0,.55)`,
             }}
           >
-            <span className="absolute left-[35%] top-[39%] h-[9%] w-[9%] rounded-full bg-[#191029]">
+            <span className="absolute left-[35%] top-[39%] h-[9%] w-[9%] rounded-full bg-[#07100d]">
               <span className="absolute left-[20%] top-[15%] h-[35%] w-[35%] rounded-full bg-white/80" />
             </span>
-            <span className="absolute left-[57%] top-[39%] h-[9%] w-[9%] rounded-full bg-[#191029]">
+            <span className="absolute left-[57%] top-[39%] h-[9%] w-[9%] rounded-full bg-[#07100d]">
               <span className="absolute left-[20%] top-[15%] h-[35%] w-[35%] rounded-full bg-white/80" />
             </span>
           </div>
@@ -147,7 +147,7 @@ export function SpaceEmptyState({
 
       {title && (
         <div className="relative z-10 flex flex-col items-center gap-1 pb-6 text-center">
-          <p className="font-display text-[15px] font-bold text-white">{title}</p>
+          <p className="font-display text-sm font-bold text-white">{title}</p>
           {subtitle && <p className="text-xs text-white/70">{subtitle}</p>}
         </div>
       )}
