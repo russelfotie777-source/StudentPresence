@@ -75,9 +75,6 @@
   margin-top: 9px;
   overflow-wrap: anywhere;
 }
-.heading h1 > span {
-  color: var(--primary);
-}
 .subtitle {
   font-size: var(--text-13);
   line-height: 1.7;
