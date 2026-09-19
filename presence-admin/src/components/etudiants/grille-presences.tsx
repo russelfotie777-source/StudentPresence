@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { AlertTriangle, Crown, Loader2, Lock, Radio, ShieldBan, ShieldOff } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Crown, Loader2, Lock, Radio, ShieldBan, ShieldOff } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   symbole,
@@ -185,6 +185,9 @@ export function GrillePresences({
                       <span className="flex items-center gap-1.5">
                         <span className="truncate font-medium text-foreground">{e.name}</span>
                         {estDelegue && <Crown className="size-3.5 shrink-0 text-warning-foreground" aria-label="Délégué" />}
+                        {e.presence_automatique && (
+                          <BadgeCheck className="size-3.5 shrink-0 text-primary" aria-label="Toujours présent" />
+                        )}
                         {e.statut_compte === "restreint" && (
                           <ShieldOff className="size-3.5 shrink-0 text-warning-foreground" aria-label="Compte restreint" />
                         )}

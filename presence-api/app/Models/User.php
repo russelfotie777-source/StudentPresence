@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'statut_compte', 'motif_statut', 'statut_modifie_le', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
+#[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'statut_compte', 'motif_statut', 'statut_modifie_le', 'presence_automatique', 'presence_automatique_motif', 'presence_automatique_le', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
 // face_descriptor est une donnée biométrique : jamais renvoyée par l'API,
 // même par accident (ex. un ->toArray() ajouté négligemment plus tard).
 #[Hidden(['password', 'remember_token', 'face_descriptor'])]
@@ -51,6 +51,8 @@ class User extends Authenticatable
             'validation_status' => ValidationStatus::class,
             'statut_compte' => StatutCompte::class,
             'statut_modifie_le' => 'datetime',
+            'presence_automatique' => 'boolean',
+            'presence_automatique_le' => 'datetime',
             'formation' => FormationType::class,
             'face_descriptor' => 'array',
             'face_enrolled_at' => 'datetime',

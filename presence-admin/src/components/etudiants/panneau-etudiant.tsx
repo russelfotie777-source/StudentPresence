@@ -2,6 +2,7 @@
 
 import {
   ArrowLeftRight,
+  BadgeCheck,
   BookOpen,
   Crown,
   DoorOpen,
@@ -185,6 +186,14 @@ export function PanneauEtudiant({ etudiant: e, feuille, symboles, onAction, onFe
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <Button variant="outline" className="justify-start gap-2" onClick={() => onAction("salle")}>
                   <ArrowLeftRight className="size-4" /> Changer de salle
+                </Button>
+                <Button
+                  variant="outline"
+                  className={cn("justify-start gap-2", e.presence_automatique ? "text-primary" : "")}
+                  onClick={() => onAction("presence_auto")}
+                >
+                  <BadgeCheck className="size-4" />
+                  {e.presence_automatique ? "Retirer le privilège" : "Toujours présent"}
                 </Button>
                 {e.statut_compte !== "actif" && (
                   <Button variant="outline" className="justify-start gap-2 text-success" onClick={() => onAction("retablir")}>

@@ -24,6 +24,9 @@ export interface User {
   statut_compte: StatutCompte;
   motif_statut: string | null;
   statut_modifie_le: string | null;
+  /** Privilège admin : compté présent à chaque séance de sa salle sans pointer. */
+  presence_automatique?: boolean;
+  presence_automatique_motif?: string | null;
   formation: FormationType | null;
   salle: { id: number; nom: string } | null;
   niveau: { id: number; nom: string } | null;

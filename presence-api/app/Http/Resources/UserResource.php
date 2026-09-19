@@ -22,6 +22,8 @@ class UserResource extends JsonResource
             'statut_compte' => $this->statut_compte->value,
             'motif_statut' => $this->motif_statut,
             'statut_modifie_le' => $this->statut_modifie_le?->toIso8601String(),
+            'presence_automatique' => (bool) $this->presence_automatique,
+            'presence_automatique_motif' => $this->presence_automatique_motif,
             'formation' => $this->formation?->value,
             'salle' => $this->whenLoaded('salle', fn () => [
                 'id' => $this->salle->id,
