@@ -1,11 +1,13 @@
+/* Le tableau de bord lit la palette commune (globals.css) : ses anciens
+   alias restent pour les règles ci-dessous, mais ne valent plus que ça. */
 .dashboard {
-  --dash-ink: #182723;
-  --dash-muted: #61726c;
-  --dash-accent: #087953;
-  --dash-blue: #326aab;
-  --dash-soft: #f2f7fb;
-  --dash-mint: #e9f5ee;
-  --dash-border: #e1e9e7;
+  --dash-ink: var(--ink-900);
+  --dash-muted: var(--ink-500);
+  --dash-accent: var(--primary);
+  --dash-blue: var(--primary);
+  --dash-soft: var(--indigo-50);
+  --dash-mint: var(--indigo-100);
+  --dash-border: var(--line);
   max-width: 1120px;
 }
 .dashboard :global(.dashboard-topbar) {
@@ -16,8 +18,8 @@
   font-size: var(--text-24);
 }
 .dashboard :global(.brand-mark) {
-  background: #183e31;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   width: 32px;
   height: 32px;
   border-radius: 7px;
@@ -29,7 +31,7 @@
   gap: 12px;
 }
 .topbarContext > span {
-  color: #b0c1ba;
+  color: var(--ink-300);
 }
 .dashboard :global(.icon-control) {
   border-radius: 8px;
@@ -121,7 +123,8 @@
   gap: 15px;
   padding: 22px 17px;
   background: var(--dash-soft);
-  border-left: 2px solid #9cbfdf;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 14px 14px 0;
 }
 .freeDayIcon {
   display: grid;
@@ -170,18 +173,15 @@
 .dashboard :global(.session-featured) {
   background: var(--card);
   border: 1px solid var(--dash-border);
-  border-top: 3px solid var(--dash-blue);
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 21px;
-  box-shadow: 0 5px 18px #233e3010;
+  box-shadow: var(--relief);
 }
 .dashboard :global(.session-live) {
-  background: var(--card);
-  color: var(--dash-ink);
-  border-color: var(--dash-border);
-}
-.dashboard :global(.session-featured.session-live) {
-  border-top-color: var(--dash-accent);
+  background: var(--hero);
+  color: var(--hero-ink);
+  border-color: transparent;
+  box-shadow: var(--lueur), inset 0 1px 0 rgb(255 255 255 / 0.25);
 }
 .dashboard :global(.session-topline) {
   margin-bottom: 22px;
@@ -191,7 +191,19 @@
   color: var(--dash-blue);
 }
 .dashboard :global(.session-live .session-label) {
-  color: var(--dash-accent);
+  color: var(--hero-ink);
+}
+.dashboard :global(.session-live .session-code),
+.dashboard :global(.session-live .session-details),
+.dashboard :global(.session-live .session-presence),
+.dashboard :global(.session-live .attendance-status) {
+  color: var(--hero-muted);
+}
+.dashboard :global(.session-featured.session-live .session-details > span:first-child) {
+  color: var(--hero-ink);
+}
+.dashboard :global(.session-live .session-hours) {
+  border-color: var(--hero-line);
 }
 .dashboard :global(.session-code) {
   font-size: var(--text-13);
@@ -229,17 +241,17 @@
   font-size: var(--text-13);
 }
 .dashboard :global(.checkin-primary) {
-  height: 48px;
-  background: var(--dash-accent);
-  color: #fff;
-  border-radius: 6px;
-  font-weight: var(--w-semibold);
+  height: 52px;
+  background: var(--menthe);
+  color: var(--menthe-ink);
+  border-radius: 12px;
+  font-weight: var(--w-bold);
   box-shadow:
-    inset 0 1px 0 #ffffff25,
-    0 3px 8px #08795316;
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 10px 30px -10px rgb(46 229 157 / 0.7);
 }
 .dashboard :global(.checkin-primary:hover) {
-  background: #066544;
+  background: #5cefb5;
 }
 .dashboard :global(.attendance-status) {
   color: var(--dash-muted);
@@ -253,18 +265,11 @@
   padding: 10px 12px;
   background: var(--dash-mint);
   width: 100%;
-  border-radius: 6px;
+  border-radius: 10px;
 }
-.dashboard :global(.session-live .role-actions > button),
-.dashboard :global(.session-live .gps-position-control) {
-  --ink-900: var(--dash-ink);
-  --ink-500: var(--dash-muted);
-  --foreground: var(--dash-ink);
-  --card: var(--surface-1);
-  --line: var(--dash-border);
-  --secondary: var(--dash-mint);
-  --secondary-foreground: var(--dash-ink);
-  --input: var(--dash-border);
+.dashboard :global(.session-live .attendance-status.confirmed) {
+  background: rgb(255 255 255 / 0.16);
+  color: var(--hero-ink);
 }
 .dashboard :global(.agenda-heading) {
   margin-top: 25px;
@@ -298,7 +303,7 @@
   width: 7px;
   height: 7px;
   border-width: 1px;
-  border-color: #81a5b9;
+  border-color: var(--ink-300);
 }
 .dashboard :global(.timeline-dot.done) {
   width: 11px;
@@ -425,21 +430,6 @@
   color: var(--dash-accent);
   min-height: 38px;
   cursor: pointer;
-}
-:global(.dark) .dashboard {
-  --dash-ink: #edf3ef;
-  --dash-muted: #a1b1a8;
-  --dash-accent: #82ceae;
-  --dash-blue: #95bfdc;
-  --dash-soft: #1c2b32;
-  --dash-mint: #234433;
-  --dash-border: #344239;
-}
-:global(.dark) .dashboard :global(.checkin-primary) {
-  color: #14271d;
-}
-:global(.dark) .dashboard :global(.checkin-primary:hover) {
-  background: #a3e4c7;
 }
 @media (min-width: 640px) and (max-width: 1023px) {
   .attendanceOverview {
