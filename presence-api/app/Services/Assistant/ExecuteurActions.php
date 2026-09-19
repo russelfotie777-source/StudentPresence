@@ -101,7 +101,8 @@ class ExecuteurActions
             throw ValidationException::withMessages(['semaines' => ["Aucune semaine du semestre n'est définie : créez d'abord le calendrier."]]);
         }
 
-        $matiere = $this->matiere($p);
+        $salle = Salle::with('filiere')->findOrFail($data['salle_id']);
+        $matiere = $this->matiere($p, $salle->filiere_id);
         $enseignant = $this->enseignant($p);
 
         $cours = CourseTemplate::create([
@@ -134,13 +135,15 @@ class ExecuteurActions
     }
 
     /**
-     * Matière par identifiant, sinon par code ou nom (insensible à la casse),
-     * sinon créée — un emploi du temps importé cite souvent des matières
-     * que le catalogue n'a pas encore.
+     * Matière par identifiant, sinon par code ou nom (insensible à la casse)
+     * parmi celles de la filière de la salle et les communes, sinon créée
+     * dans la filière de la salle — un emploi du temps importé cite souvent
+     * des matières que le catalogue n'a pas encore, et chaque filière a les
+     * siennes.
      *
      * @param  array<string, mixed>  $p
      */
-    private function matiere(array $p): Matiere
+    private function matiere(array $p, ?int $filiereId): Matiere
     {
         if (! empty($p['matiere_id'])) {
             return Matiere::find($p['matiere_id'])
@@ -154,27 +157,36 @@ class ExecuteurActions
             throw ValidationException::withMessages(['matiere' => ['Aucune matière indiquée.']]);
         }
 
-        $existante = Matiere::query()
-            ->when($code !== '', fn ($q) => $q->whereRaw('LOWER(code) = ?', [Str::lower($code)]))
-            ->when($code === '', fn ($q) => $q->whereRaw('LOWER(nom) = ?', [Str::lower($nom)]))
-            ->first()
-            ?? ($nom !== '' ? Matiere::whereRaw('LOWER(nom) = ?', [Str::lower($nom)])->first() : null);
+        $candidates = Matiere::query()->pourFiliere($filiereId);
+        $existante = ($code !== '' ? (clone $candidates)->whereRaw('LOWER(code) = ?', [Str::lower($code)])->first() : null)
+            ?? ($nom !== '' ? (clone $candidates)->whereRaw('LOWER(nom) = ?', [Str::lower($nom)])->first() : null);
 
         if ($existante) {
             return $existante;
         }
 
         return Matiere::create([
+            'filiere_id' => $filiereId,
             'nom' => $nom !== '' ? $nom : $code,
-            'code' => $code !== '' ? Str::upper($code) : $this->codeDepuisNom($nom),
+            'code' => $code !== '' ? $this->codeLibre(Str::upper($code), $filiereId) : $this->codeDepuisNom($nom, $filiereId),
         ]);
     }
 
-    private function codeDepuisNom(string $nom): string
+    private function codeDepuisNom(string $nom, ?int $filiereId): string
     {
         $base = Str::upper(Str::substr(preg_replace('/[^A-Za-z0-9]/', '', Str::ascii($nom)) ?: 'MAT', 0, 6));
+
+        return $this->codeLibre($base, $filiereId);
+    }
+
+    /** Le code tel quel s'il est libre dans la filière, sinon suffixé (INF101, INF1012, …). */
+    private function codeLibre(string $base, ?int $filiereId): string
+    {
+        $pris = fn (string $code) => Matiere::where('code', $code)
+            ->where(fn ($q) => $filiereId ? $q->where('filiere_id', $filiereId) : $q->whereNull('filiere_id'))
+            ->exists();
         $code = $base;
-        for ($i = 2; Matiere::where('code', $code)->exists(); $i++) {
+        for ($i = 2; $pris($code); $i++) {
             $code = Str::substr($base, 0, 18)."{$i}";
         }
 

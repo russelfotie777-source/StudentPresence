@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\FormationType;
 use App\Models\ConversationIA;
+use App\Models\Filiere;
 use App\Models\Matiere;
 use App\Models\Salle;
 use App\Models\Seance;
@@ -365,6 +366,34 @@ class AssistantTest extends TestCase
         $this->assertDatabaseCount('matieres', 1);
         $this->assertDatabaseHas('course_templates', ['matiere_id' => $existante->id, 'enseignant_id' => $this->prof->id]);
         $this->assertDatabaseCount('seances', 1);
+    }
+
+    /**
+     * Chaque filière a ses matières : une matière inconnue citée par un
+     * emploi du temps est créée dans la filière de la salle du cours, et une
+     * matière homonyme d'une autre filière n'est pas réutilisée.
+     */
+    public function test_an_unknown_subject_is_created_in_the_filiere_of_the_salle(): void
+    {
+        $autreFiliere = Filiere::factory()->create();
+        $homonyme = Matiere::factory()->create(['nom' => 'Réseaux', 'code' => 'RES201', 'filiere_id' => $autreFiliere->id]);
+        $this->scenario(new ModeleFictif([]));
+        $conversation = $this->conversation();
+        $conversation->fill(['actions' => [$this->action('creer_cours', [
+            'salle_id' => $this->salle->id, 'matiere_id' => null, 'matiere_nom' => 'Réseaux', 'matiere_code' => 'RES201',
+            'enseignant_id' => $this->prof->id, 'enseignant_nom' => null,
+            'jour' => 'JEUDI', 'heure_debut' => '14:00', 'heure_fin' => '16:00', 'date_debut' => '2026-09-21', 'date_fin' => '2026-09-27',
+        ], 'a1')]])->save();
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->postJson("/api/assistant/conversations/{$conversation->id}/appliquer", ['ids' => ['a1']])
+            ->assertJsonPath('appliquees', 1);
+
+        $this->assertDatabaseCount('matieres', 2);
+        $creee = Matiere::where('id', '!=', $homonyme->id)->first();
+        $this->assertSame($this->salle->filiere_id, $creee->filiere_id, 'Créée dans la filière de la salle.');
+        $this->assertSame('RES201', $creee->code, 'Le même code peut vivre dans deux filières.');
+        $this->assertDatabaseHas('course_templates', ['matiere_id' => $creee->id]);
     }
 
     public function test_applying_a_student_enrolment_creates_the_account_with_an_initial_password(): void

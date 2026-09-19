@@ -142,13 +142,13 @@ class Outils
             ],
             [
                 'name' => 'proposer_creer_cours',
-                'description' => "Propose un cours pour une salle : une séance chaque semaine (ou une seule si date_debut = date_fin). Un par ligne d'emploi du temps. Matière et enseignant : donne l'identifiant s'il existe, sinon le nom (et le code de matière) pour création.",
+                'description' => "Propose un cours pour une salle : une séance chaque semaine (ou une seule si date_debut = date_fin). Un par ligne d'emploi du temps. Matière : donne l'identifiant d'une matière de la filière de la salle (ou commune) si elle existe, sinon son nom et son code — elle sera créée dans la filière de la salle à l'application. Enseignant : l'identifiant s'il existe, sinon le nom (l'admin devra le créer).",
                 'strict' => true,
                 'inputSchema' => $schema([
                     'resume' => $texte("Une phrase pour l'admin, qui décrit exactement l'action (ex. « Maths Discrètes avec Pr. Mballa, lundi 08:00–10:00 en A23-FI, tout le semestre »)"),
                     'salle_id' => $entier('Salle (classe) qui suit ce cours'),
-                    'matiere_id' => $entierOuNul('Matière existante'),
-                    'matiere_nom' => $texteOuNul("Nom de la matière si elle n'existe pas encore"),
+                    'matiere_id' => $entierOuNul('Matière existante de la filière de la salle, ou commune'),
+                    'matiere_nom' => $texteOuNul("Nom de la matière si elle n'existe pas encore dans cette filière : elle y sera créée"),
                     'matiere_code' => $texteOuNul("Code de la matière si elle n'existe pas encore (ex. INF321)"),
                     'enseignant_id' => $entierOuNul('Enseignant existant'),
                     'enseignant_nom' => $texteOuNul("Nom de l'enseignant s'il n'est pas dans le référentiel (l'admin devra le créer)"),
@@ -305,7 +305,13 @@ class Outils
             ])->values();
         }
         if ($tout || $partie === 'matieres') {
-            $r['matieres'] = Matiere::orderBy('nom')->get(['id', 'code', 'nom'])->values();
+            // Chaque matière dit sa filière et son niveau : le modèle choisit
+            // celle de la bonne salle, ou en propose une nouvelle si elle manque.
+            $r['matieres'] = Matiere::with('filiere.niveau', 'filiere.departement')->orderBy('nom')->get()->map(fn (Matiere $m) => [
+                'id' => $m->id, 'code' => $m->code, 'nom' => $m->nom,
+                'filiere_id' => $m->filiere_id, 'filiere' => $m->filiere?->nom ?? 'commune à toutes les filières',
+                'niveau' => $m->filiere?->niveau?->nom, 'departement' => $m->filiere?->departement?->code,
+            ])->values();
         }
         if ($tout || $partie === 'enseignants') {
             $r['enseignants'] = User::where('role', UserRole::Enseignant->value)->orderBy('name')
