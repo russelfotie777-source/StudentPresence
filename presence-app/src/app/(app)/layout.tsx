@@ -46,7 +46,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <span className="text-success">
           <ZirisMark size={54} anime />
         </span>
-        <span className="text-ink-500 text-[13px]" role="status">
+        <span className="text-ink-500 text-xs" role="status">
           Ouverture de votre espace&hellip;
         </span>
       </div>

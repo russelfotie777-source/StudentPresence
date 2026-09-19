@@ -124,9 +124,6 @@ export default function DashboardPage() {
           </span>
           <ZirisWordmark />
         </Link>
-        <span className={styles.topbarContext}>
-          MON CAMPUS <span>/</span> ACCUEIL
-        </span>
         <div className="topbar-tools">
           <ThemeToggle />
           <Link
@@ -158,15 +155,6 @@ export default function DashboardPage() {
             Bonjour, {me?.user.name.trim().split(/\s+/)[0]}
             <span className="brand-period">.</span>
           </h1>
-          <p className="welcome-subtitle">
-            {isLoading
-              ? "Votre journée se prépare."
-              : active
-                ? "Votre séance a commencé."
-                : remaining
-                  ? "Votre prochaine séance vous attend."
-                  : "Votre journée, à votre rythme."}
-          </p>
         </div>
         <div className={`date-stamp ${styles.date}`} title={`Heure de ${FUSEAU.split("/")[1]}`}>
           <span className={styles.dateNumber}>
@@ -245,10 +233,9 @@ export default function DashboardPage() {
                 <CalendarCheck2 size={25} strokeWidth={1.5} />
               </span>
               <div>
-                <h3>Une journée sans cours.</h3>
-                <p>Aucune séance programmée aujourd’hui.</p>
+                <h3>Pas de cours aujourd’hui.</h3>
                 <Link href="/historique">
-                  Retrouver mes dernières séances <ArrowRight size={14} />
+                  Voir mes dernières séances <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
@@ -308,9 +295,6 @@ export default function DashboardPage() {
               <h2>
                 {role === "Etudiant" ? "Votre assiduité" : "En un regard"}
               </h2>
-              <span className="eyebrow">
-                {role === "Etudiant" ? "BILAN GLOBAL" : "AUJOURD’HUI"}
-              </span>
             </div>
             {statsError && role === "Etudiant" ? (
               <div className={styles.statsError} role="alert">
@@ -406,7 +390,6 @@ export default function DashboardPage() {
                 height={42}
               />
               <div>
-                <p className="eyebrow">VOTRE CAMPUS</p>
                 <h3>IUT de Douala</h3>
               </div>
             </div>
@@ -435,7 +418,7 @@ export default function DashboardPage() {
       </div>
       <footer className="dashboard-footer">
         <ZirisWordmark />
-        <span>Chaque séance compte.</span>
+        <span>IUT de Douala</span>
       </footer>
       {checkInSeance && (
         <CheckInDialog

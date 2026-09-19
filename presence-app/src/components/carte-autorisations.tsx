@@ -25,7 +25,7 @@ const LIBELLES: Record<EtatPermission, { texte: string; classe: string }> = {
 export function CarteAutorisations({ afficherCamera }: { afficherCamera: boolean }) {
   return (
     <div className="flex flex-col gap-2">
-      <h2 className="px-1 text-[12.5px] font-semibold uppercase tracking-wide text-ink-300">
+      <h2 className="px-1 text-xs font-semibold text-ink-300">
         Autorisations
       </h2>
       <div className="overflow-hidden rounded-2xl border border-line bg-card">
@@ -77,7 +77,7 @@ function LigneAutorisation({
         </div>
         <span
           className={cn(
-            "flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+            "flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
             badge.classe,
           )}
         >

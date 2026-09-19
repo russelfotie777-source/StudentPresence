@@ -82,9 +82,6 @@ export default function RegisterPage() {
         <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">
           Créer un compte
         </h2>
-        <p className="mt-1.5 text-[15px] text-ink-500">
-          Renseignez vos informations pour commencer.
-        </p>
       </div>
 
       {errorMessage && (

@@ -106,26 +106,14 @@ export default function HistoriquePage() {
           </span>
           <ZirisWordmark />
         </Link>
-        <span className={styles.context}>
-          MON CAMPUS <span>/</span> HISTORIQUE
-        </span>
         <ThemeToggle />
       </header>
 
       <div className={styles.heading}>
         <div>
-          <p className={styles.eyebrow}>
-            <span />
-            {role === "Delegue" ? "Présence des enseignants" : "Votre parcours"}
-          </p>
           <h1>
             Historique<span>.</span>
           </h1>
-          <p className={styles.subtitle}>
-            {role === "Etudiant"
-              ? "Chaque présence fait la différence."
-              : "Le suivi de vos séances passées."}
-          </p>
         </div>
         <div className={styles.total}>
           <strong>{isLoading ? "…" : data ? total(data.pages) : "—"}</strong>
@@ -222,8 +210,7 @@ export default function HistoriquePage() {
       {!isLoading && !isError && seances.length === 0 && (
         <div className={styles.empty}>
           <History size={32} strokeWidth={1.5} />
-          <h2>Votre parcours commence ici.</h2>
-          <p>Vos séances passées apparaîtront dans cet espace.</p>
+          <h2>Aucune séance passée pour l’instant.</h2>
           <Link href="/dashboard">
             Revenir à ma journée <ArrowUpRight size={16} />
           </Link>

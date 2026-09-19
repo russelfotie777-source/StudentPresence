@@ -89,7 +89,6 @@ export default function LoginPage() {
             <ZirisWordmark />
           </Link>
           <div className={styles.headerRight}>
-            <span>Nouveau ici ?</span>
             <Link href="/register">
               Créer un compte <ArrowUpRight size={15} />
             </Link>
@@ -97,9 +96,6 @@ export default function LoginPage() {
         </header>
 
         <section className={styles.visual} aria-label="Ziris">
-          <div className={styles.visualEyebrow}>
-            <span /> LE LIEN AVEC VOTRE CAMPUS
-          </div>
           <div className={styles.scene}>
             <div className={styles.fallback} aria-hidden="true">
               <CheckCheck size={150} strokeWidth={1.3} />
@@ -118,18 +114,9 @@ export default function LoginPage() {
               <h1>
                 <ZirisWordmark />
               </h1>
-              <span className={styles.edition}>
-                CHAQUE
-                <br />
-                SÉANCE COMPTE.
-              </span>
             </div>
-            <p>Votre quotidien. Votre campus. Votre avenir.</p>
           </motion.div>
           <div className={styles.visualBottom}>
-            <span className={styles.visualIndex}>
-              01 <span>/</span> VOTRE POINT DE DÉPART
-            </span>
             <button
               type="button"
               onClick={() => setPaused(!paused)}
@@ -156,14 +143,10 @@ export default function LoginPage() {
             <span className={styles.formSymbol}>
               <Fingerprint size={25} strokeWidth={1.5} />
             </span>
-            <p className={styles.formEyebrow}>VOTRE ESPACE PERSONNEL</p>
             <h2 id="login-title">
               Bon retour <br />
               parmi nous<span>.</span>
             </h2>
-            <p className={styles.formIntro}>
-              Votre prochaine séance vous attend.
-            </p>
 
             <form
               onSubmit={handleSubmit}
@@ -269,16 +252,12 @@ export default function LoginPage() {
                   )}
                 </button>
               </fieldset>
-              <div className={styles.security}>
-                <LockKeyhole size={12} />
-                <span>Vos identifiants restent confidentiels.</span>
-              </div>
             </form>
 
             <div className={styles.signup}>
-              <span>Votre première visite ?</span>
+              <span>Pas encore de compte ?</span>
               <Link href="/register">
-                Rejoignez votre campus <ArrowUpRight size={15} />
+                Créer un compte <ArrowUpRight size={15} />
               </Link>
             </div>
           </motion.div>
@@ -286,7 +265,6 @@ export default function LoginPage() {
             <Image src="/iut-douala.png" alt="" width={30} height={30} />
             <div>
               <strong>IUT de Douala</strong>
-              <span>Institut Universitaire de Technologie</span>
             </div>
             <span className={styles.institutionMark}><ZirisMark size={23} /></span>
           </footer>

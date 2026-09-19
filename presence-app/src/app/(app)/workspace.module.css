@@ -45,7 +45,7 @@
   background: #e5f4ed;
 }
 .workspace :global(.nav-label) {
-  font-size: 10px;
+  font-size: var(--text-13);
 }
 .workspace :global(.nav-item-active .nav-label) {
   color: var(--primary);
@@ -88,7 +88,7 @@
     min-height: 48px;
   }
   .workspace :global(.nav-label) {
-    font-size: 12px;
+    font-size: var(--text-13);
   }
   .workspace :global(.nav-item-active) {
     background: var(--surface-2);
@@ -102,6 +102,6 @@
 }
 @media (max-width: 359px) {
   .workspace :global(.nav-label) {
-    font-size: 9px;
+    font-size: var(--text-13);
   }
 }
