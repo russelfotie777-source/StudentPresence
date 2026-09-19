@@ -103,7 +103,7 @@ class ExecuteurActions
 
         $salle = Salle::with('filiere')->findOrFail($data['salle_id']);
         $matiere = $this->matiere($p, $salle->filiere_id);
-        $enseignant = $this->enseignant($p);
+        [$enseignant, $enseignantCree] = $this->enseignant($p);
 
         $cours = CourseTemplate::create([
             ...$data,
@@ -123,14 +123,16 @@ class ExecuteurActions
 
         return [
             'message' => sprintf(
-                '%s avec %s, %s %s–%s : %d séance%s créée%s%s.',
+                '%s avec %s, %s %s–%s : %d séance%s créée%s%s%s.',
                 $matiere->nom, $enseignant->name, Str::lower($data['jour']), $data['heure_debut'], $data['heure_fin'],
                 $resultat->created->count(), $resultat->created->count() > 1 ? 's' : '', $resultat->created->count() > 1 ? 's' : '',
                 $resultat->skipped->isNotEmpty() ? ', '.$resultat->skipped->count().' semaine(s) ignorée(s) (conflit ou déjà programmée)' : '',
+                $enseignantCree ? " ; compte enseignant créé pour {$enseignant->name} ({$enseignant->phone})" : '',
             ),
             'cours_id' => $cours->id,
             'seances_creees' => $resultat->created->count(),
             'semaines_ignorees' => $resultat->skipped->values()->all(),
+            'enseignant_cree' => $enseignantCree ? $this->identifiants($enseignant) : null,
         ];
     }
 
@@ -194,30 +196,145 @@ class ExecuteurActions
     }
 
     /**
-     * Enseignant par identifiant, sinon par nom exact — mais jamais créé à
-     * la volée : il lui faut un téléphone pour se connecter, c'est l'action
-     * creer_enseignant qui s'en charge.
+     * Enseignant par identifiant, sinon par nom — insensible à la casse,
+     * aux accents, à l'ordre des mots et aux titres (« Pr. », « M. »), et un
+     * nom de famille seul suffit s'il ne désigne qu'un enseignant —, sinon
+     * créé : un emploi du temps cite des enseignants que l'application ne
+     * connaît pas encore, et l'admin n'a pas à les saisir un à un avant de
+     * pouvoir l'importer. Sans téléphone, le compte reçoit un identifiant
+     * provisoire (ENS0001…) qu'il suffit de communiquer avec le mot de
+     * passe initial.
      *
      * @param  array<string, mixed>  $p
+     * @return array{0: User, 1: bool} l'enseignant, et s'il vient d'être créé
      */
-    private function enseignant(array $p): User
+    private function enseignant(array $p): array
     {
         if (! empty($p['enseignant_id'])) {
             $u = User::where('role', UserRole::Enseignant->value)->find($p['enseignant_id']);
 
-            return $u ?? throw ValidationException::withMessages(['enseignant_id' => ["Enseignant {$p['enseignant_id']} introuvable."]]);
+            return [$u ?? throw ValidationException::withMessages(['enseignant_id' => ["Enseignant {$p['enseignant_id']} introuvable."]]), false];
         }
 
-        $nom = trim((string) ($p['enseignant_nom'] ?? ''));
-        $u = $nom !== ''
-            ? User::where('role', UserRole::Enseignant->value)->whereRaw('LOWER(name) = ?', [Str::lower($nom)])->first()
-            : null;
+        $nom = self::sansTitre(trim((string) ($p['enseignant_nom'] ?? '')));
+        if ($nom === '') {
+            throw ValidationException::withMessages(['enseignant' => ['Aucun enseignant indiqué.']]);
+        }
 
-        return $u ?? throw ValidationException::withMessages([
-            'enseignant' => [$nom !== ''
-                ? "Enseignant « {$nom} » introuvable : créez son compte d'abord (numéro de téléphone requis)."
-                : 'Aucun enseignant indiqué.'],
+        if ($existant = $this->enseignantParNom($nom)) {
+            return [$existant, false];
+        }
+
+        return [$this->nouvelEnseignant($nom, $p['enseignant_telephone'] ?? null, null), true];
+    }
+
+    /**
+     * Le nom cité correspond-il à un enseignant connu ? Même nom aux titres,
+     * accents et ordre près ; ou une partie du nom (« Mballa » pour
+     * « Étienne Mballa ») si elle ne désigne qu'une seule personne — à deux,
+     * on ne devine pas.
+     */
+    private function enseignantParNom(string $nom): ?User
+    {
+        $cle = self::cleNom($nom);
+        if ($cle === []) {
+            return null;
+        }
+
+        $enseignants = User::where('role', UserRole::Enseignant->value)->get();
+
+        if ($exact = $enseignants->first(fn (User $u) => self::cleNom($u->name) === $cle)) {
+            return $exact;
+        }
+
+        $partiels = $enseignants->filter(fn (User $u) => array_diff($cle, self::cleNom($u->name)) === []);
+        if ($partiels->count() > 1) {
+            throw ValidationException::withMessages(['enseignant' => [sprintf(
+                '« %s » peut désigner %s : précisez l\'identifiant de l\'enseignant.',
+                $nom, $partiels->map(fn (User $u) => "{$u->name} (id {$u->id})")->implode(' ou '),
+            )]]);
+        }
+
+        return $partiels->first();
+    }
+
+    /**
+     * Les mots significatifs d'un nom, triés : « Pr. MBALLA Étienne » et
+     * « étienne mballa » donnent la même clé.
+     *
+     * @return list<string>
+     */
+    private static function cleNom(string $nom): array
+    {
+        $mots = preg_split('/[^a-z0-9]+/', Str::lower(Str::ascii($nom)), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $mots = array_values(array_diff($mots, self::TITRES));
+        sort($mots);
+
+        return $mots;
+    }
+
+    /** Titres et civilités qui précèdent un nom dans un emploi du temps. */
+    private const TITRES = ['pr', 'prof', 'professeur', 'dr', 'docteur', 'm', 'mr', 'mme', 'mlle', 'monsieur', 'madame', 'ing', 'ir'];
+
+    /** « Pr. Mballa » → « Mballa » : le compte porte le nom, pas le titre. */
+    private static function sansTitre(string $nom): string
+    {
+        return trim((string) preg_replace('/^(?:'.implode('|', self::TITRES).')\.?\s+/i', '', $nom));
+    }
+
+    /**
+     * Crée un compte enseignant validé, avec le mot de passe initial commun
+     * et, faute de téléphone, un identifiant provisoire.
+     */
+    private function nouvelEnseignant(string $nom, ?string $telephone, ?string $email): User
+    {
+        $telephone = trim((string) $telephone);
+
+        $data = Validator::make([
+            'name' => $nom,
+            'phone' => $telephone !== '' ? $telephone : $this->identifiantProvisoire(),
+            'email' => $email,
+        ], [
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
+            'email' => ['nullable', 'email', 'max:255'],
+        ], [], ['phone' => 'téléphone', 'name' => 'nom'])->validate();
+
+        return User::create([
+            ...$data,
+            'password' => Hash::make(self::motDePasseInitial()),
+            'role' => UserRole::Enseignant,
+            'validation_status' => ValidationStatus::Approved,
         ]);
+    }
+
+    /** ENS0001, ENS0002… : le premier numéro libre après le plus haut attribué. */
+    private function identifiantProvisoire(): string
+    {
+        $prefixe = (string) config('presence.prefixe_identifiant_enseignant', 'ENS');
+        $dernier = (int) User::where('phone', 'like', $prefixe.'%')->pluck('phone')
+            ->map(fn (string $p) => (int) substr($p, strlen($prefixe)))->max();
+
+        do {
+            $identifiant = $prefixe.str_pad((string) ++$dernier, 4, '0', STR_PAD_LEFT);
+        } while (User::where('phone', $identifiant)->exists());
+
+        return $identifiant;
+    }
+
+    private static function motDePasseInitial(): string
+    {
+        return (string) config('presence.mot_de_passe_initial', '12345678');
+    }
+
+    /**
+     * Ce que l'admin remet à la personne pour sa première connexion.
+     *
+     * @return array{nom: string, identifiant: string, mot_de_passe_initial: string}
+     */
+    private function identifiants(User $u): array
+    {
+        return ['nom' => $u->name, 'identifiant' => $u->phone, 'mot_de_passe_initial' => self::motDePasseInitial()];
     }
 
     /**
@@ -248,14 +365,11 @@ class ExecuteurActions
             ]);
         }
 
-        // Mot de passe initial lisible, remis à l'étudiant par l'admin.
-        $motDePasse = (string) random_int(10000000, 99999999);
-
         $etudiant = User::create([
             'name' => $data['name'],
             'phone' => $data['phone'],
             'email' => $data['email'],
-            'password' => Hash::make($motDePasse),
+            'password' => Hash::make(self::motDePasseInitial()),
             'role' => UserRole::Etudiant,
             'validation_status' => ValidationStatus::Approved,
             'formation' => $data['formation'],
@@ -268,7 +382,7 @@ class ExecuteurActions
             'message' => "{$etudiant->name} ({$etudiant->phone}) inscrit·e en {$salle->nom}.",
             'etudiant_id' => $etudiant->id,
             'matricule' => $etudiant->phone,
-            'mot_de_passe_initial' => $motDePasse,
+            'mot_de_passe_initial' => self::motDePasseInitial(),
         ];
     }
 
@@ -278,30 +392,18 @@ class ExecuteurActions
      */
     private function creerEnseignant(array $p): array
     {
-        $data = Validator::make([
-            'name' => trim((string) ($p['nom'] ?? '')),
-            'phone' => trim((string) ($p['telephone'] ?? '')),
-            'email' => $p['email'] ?? null,
-        ], [
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
-            'email' => ['nullable', 'email', 'max:255'],
-        ], [], ['phone' => 'téléphone', 'name' => 'nom'])->validate();
+        $nom = self::sansTitre(trim((string) ($p['nom'] ?? '')));
+        if ($nom === '') {
+            throw ValidationException::withMessages(['nom' => ['Le nom est obligatoire.']]);
+        }
 
-        $motDePasse = (string) random_int(10000000, 99999999);
-
-        $enseignant = User::create([
-            ...$data,
-            'password' => Hash::make($motDePasse),
-            'role' => UserRole::Enseignant,
-            'validation_status' => ValidationStatus::Approved,
-        ]);
+        $enseignant = $this->nouvelEnseignant($nom, $p['telephone'] ?? null, $p['email'] ?? null);
 
         return [
             'message' => "Compte enseignant créé pour {$enseignant->name} ({$enseignant->phone}).",
             'enseignant_id' => $enseignant->id,
             'telephone' => $enseignant->phone,
-            'mot_de_passe_initial' => $motDePasse,
+            'mot_de_passe_initial' => self::motDePasseInitial(),
         ];
     }
 
@@ -435,6 +537,7 @@ class ExecuteurActions
         $crees = 0;
         $seances = 0;
         $echecs = [];
+        $enseignantsCrees = [];
 
         foreach ($p['cours'] ?? [] as $i => $ligne) {
             $libelle = sprintf('%s %s %s–%s (%s)', $ligne['matiere_nom'] ?? '?', $ligne['jour'] ?? '?', $ligne['heure_debut'] ?? '?', $ligne['heure_fin'] ?? '?', $ligne['salle_nom'] ?? 'salle ?');
@@ -450,11 +553,15 @@ class ExecuteurActions
                     'salle_id' => $ligne['salle_id'],
                     'matiere_id' => $ligne['matiere_id'] ?? null, 'matiere_nom' => $ligne['matiere_nom'] ?? null, 'matiere_code' => $ligne['matiere_code'] ?? null,
                     'enseignant_id' => $ligne['enseignant_id'] ?? null, 'enseignant_nom' => $ligne['enseignant_nom'] ?? null,
+                    'enseignant_telephone' => $ligne['enseignant_telephone'] ?? null,
                     'jour' => $ligne['jour'], 'heure_debut' => $ligne['heure_debut'], 'heure_fin' => $ligne['heure_fin'],
                     'date_debut' => $ligne['date_debut'] ?? null, 'date_fin' => $ligne['date_fin'] ?? null,
                 ]));
                 $crees++;
                 $seances += $r['seances_creees'];
+                if ($r['enseignant_cree']) {
+                    $enseignantsCrees[] = $r['enseignant_cree'];
+                }
             } catch (ValidationException $e) {
                 $echecs[] = ['source' => $ligne['source'] ?? $i + 1, 'cours' => $libelle, 'motif' => collect($e->errors())->flatten()->implode(' ')];
             }
@@ -464,14 +571,17 @@ class ExecuteurActions
 
         return [
             'ok' => $crees > 0 || $total === 0,
-            'message' => sprintf('%d cours créé%s sur %d (%d séances)%s.', $crees, $crees > 1 ? 's' : '', $total, $seances,
-                $echecs ? ', '.count($echecs).' en échec' : ''),
+            'message' => sprintf('%d cours créé%s sur %d (%d séances)%s%s.', $crees, $crees > 1 ? 's' : '', $total, $seances,
+                $echecs ? ', '.count($echecs).' en échec' : '',
+                $enseignantsCrees ? sprintf(', %d compte%s enseignant créé%s', count($enseignantsCrees), count($enseignantsCrees) > 1 ? 's' : '', count($enseignantsCrees) > 1 ? 's' : '') : ''),
             'details' => [
                 'crees' => $crees,
                 'seances_creees' => $seances,
                 'total' => $total,
                 'echecs' => array_slice($echecs, 0, self::MAX_ECHECS_DETAILLES),
                 'echecs_total' => count($echecs),
+                // À remettre aux intéressés : identifiant provisoire et mot de passe initial.
+                'enseignants_crees' => $enseignantsCrees,
             ],
         ];
     }

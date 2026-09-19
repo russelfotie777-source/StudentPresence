@@ -142,7 +142,7 @@ class Outils
             ],
             [
                 'name' => 'proposer_creer_cours',
-                'description' => "Propose un cours pour une salle : une séance chaque semaine (ou une seule si date_debut = date_fin). Un par ligne d'emploi du temps. Matière : donne l'identifiant d'une matière de la filière de la salle (ou commune) si elle existe, sinon son nom et son code — elle sera créée dans la filière de la salle à l'application. Enseignant : l'identifiant s'il existe, sinon le nom (l'admin devra le créer).",
+                'description' => "Propose un cours pour une salle : une séance chaque semaine (ou une seule si date_debut = date_fin). Un par ligne d'emploi du temps. Matière : donne l'identifiant d'une matière de la filière de la salle (ou commune) si elle existe, sinon son nom et son code — elle sera créée dans la filière de la salle à l'application. Enseignant : l'identifiant s'il existe, sinon son nom — son compte sera créé à l'application, avec son téléphone comme identifiant si tu le connais, sinon un identifiant provisoire.",
                 'strict' => true,
                 'inputSchema' => $schema([
                     'resume' => $texte("Une phrase pour l'admin, qui décrit exactement l'action (ex. « Maths Discrètes avec Pr. Mballa, lundi 08:00–10:00 en A23-FI, tout le semestre »)"),
@@ -151,7 +151,8 @@ class Outils
                     'matiere_nom' => $texteOuNul("Nom de la matière si elle n'existe pas encore dans cette filière : elle y sera créée"),
                     'matiere_code' => $texteOuNul("Code de la matière si elle n'existe pas encore (ex. INF321)"),
                     'enseignant_id' => $entierOuNul('Enseignant existant'),
-                    'enseignant_nom' => $texteOuNul("Nom de l'enseignant s'il n'est pas dans le référentiel (l'admin devra le créer)"),
+                    'enseignant_nom' => $texteOuNul("Nom et prénoms de l'enseignant, sans titre (« Pr. », « M. »), s'il n'est pas dans le référentiel : son compte sera créé"),
+                    'enseignant_telephone' => $texteOuNul("Téléphone de l'enseignant à créer, s'il est connu ; null pour un identifiant provisoire"),
                     'jour' => $jour,
                     'heure_debut' => $heure('Début'),
                     'heure_fin' => $heure('Fin'),
@@ -161,7 +162,7 @@ class Outils
             ],
             [
                 'name' => 'proposer_inscrire_etudiant',
-                'description' => "Propose la création d'un compte étudiant dans une salle. Le matricule sert d'identifiant de connexion ; un mot de passe initial sera généré.",
+                'description' => "Propose la création d'un compte étudiant dans une salle. Le matricule sert d'identifiant de connexion, avec le mot de passe initial commun.",
                 'strict' => true,
                 'inputSchema' => $schema([
                     'resume' => $texte("Une phrase pour l'admin, qui décrit exactement l'action (ex. « Maths Discrètes avec Pr. Mballa, lundi 08:00–10:00 en A23-FI, tout le semestre »)"),
@@ -174,12 +175,12 @@ class Outils
             ],
             [
                 'name' => 'proposer_creer_enseignant',
-                'description' => "Propose la création d'un compte enseignant validé. Le numéro de téléphone est l'identifiant de connexion : demande-le à l'admin s'il manque.",
+                'description' => "Propose la création d'un compte enseignant validé, sans cours. Le numéro de téléphone est l'identifiant de connexion ; s'il n'est pas connu, un identifiant provisoire (ENS0001…) est attribué. Inutile avant proposer_creer_cours, qui crée lui-même l'enseignant qu'il cite.",
                 'strict' => true,
                 'inputSchema' => $schema([
-                    'resume' => $texte("Une phrase pour l'admin, qui décrit exactement l'action (ex. « Maths Discrètes avec Pr. Mballa, lundi 08:00–10:00 en A23-FI, tout le semestre »)"),
-                    'nom' => $texte('Nom et prénoms'),
-                    'telephone' => $texte('Téléphone (identifiant de connexion)'),
+                    'resume' => $texte("Une phrase pour l'admin, qui décrit exactement l'action (ex. « Créer le compte de Étienne Mballa »)"),
+                    'nom' => $texte('Nom et prénoms, sans titre'),
+                    'telephone' => $texteOuNul('Téléphone (identifiant de connexion) ; null pour un identifiant provisoire'),
                     'email' => $texteOuNul('Adresse e-mail si connue'),
                 ]),
             ],
