@@ -380,15 +380,15 @@
   --rose-500: #d64545;
   --rose-100: #fbe3e3;
   --radius: 0.75rem;
-  /* La menthe elle-même, pour les lueurs et dégradés qui ne passent pas par --primary. */
+  /* La menthe elle-même, pour ce qui ne passe pas par --primary (le bouton de pointage). */
   --menthe: #2ee59d;
   --menthe-ink: #06140d;
-  --lueur: 0 18px 50px -18px rgb(15 157 104 / 0.55);
-  --hero: linear-gradient(135deg, #0f9d68 0%, #0b7a63 60%, #0c5f6b 100%);
+  /* Mat et plein : pas de dégradé, pas de halo — c'est la couleur qui porte, pas la lumière. */
+  --hero: #0e8a5f;
   --hero-ink: #ffffff;
-  --hero-muted: #cdeee0;
+  --hero-muted: #d2efe2;
   --hero-line: rgb(255 255 255 / 0.22);
-  --verre: rgb(255 255 255 / 0.82);
+  --verre: #ffffff;
   --relief: inset 0 1px 0 rgb(255 255 255 / 0.9);
 }
 .dark {
@@ -414,12 +414,11 @@
   --accent-foreground: #7cf0c1;
   --success-foreground: #06140d;
   --warning-foreground: #2a1704;
-  --lueur: 0 24px 60px -20px rgb(46 229 157 / 0.5);
-  --hero: linear-gradient(135deg, #12b075 0%, #0d8a6a 55%, #0d6f7a 100%);
+  --hero: #0d6f4f;
   --hero-ink: #f7fffb;
-  --hero-muted: #c9f2e0;
-  --hero-line: rgb(255 255 255 / 0.2);
-  --verre: rgb(15 19 17 / 0.78);
+  --hero-muted: #c9ecdc;
+  --hero-line: rgb(255 255 255 / 0.18);
+  --verre: #141917;
   --relief: inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
 * {
@@ -588,12 +587,13 @@ a {
   box-shadow: var(--relief);
 }
 /* La séance en cours est la seule surface colorée de l'écran : c'est elle
-   qu'on doit voir en premier, et sa lueur la décolle du fond. */
+   qu'on doit voir en premier. Pleine et mate — un halo ou un dégradé, c'est
+   la lumière qui attire l'œil, pas le contenu. */
 .session-live {
   background: var(--hero);
   color: var(--hero-ink);
-  border-color: transparent;
-  box-shadow: var(--lueur), inset 0 1px 0 rgb(255 255 255 / 0.25);
+  border-color: rgb(0 0 0 / 0.12);
+  box-shadow: none;
 }
 .session-topline {
   display: flex;
@@ -681,16 +681,14 @@ a {
   color: var(--menthe-ink);
   font-size: var(--text-15);
   font-weight: var(--w-bold);
-  box-shadow: 0 10px 30px -10px rgb(46 229 157 / 0.7);
+  box-shadow: none;
   padding: 0 16px;
   transition:
     background 0.2s,
-    transform 0.2s,
-    box-shadow 0.2s;
+    transform 0.2s;
 }
 .checkin-primary:hover {
   background: #5cefb5;
-  box-shadow: 0 14px 34px -10px rgb(46 229 157 / 0.8);
 }
 .checkin-primary:active {
   transform: scale(0.985);
@@ -1029,8 +1027,6 @@ a {
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   background: var(--verre);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
 }
 .nav-items {
   display: grid;
