@@ -192,9 +192,6 @@
 .dashboard :global(.session-live .attendance-status) {
   color: var(--hero-muted);
 }
-.dashboard :global(.session-featured.session-live .session-details > span:first-child) {
-  color: var(--hero-ink);
-}
 .dashboard :global(.session-live .session-hours) {
   border-color: var(--hero-line);
 }
@@ -212,9 +209,6 @@
   font-size: var(--text-13);
   color: var(--dash-muted);
   line-height: 1.5;
-}
-.dashboard :global(.session-featured .session-details > span:first-child) {
-  color: var(--dash-blue);
 }
 .dashboard :global(.session-hours) {
   margin-top: 21px;
@@ -266,15 +260,6 @@
   margin-top: 25px;
   margin-bottom: 2px;
 }
-.dashboard :global(.agenda-filter) {
-  background: var(--surface-2);
-  border: 1px solid var(--dash-border);
-  padding: 2px;
-}
-.dashboard :global(.agenda-filter button) {
-  min-height: 32px;
-  font-size: var(--text-13);
-}
 .dashboard :global(.session-row) {
   gap: 22px;
   padding: 20px 0;
@@ -289,17 +274,6 @@
 }
 .dashboard :global(.session-row .session-details) {
   font-size: var(--text-13);
-}
-.dashboard :global(.timeline-dot) {
-  width: 7px;
-  height: 7px;
-  right: -9px;
-  border-width: 1px;
-  border-color: var(--ink-300);
-}
-.dashboard :global(.timeline-dot.done) {
-  width: 11px;
-  height: 11px;
 }
 .attendanceOverview {
   display: grid;

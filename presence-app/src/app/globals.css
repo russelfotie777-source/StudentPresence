@@ -627,7 +627,7 @@ a {
 .session-details {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 8px 8px;
   color: var(--muted-foreground);
   margin-top: 12px;
   font-size: var(--text-13);
@@ -639,8 +639,10 @@ a {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.session-details svg {
-  flex: none;
+.session-details > span + span::before {
+  content: "·";
+  margin-right: 3px;
+  opacity: 0.55;
 }
 .session-live .session-details {
   color: var(--hero-muted);
@@ -720,26 +722,6 @@ a {
   font-size: var(--text-13);
   font-weight: var(--w-bold);
 }
-.agenda-filter {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  background: var(--surface-2);
-  border-radius: 6px;
-}
-.agenda-filter button {
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 4px;
-  font-size: var(--text-13);
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.agenda-filter button[aria-pressed="true"] {
-  background: var(--card);
-  color: var(--ink-900);
-  box-shadow: 0 1px 3px #0000000b;
-}
 .session-row {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
@@ -752,56 +734,15 @@ a {
   display: flex;
   flex-direction: column;
   font-variant-numeric: tabular-nums;
-  padding-right: 10px;
-}
-/* La ligne de la frise passe par le centre des points (voir .timeline-dot :
-   9 px de large, décalé de 10 px à droite de la colonne). */
-.session-time::before {
-  content: "";
-  position: absolute;
-  top: -22px;
-  bottom: -22px;
-  right: -5px;
-  width: 1px;
-  background: var(--line);
-}
-/* Chaque ligne est enveloppée par son animation d'entrée : c'est donc au
-   niveau de la liste que se lisent la première et la dernière. */
-.agenda-list > :first-child .session-time::before {
-  top: 4px;
-}
-.agenda-list > :last-child .session-time::before {
-  bottom: auto;
-  height: 4px;
 }
 .session-time strong {
   font-size: var(--text-13);
   font-weight: var(--w-semibold);
 }
-.session-time > span:not(.timeline-dot) {
+.session-time > span {
   font-size: var(--text-13);
   margin-top: 5px;
   color: var(--muted-foreground);
-}
-.timeline-dot {
-  position: absolute;
-  top: 4px;
-  right: -10px;
-  display: grid;
-  place-items: center;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 2px solid var(--ink-300);
-  background: var(--background);
-}
-.timeline-dot.done {
-  background: var(--primary);
-  border: none;
-  color: var(--background);
-  width: 12px;
-  height: 12px;
-  right: -11px;
 }
 .session-row h3 {
   font-size: var(--text-15);

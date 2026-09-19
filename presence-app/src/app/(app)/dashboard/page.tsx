@@ -84,7 +84,6 @@ export default function DashboardPage() {
     isFetching: statsFetching,
   } = useAttendanceStats(role === "Etudiant");
   const { data: notifications } = useNotifications();
-  const [filter, setFilter] = useState<"all" | "remaining">("all");
   const [checkInSeance, setCheckInSeance] = useState<Seance | null>(null);
   const [rosterSeance, setRosterSeance] = useState<Seance | null>(null);
   const [pushSeance, setPushSeance] = useState<Seance | null>(null);
@@ -94,9 +93,7 @@ export default function DashboardPage() {
   const active = seances?.find((s) => s.is_active);
   const focus = active ?? seances?.find((s) => !s.is_past && !s.is_active);
   const remaining = seances?.filter((s) => !s.is_past).length ?? 0;
-  const shown = seances?.filter(
-    (s) => s.id !== focus?.id && (filter === "all" || !s.is_past),
-  );
+  const shown = seances?.filter((s) => s.id !== focus?.id);
   const roleLabel =
     role === "Delegue"
       ? "Délégué"
@@ -264,24 +261,6 @@ export default function DashboardPage() {
             <>
               <div className="agenda-heading">
                 <h3>Au programme</h3>
-                <div
-                  className="agenda-filter"
-                  role="group"
-                  aria-label="Filtrer les séances"
-                >
-                  <button
-                    aria-pressed={filter === "all"}
-                    onClick={() => setFilter("all")}
-                  >
-                    Tout
-                  </button>
-                  <button
-                    aria-pressed={filter === "remaining"}
-                    onClick={() => setFilter("remaining")}
-                  >
-                    À venir
-                  </button>
-                </div>
               </div>
               <div className="agenda-list">
                 {shown?.map((seance, index) => (
@@ -291,13 +270,13 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <SeanceCard seance={seance}>{actions(seance)}</SeanceCard>
+                    <SeanceCard seance={seance}>
+                      {seance.is_active || seance.is_past ? actions(seance) : null}
+                    </SeanceCard>
                   </motion.div>
                 ))}
                 {shown?.length === 0 && (
-                  <p className="agenda-done">
-                    <Check size={16} /> Aucune autre séance à afficher.
-                  </p>
+                  <p className="agenda-done">Aucune autre séance aujourd’hui.</p>
                 )}
               </div>
             </>
@@ -483,18 +462,7 @@ function StudentActions({
           : "Liste de présence validée"}
       </span>
     );
-  if (seance.is_past)
-    return (
-      <span className="attendance-status">
-        <Clock3 size={15} /> Séance terminée
-      </span>
-    );
-  if (!seance.is_active)
-    return (
-      <span className="attendance-status">
-        <Clock3 size={15} /> Pointage à l’ouverture de la séance
-      </span>
-    );
+  if (!seance.is_active) return null;
   if (restreint)
     return (
       <span className="attendance-status">
@@ -543,6 +511,16 @@ function DelegateActions({
     seance.fin_reelle === null &&
     seance.is_active &&
     !seance.presences_locked;
+  if (!seance.is_active) {
+    // Séance passée sans appel validé : il reste à confirmer la liste. Rien d'autre.
+    return seance.presences_locked ? null : (
+      <div className="role-actions">
+        <Button variant="secondary" className="w-full" onClick={onConfirmRoster}>
+          <Users size={16} /> Confirmer la liste
+        </Button>
+      </div>
+    );
+  }
   return (
     <div className="role-actions">
       {seance.is_active && !seance.presences_locked && (
@@ -621,6 +599,19 @@ function TeacherActions({
 }) {
   const mark = useMarkProf(seance.id);
   const disabled = !seance.is_active || mark.isPending;
+  if (!seance.is_active) {
+    // Hors séance, l'enseignant peut encore déclarer l'effectif — c'est tout.
+    return (
+      <div className="role-actions">
+        <Button variant="secondary" className="w-full" onClick={onPush}>
+          <Users size={16} />
+          {seance.push
+            ? `Effectif déclaré : ${seance.push.etudiants_presents}`
+            : "Déclarer l’effectif"}
+        </Button>
+      </div>
+    );
+  }
   return (
     <div className="role-actions">
       <Button
