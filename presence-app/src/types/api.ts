@@ -101,12 +101,31 @@ export interface RequeteEnseignant {
 
 export interface DemandeFormation {
   id: number;
-  salle_cible?: { id: number; nom: string } | null;
+  salle_cible?: { id: number; nom: string; filiere?: string | null; niveau?: string | null } | null;
   motif: string | null;
   statut: RequestStatus;
   date_creation: string;
   date_traitement: string | null;
   commentaire_admin: string | null;
+}
+
+/** Ce que l'onglet Migration montre à un étudiant : sa situation et ce qu'il peut demander. */
+export interface SituationMigration {
+  formation: FormationType | null;
+  salle: { id: number; nom: string; formation: "FI" | "FA" } | null;
+  niveau: string | null;
+  filiere: string | null;
+  departement: { code: string; nom: string } | null;
+  niveau_max: number;
+  eligible: boolean;
+  empechement: string | null;
+  salles: { id: number; nom: string; filiere: string; niveau: string; effectif: number }[];
+  demande_en_attente: {
+    id: number;
+    salle_cible: { id: number; nom: string } | null;
+    motif: string | null;
+    date_creation: string | null;
+  } | null;
 }
 
 export interface PayrollLine {
