@@ -102,8 +102,11 @@ export interface DemandeFormation {
     niveau: string | null;
     niveau_id: number | null;
     filiere: string | null;
+    departement_id?: number | null;
+    formation?: FormationType | null;
   };
-  salle_cible?: { id: number; nom: string } | null;
+  /** La salle FI demandée par l'étudiant — retenue à l'approbation sauf si l'admin en choisit une autre. */
+  salle_cible?: { id: number; nom: string; filiere?: string | null; niveau?: string | null } | null;
   motif: string | null;
   statut: RequestStatus;
   date_creation: string;

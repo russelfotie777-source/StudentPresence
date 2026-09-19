@@ -61,9 +61,11 @@ export default function DemandesFormationPage() {
           Migrations FA → FI
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Un étudiant en alternance demande à suivre l&apos;emploi du temps de jour.
-          L&apos;approbation le bascule en FM et le rattache définitivement à la salle FI
-          choisie, avec la filière et le niveau qui vont avec.
+          Un étudiant en alternance demande à suivre l&apos;emploi du temps de jour dans une
+          salle FI de son département et de son niveau (premières années seulement). Il
+          reste en FA tant que vous n&apos;avez pas approuvé : l&apos;approbation le bascule
+          en FM et le rattache à la salle retenue — celle qu&apos;il demande, sauf si vous en
+          choisissez une autre.
         </p>
       </div>
 
@@ -101,12 +103,12 @@ export default function DemandesFormationPage() {
             key={d.id}
             demande={d}
             salles={salles ?? []}
-            salleChoisie={salleChoisie[d.id] ?? ""}
+            salleChoisie={salleChoisie[d.id] ?? (d.salle_cible ? String(d.salle_cible.id) : "")}
             onSalle={(v) => setSalleChoisie((c) => ({ ...c, [d.id]: v }))}
             commentaire={commentaires[d.id] ?? ""}
             onCommentaire={(v) => setCommentaires((c) => ({ ...c, [d.id]: v }))}
             onApprouver={() =>
-              approuver.mutate({ id: d.id, salle_id: Number(salleChoisie[d.id]) })
+              approuver.mutate({ id: d.id, salle_id: Number(salleChoisie[d.id] ?? d.salle_cible?.id) })
             }
             onRejeter={() => rejeter.mutate({ id: d.id, commentaire: commentaires[d.id] })}
             enCours={idEnCours === d.id}
@@ -139,7 +141,7 @@ function CarteDemande({
   enCours: boolean;
 }) {
   const statut = STATUTS[d.statut];
-  const cibles = ciblesPossibles(salles, d.etudiant?.niveau_id ?? null);
+  const cibles = ciblesPossibles(salles, d.etudiant?.niveau_id ?? null, d.etudiant?.departement_id ?? null);
 
   return (
     <motion.article
@@ -177,8 +179,8 @@ function CarteDemande({
         />
         <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
         <Rattachement
-          libelle="Après migration"
-          valeur={d.salle_cible?.nom ?? "à choisir"}
+          libelle={d.statut === "en_attente" ? "Demandée" : "Après migration"}
+          valeur={[d.salle_cible?.nom, d.salle_cible?.filiere, d.salle_cible?.niveau].filter(Boolean).join(" · ") || "à choisir"}
           enAttente={!d.salle_cible}
         />
       </div>
@@ -292,20 +294,19 @@ function Rattachement({
 }
 
 /**
- * Salles FI proposées comme cible. Restreintes au niveau du demandeur : sans
- * ce filtre, l'admin arbitre parmi toutes les salles de l'établissement, dont
- * les noms se répètent d'une filière à l'autre. Repli sur toutes les salles
- * FI si le niveau est inconnu, pour ne jamais bloquer la décision.
+ * Salles FI proposées comme cible. Restreintes au département et au niveau
+ * du demandeur — les mêmes que l'app lui a proposées : sans ce filtre,
+ * l'admin arbitre parmi toutes les salles de l'établissement, dont les noms
+ * se répètent d'une filière à l'autre. Repli progressif (niveau seul, puis
+ * toutes les FI) pour ne jamais bloquer la décision.
  */
-function ciblesPossibles(salles: Salle[], niveauId: number | null): Salle[] {
+function ciblesPossibles(salles: Salle[], niveauId: number | null, departementId: number | null): Salle[] {
   const fi = salles.filter((s) => s.formation === "FI");
-  if (niveauId === null) {
-    return fi;
-  }
+  const duNiveau = niveauId === null ? fi : fi.filter((s) => s.filiere?.niveau_id === niveauId);
+  const duDepartement =
+    departementId === null ? duNiveau : duNiveau.filter((s) => s.filiere?.departement_id === departementId);
 
-  const duNiveau = fi.filter((s) => s.filiere?.niveau_id === niveauId);
-
-  return duNiveau.length > 0 ? duNiveau : fi;
+  return duDepartement.length > 0 ? duDepartement : duNiveau.length > 0 ? duNiveau : fi;
 }
 
 
