@@ -59,15 +59,15 @@ export function SeanceCard({
               <span className="time-separator">→</span>{" "}
               {seance.heure_fin.slice(0, 5)}
             </span>
-            <span className="session-presence">
-              {seance.etat_prof === "present"
-                ? seance.etat_prof_par_delegue
-                  ? "Enseignant présent (confirmé par le délégué)"
-                  : "Enseignant présent"
-                : seance.etat_prof === "absent"
-                  ? "Enseignant absent"
-                  : "En attente de l’enseignant"}
-            </span>
+            {seance.etat_prof && (
+              <span className="session-presence">
+                {seance.etat_prof === "present"
+                  ? seance.etat_prof_par_delegue
+                    ? "Enseignant présent (confirmé par le délégué)"
+                    : "Enseignant présent"
+                  : "Enseignant absent"}
+              </span>
+            )}
           </div>
         )}
         {children && <div className="session-actions">{children}</div>}
