@@ -504,8 +504,7 @@ function StudentActions({
   if (!seance.position_envoyee)
     return (
       <span className="attendance-status">
-        <MapPin size={16} /> Position du délégué indisponible. Faites constater
-        votre présence lors de l’appel.
+        <MapPin size={16} /> Position du délégué indisponible.
       </span>
     );
   return (
