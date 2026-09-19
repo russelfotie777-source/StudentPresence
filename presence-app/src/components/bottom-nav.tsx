@@ -65,7 +65,6 @@ export function BottomNav({ role }: { role: UserRole }) {
         </span>
         <ZirisWordmark />
       </Link>
-      <p className="nav-caption">VOTRE ESPACE</p>
       <div
         className="nav-items"
         style={{ "--nav-count": items.length } as React.CSSProperties}
@@ -92,7 +91,7 @@ export function BottomNav({ role }: { role: UserRole }) {
                 />
                 {item.href === PROFILE_ITEM.href && nonLues > 0 && (
                   <span
-                    className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9.5px] font-bold text-white tabular-nums ring-2 ring-card"
+                    className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-white tabular-nums ring-2 ring-card"
                     aria-label={`${nonLues} notification(s) non lue(s)`}
                   >
                     {nonLues > 9 ? "9+" : nonLues}
@@ -106,8 +105,6 @@ export function BottomNav({ role }: { role: UserRole }) {
       </div>
       <div className="nav-footnote">
         <span className="metric-marker" /> IUT de Douala
-        <br />
-        <span>Année universitaire 2026</span>
       </div>
     </nav>
   );

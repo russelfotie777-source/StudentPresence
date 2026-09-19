@@ -284,7 +284,7 @@ export default function FacePage() {
               <ZirisMark size={22} />
             </span>
             <ZirisWordmark />
-            <span className={styles.identityLabel}>IDENTITY</span>
+            <span className={styles.identityLabel}>Identité</span>
           </div>
           <div className={styles.headerRight}>
             <LockKeyhole size={13} />
@@ -333,7 +333,7 @@ export default function FacePage() {
                 <ScanFace size={22} strokeWidth={1.25} />
               </span>
               <div>
-                <span>VÉRIFICATION FACIALE</span>
+                <span>Vérification faciale</span>
                 <strong>
                   {isFirstTime && !verified
                     ? "Première connexion"
@@ -367,10 +367,10 @@ export default function FacePage() {
               <div className={styles.stageLabel}>
                 <span className={styles.liveDot} />{" "}
                 {verified
-                  ? "CONFIRMÉ"
+                  ? "Confirmé"
                   : cameraReady
-                    ? "CAMÉRA ACTIVE"
-                    : "CAMÉRA"}
+                    ? "Caméra active"
+                    : "Caméra"}
               </div>
               <span className={styles.stageIndex} aria-hidden="true">
                 Z / 02
@@ -429,8 +429,8 @@ export default function FacePage() {
                 paused={paused || !!reducedMotion}
               />
               <div className={styles.opticsLabel} aria-hidden="true">
-                <span>ZIRIS</span>
-                <span>IDENTITY / 02</span>
+                <span>Ziris</span>
+                <span>Identité · étape 2</span>
               </div>
               <button
                 className={styles.motionToggle}
@@ -464,7 +464,7 @@ export default function FacePage() {
                 aria-label="État de la vérification"
               >
                 <div>
-                  <span>01 · CAMÉRA</span>
+                  <span>01 · Caméra</span>
                   <strong>
                     {verified
                       ? "Terminée"
@@ -476,7 +476,7 @@ export default function FacePage() {
                   </strong>
                 </div>
                 <div>
-                  <span>02 · CADRAGE</span>
+                  <span>02 · Cadrage</span>
                   <strong>
                     {verified
                       ? "Confirmé"
@@ -488,7 +488,7 @@ export default function FacePage() {
                   </strong>
                 </div>
                 <div>
-                  <span>03 · IDENTITÉ</span>
+                  <span>03 · Identité</span>
                   <strong>
                     {verified
                       ? "Vérifiée"

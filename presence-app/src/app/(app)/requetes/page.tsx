@@ -81,7 +81,7 @@ function RequetesContent() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        className="font-display text-[26px] font-bold tracking-tight text-ink-900"
+        className="font-display text-xl font-bold tracking-tight text-ink-900"
       >
         Mes requêtes
       </motion.h1>
@@ -162,7 +162,7 @@ function RequetesContent() {
               </p>
               <span
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                  "flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
                   STATUS_LABELS[r.statut].className,
                 )}
               >
@@ -172,7 +172,7 @@ function RequetesContent() {
             </div>
             <p className="text-xs text-ink-500">{r.description}</p>
             {r.commentaire_admin && (
-              <p className="text-xs italic text-ink-300">Réponse admin : {r.commentaire_admin}</p>
+              <p className="text-xs text-ink-300">Réponse admin : {r.commentaire_admin}</p>
             )}
           </motion.div>
         ))}

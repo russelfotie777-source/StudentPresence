@@ -57,8 +57,8 @@ export function DemandePermission({
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
         <Icone className="h-6 w-6 text-indigo-600" />
       </div>
-      <h2 className="font-display text-[17px] font-bold text-ink-900">{textes.titre}</h2>
-      <p className="max-w-[290px] text-[13.5px] leading-relaxed text-ink-500">{textes.raison}</p>
+      <h2 className="font-display text-base font-bold text-ink-900">{textes.titre}</h2>
+      <p className="max-w-[290px] text-xs leading-relaxed text-ink-500">{textes.raison}</p>
       <motion.div whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 500, damping: 22 }}>
         {/* Le déclenchement doit rester dans le gestionnaire du clic : sorti du
             geste de l'utilisateur, iOS peut ignorer la demande sans rien
@@ -86,10 +86,10 @@ export function PermissionRefusee({ type }: { type: TypePermission }) {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50">
           <ExternalLink className="h-5 w-5 text-amber-600" />
         </div>
-        <h2 className="font-display text-[16px] font-bold text-ink-900">
+        <h2 className="font-display text-base font-bold text-ink-900">
           Ouvrez la page dans votre navigateur
         </h2>
-        <p className="max-w-[290px] text-[13px] leading-relaxed text-ink-500">
+        <p className="max-w-[290px] text-xs leading-relaxed text-ink-500">
           Vous consultez cette page depuis une autre application, qui bloque l&apos;accès à la{" "}
           {libelle}. Touchez le menu « ⋯ » puis « Ouvrir dans le navigateur » et reconnectez-vous.
         </p>
@@ -113,8 +113,8 @@ export function PermissionRefusee({ type }: { type: TypePermission }) {
 
       <ol className="flex flex-col gap-2 rounded-2xl border border-line bg-card p-3.5">
         {etapes.map((etape, i) => (
-          <li key={etape} className="flex gap-2.5 text-[13px] leading-relaxed text-ink-500">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-bold text-secondary-foreground">
+          <li key={etape} className="flex gap-2.5 text-xs leading-relaxed text-ink-500">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">
               {i + 1}
             </span>
             <span>{etape}</span>

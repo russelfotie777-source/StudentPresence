@@ -147,7 +147,7 @@ export function SpaceEmptyState({
 
       {title && (
         <div className="relative z-10 flex flex-col items-center gap-1 pb-6 text-center">
-          <p className="font-display text-[15px] font-bold text-white">{title}</p>
+          <p className="font-display text-sm font-bold text-white">{title}</p>
           {subtitle && <p className="text-xs text-white/70">{subtitle}</p>}
         </div>
       )}

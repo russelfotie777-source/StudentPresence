@@ -17,7 +17,7 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-size: 26px;
+  font-size: var(--text-24);
   color: var(--ink-900);
 }
 .brand > span:first-child {
@@ -37,7 +37,7 @@
 }
 .context {
   display: none;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   gap: 12px;
 }
@@ -58,7 +58,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
 }
 .eyebrow > span {
@@ -79,7 +79,7 @@
   color: var(--primary);
 }
 .subtitle {
-  font-size: 11px;
+  font-size: var(--text-13);
   line-height: 1.7;
   color: var(--ink-500);
   margin-top: 8px;
@@ -102,7 +102,7 @@
 }
 .total > span {
   text-align: right;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   line-height: 1.5;
   margin-top: 6px;
@@ -129,8 +129,8 @@
   min-height: 44px;
   padding: 6px;
   color: var(--ink-500);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   border-radius: 4px;
   cursor: pointer;
   transition:
@@ -168,7 +168,7 @@
   width: 100%;
   min-width: 0;
   outline: none;
-  font-size: 16px;
+  font-size: var(--text-17);
   color: var(--ink-900);
   background: transparent;
   min-height: 44px;
@@ -189,7 +189,7 @@
   cursor: pointer;
 }
 .resultCount {
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   line-height: 1.6;
   margin-top: 13px;
@@ -221,19 +221,19 @@
   gap: 3px;
 }
 .dateWords > strong {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   text-transform: capitalize;
 }
 .dateWords > span {
   color: var(--ink-500);
-  font-size: 9px;
+  font-size: var(--text-13);
 }
 .dayCount {
   margin-left: auto;
   color: var(--ink-500);
-  font-size: 9px;
-  font-weight: 400;
+  font-size: var(--text-13);
+  font-weight: var(--w-regular);
 }
 .sessions {
   list-style: none;
@@ -253,7 +253,7 @@
   align-items: flex-start;
   flex-direction: column;
   color: var(--ink-500);
-  font-size: 10px;
+  font-size: var(--text-13);
   font-variant-numeric: tabular-nums;
 }
 .time time:first-child {
@@ -278,7 +278,7 @@
   overflow-wrap: anywhere;
 }
 .teacher {
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   line-height: 1.6;
   margin-top: 4px;
@@ -290,7 +290,7 @@
   flex-wrap: wrap;
   gap: 7px 12px;
   margin-top: 11px;
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
 }
 .sessionMeta > span {
@@ -309,8 +309,8 @@
 .sessionMeta .status {
   padding: 4px 7px;
   border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   line-height: 1.4;
 }
 .present {
@@ -335,7 +335,7 @@
   margin-top: 20px;
 }
 .more > span {
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--ink-500);
 }
 .more button,
@@ -346,8 +346,8 @@
   gap: 8px;
   padding: 0 18px;
   min-height: 44px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   color: var(--ink-900);
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -367,7 +367,7 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--ink-500);
   padding: 25px 0 5px;
 }
@@ -393,7 +393,7 @@
     sans-serif;
 }
 .empty p {
-  font-size: 12px;
+  font-size: var(--text-13);
   line-height: 1.8;
   color: var(--ink-500);
   margin-top: 10px;
@@ -403,8 +403,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   min-height: 44px;
   margin-top: 17px;
   color: var(--primary);
@@ -419,15 +419,15 @@
   margin-top: 24px;
   border-left: 2px solid var(--history-red);
   background: var(--history-red-soft);
-  font-size: 12px;
+  font-size: var(--text-13);
 }
 .error p {
-  font-size: 11px;
+  font-size: var(--text-13);
   margin-top: 6px;
   line-height: 1.6;
 }
 .pageError {
-  font-size: 12px;
+  font-size: var(--text-13);
   line-height: 1.6;
   color: var(--history-red);
   padding: 20px 0 0;
@@ -467,14 +467,14 @@
     max-width: 350px;
   }
   .search input {
-    font-size: 13px;
+    font-size: var(--text-13);
   }
   .heading h1 {
-    font-size: 40px;
+    font-size: var(--text-38);
   }
   .subtitle {
     max-width: none;
-    font-size: 12px;
+    font-size: var(--text-13);
   }
   .heading {
     padding: 34px 0;
@@ -486,7 +486,7 @@
     padding-left: 24px;
   }
   .total > strong {
-    font-size: 38px;
+    font-size: var(--text-38);
   }
   .total > span {
     text-align: left;
@@ -519,7 +519,7 @@
     gap: 24px;
   }
   .sessionBody h3 {
-    font-size: 18px;
+    font-size: var(--text-17);
   }
   .sessionMeta {
     margin-top: 13px;
@@ -537,7 +537,7 @@
     display: flex;
   }
   .brand {
-    font-size: 20px;
+    font-size: var(--text-20);
   }
   .heading {
     padding-bottom: 38px;
@@ -548,10 +548,10 @@
 }
 @media (max-width: 359px) {
   .heading h1 {
-    font-size: 29px;
+    font-size: var(--text-30);
   }
   .total > strong {
-    font-size: 25px;
+    font-size: var(--text-24);
   }
   .heading {
     gap: 10px;
@@ -560,7 +560,7 @@
     padding-left: 10px;
   }
   .filters button {
-    font-size: 10px;
+    font-size: var(--text-13);
     gap: 4px;
   }
   .row {
@@ -568,7 +568,7 @@
     grid-template-columns: 43px minmax(0, 1fr);
   }
   .sessionBody h3 {
-    font-size: 15px;
+    font-size: var(--text-15);
   }
 }
 @media (prefers-reduced-motion: reduce) {

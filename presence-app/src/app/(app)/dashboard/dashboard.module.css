@@ -13,7 +13,7 @@
   border-color: var(--dash-border);
 }
 .dashboard :global(.presence-brand) {
-  font-size: 26px;
+  font-size: var(--text-24);
 }
 .dashboard :global(.brand-mark) {
   background: #183e31;
@@ -24,7 +24,7 @@
 }
 .topbarContext {
   display: none;
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--dash-muted);
   gap: 12px;
 }
@@ -42,22 +42,22 @@
   gap: 20px;
 }
 .dashboard :global(.welcome-copy h1) {
-  font-size: 32px;
+  font-size: var(--text-30);
   line-height: 1.16;
-  font-weight: 600;
+  font-weight: var(--w-semibold);
   margin-top: 10px;
 }
 .dashboard :global(.welcome-subtitle) {
   line-height: 1.7;
-  font-size: 12px;
+  font-size: var(--text-13);
   margin-top: 9px;
 }
 .role {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .role > span:first-child {
   width: 5px;
@@ -74,8 +74,8 @@
 }
 .dateNumber {
   font-family: var(--font-display), sans-serif;
-  font-weight: 600;
-  font-size: 30px;
+  font-weight: var(--w-semibold);
+  font-size: var(--text-30);
   line-height: 1;
   color: var(--dash-ink);
   padding-right: 12px;
@@ -88,12 +88,12 @@
   gap: 4px;
 }
 .dateWords > strong {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   text-transform: capitalize;
 }
 .dateWords > span {
-  font-size: 10px;
+  font-size: var(--text-13);
   color: var(--dash-muted);
 }
 .dashboard :global(.section-heading) {
@@ -101,16 +101,16 @@
 }
 .dashboard :global(.section-heading h2) {
   font-family: var(--font-display), sans-serif;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: var(--text-17);
+  font-weight: var(--w-semibold);
 }
 .dashboard :global(.quiet-count) {
-  font-size: 10px;
+  font-size: var(--text-13);
   font-variant-numeric: tabular-nums;
 }
 .dashboard :global(.section-heading .eyebrow) {
-  font-size: 8px;
-  font-weight: 500;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .dashboard :global(.dashboard-columns) {
   gap: 28px;
@@ -133,13 +133,13 @@
 }
 .freeDay h3 {
   font-family: var(--font-display), sans-serif;
-  font-size: 18px;
+  font-size: var(--text-17);
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: var(--w-semibold);
   color: var(--dash-ink);
 }
 .freeDay p {
-  font-size: 11px;
+  font-size: var(--text-13);
   line-height: 1.8;
   color: var(--dash-muted);
   margin-top: 5px;
@@ -148,8 +148,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   color: var(--dash-blue);
   min-height: 40px;
   margin-top: 4px;
@@ -163,7 +163,7 @@
   align-items: center;
   gap: 10px;
   color: var(--dash-accent);
-  font-size: 12px;
+  font-size: var(--text-13);
   padding: 16px 0;
   border-top: 1px solid var(--dash-border);
 }
@@ -187,24 +187,24 @@
   margin-bottom: 22px;
 }
 .dashboard :global(.session-label) {
-  font-size: 9px;
+  font-size: var(--text-13);
   color: var(--dash-blue);
 }
 .dashboard :global(.session-live .session-label) {
   color: var(--dash-accent);
 }
 .dashboard :global(.session-code) {
-  font-size: 8px;
+  font-size: var(--text-13);
   color: var(--dash-muted);
   opacity: 1;
 }
 .dashboard :global(.session-featured h3) {
-  font-size: 25px;
-  font-weight: 600;
+  font-size: var(--text-24);
+  font-weight: var(--w-semibold);
   line-height: 1.2;
 }
 .dashboard :global(.session-details) {
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--dash-muted);
   line-height: 1.5;
 }
@@ -218,22 +218,22 @@
 }
 .dashboard :global(.session-hours > span:first-of-type) {
   font-family: var(--font-display), sans-serif;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--text-17);
+  font-weight: var(--w-semibold);
   font-variant-numeric: tabular-nums;
 }
 .dashboard :global(.session-presence) {
   opacity: 1;
   color: var(--dash-muted);
   line-height: 1.6;
-  font-size: 9px;
+  font-size: var(--text-13);
 }
 .dashboard :global(.checkin-primary) {
   height: 48px;
   background: var(--dash-accent);
   color: #fff;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: var(--w-semibold);
   box-shadow:
     inset 0 1px 0 #ffffff25,
     0 3px 8px #08795316;
@@ -243,7 +243,7 @@
 }
 .dashboard :global(.attendance-status) {
   color: var(--dash-muted);
-  font-size: 11px;
+  font-size: var(--text-13);
   line-height: 1.7;
 }
 .dashboard :global(.attendance-status.confirmed) {
@@ -277,7 +277,7 @@
 }
 .dashboard :global(.agenda-filter button) {
   min-height: 32px;
-  font-size: 10px;
+  font-size: var(--text-13);
 }
 .dashboard :global(.session-row) {
   gap: 22px;
@@ -285,14 +285,14 @@
 }
 .dashboard :global(.session-time strong) {
   font-family: var(--font-display), sans-serif;
-  font-size: 14px;
+  font-size: var(--text-15);
 }
 .dashboard :global(.session-row h3) {
   line-height: 1.5;
-  font-weight: 600;
+  font-weight: var(--w-semibold);
 }
 .dashboard :global(.session-row .session-details) {
-  font-size: 10px;
+  font-size: var(--text-13);
 }
 .dashboard :global(.timeline-dot) {
   width: 7px;
@@ -317,14 +317,14 @@
   max-width: 200px;
 }
 .dashboard :global(.attendance-value strong) {
-  font-size: 34px;
+  font-size: var(--text-38);
 }
 .dashboard :global(.attendance-value strong span) {
-  font-size: 14px;
+  font-size: var(--text-15);
   margin-left: 3px;
 }
 .dashboard :global(.attendance-value > span) {
-  font-size: 9px;
+  font-size: var(--text-13);
 }
 .dashboard :global(.sculpture-pause) {
   right: 0;
@@ -347,7 +347,7 @@
   gap: 6px;
   align-items: center;
   color: var(--dash-muted);
-  font-size: 10px;
+  font-size: var(--text-13);
   line-height: 1.5;
 }
 .attendanceFigures dt > span {
@@ -364,8 +364,8 @@
 }
 .attendanceFigures dd {
   font-family: var(--font-display), sans-serif;
-  font-size: 25px;
-  font-weight: 600;
+  font-size: var(--text-24);
+  font-weight: var(--w-semibold);
   line-height: 1.2;
   margin-top: 5px;
   font-variant-numeric: tabular-nums;
@@ -377,7 +377,7 @@
   padding-bottom: 15px;
 }
 .dashboard :global(.text-link) {
-  font-size: 11px;
+  font-size: var(--text-13);
   min-height: 40px;
 }
 .dashboard :global(.insights-column) {
@@ -388,10 +388,10 @@
 }
 .dashboard :global(.academic-heading h3) {
   font-family: var(--font-display), sans-serif;
-  font-size: 16px;
+  font-size: var(--text-17);
 }
 .dashboard :global(.academic-section .eyebrow) {
-  font-size: 8px;
+  font-size: var(--text-13);
 }
 .dashboard :global(.academic-section dl) {
   margin: 18px 0 8px;
@@ -406,14 +406,14 @@
   justify-content: space-between;
   margin-top: 28px;
   padding-top: 17px;
-  font-size: 9px;
+  font-size: var(--text-13);
 }
 .dashboard :global(.dashboard-footer .ziris-wordmark) {
-  font-size: 13px;
+  font-size: var(--text-13);
   color: var(--dash-ink);
 }
 .statsError {
-  font-size: 12px;
+  font-size: var(--text-13);
   line-height: 1.6;
   padding: 16px 0;
   color: var(--dash-muted);
@@ -466,19 +466,19 @@
     margin-left: 26px;
   }
   .dashboard :global(.dashboard-topbar .presence-brand) {
-    font-size: 20px;
+    font-size: var(--text-20);
   }
   .dashboard :global(.welcome-section) {
     padding: 34px 0;
   }
   .dashboard :global(.welcome-copy h1) {
-    font-size: 40px;
+    font-size: var(--text-38);
   }
   .dateNumber {
-    font-size: 39px;
+    font-size: var(--text-38);
   }
   .dateWords > strong {
-    font-size: 12px;
+    font-size: var(--text-13);
   }
   .dashboard :global(.dashboard-columns) {
     grid-template-columns: minmax(0, 1fr) 295px;
@@ -510,19 +510,19 @@
     gap: 20px;
   }
   .freeDay h3 {
-    font-size: 22px;
+    font-size: var(--text-24);
   }
   .freeDay p {
-    font-size: 12px;
+    font-size: var(--text-13);
   }
   .freeDay a {
-    font-size: 11px;
+    font-size: var(--text-13);
   }
   .dashboard :global(.session-featured) {
     padding: 27px;
   }
   .dashboard :global(.session-featured h3) {
-    font-size: 29px;
+    font-size: var(--text-30);
   }
 }
 @media (min-width: 1400px) {
@@ -533,7 +533,7 @@
 }
 @media (max-width: 359px) {
   .dashboard :global(.welcome-copy h1) {
-    font-size: 29px;
+    font-size: var(--text-30);
   }
   .freeDay {
     gap: 9px;
@@ -543,18 +543,18 @@
     width: 30px;
   }
   .freeDay h3 {
-    font-size: 17px;
+    font-size: var(--text-17);
   }
   .attendanceOverview {
     gap: 10px;
   }
   .dashboard :global(.attendance-value strong) {
-    font-size: 30px;
+    font-size: var(--text-30);
   }
   .attendanceFigures dt {
-    font-size: 9px;
+    font-size: var(--text-13);
   }
   .dashboard :global(.session-featured h3) {
-    font-size: 23px;
+    font-size: var(--text-24);
   }
 }

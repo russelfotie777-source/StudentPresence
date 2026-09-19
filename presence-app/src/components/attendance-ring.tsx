@@ -41,7 +41,7 @@ export function AttendanceRing({ percent }: { percent: number }) {
         />
       </svg>
       <div className="absolute flex h-[45px] w-[45px] items-center justify-center rounded-full bg-surface-1 shadow-sm">
-        <span className="font-display text-[13px] font-extrabold text-ink-900">{percent}%</span>
+        <span className="font-display text-xs font-extrabold text-ink-900">{percent}%</span>
       </div>
     </div>
   );

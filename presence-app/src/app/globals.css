@@ -9,6 +9,37 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
+
+  /* Typographie : une échelle, trois graisses, un seul resserrement — et
+     rien d'autre. Ce sont les mêmes variables que lisent les feuilles CSS
+     (voir :root plus bas) : text-sm et var(--text-15) sont un seul réglage.
+     Rien en dessous de 13 px : sur un téléphone, c'est le seuil de lecture. */
+  --text-xs: var(--text-13);
+  --text-xs--line-height: 1.45;
+  --text-sm: var(--text-15);
+  --text-sm--line-height: 1.5;
+  --text-base: var(--text-17);
+  --text-base--line-height: 1.5;
+  --text-lg: var(--text-20);
+  --text-lg--line-height: 1.35;
+  --text-xl: var(--text-24);
+  --text-xl--line-height: 1.25;
+  --text-2xl: var(--text-30);
+  --text-2xl--line-height: 1.2;
+  --text-3xl: var(--text-38);
+  --text-3xl--line-height: 1.15;
+  --text-4xl: var(--text-56);
+  --text-4xl--line-height: 1.05;
+  --font-weight-medium: var(--w-semibold);
+  --font-weight-semibold: var(--w-semibold);
+  --font-weight-bold: var(--w-bold);
+  --font-weight-extrabold: var(--w-bold);
+  --font-weight-black: var(--w-bold);
+  --tracking-tight: var(--tracking-title);
+  --tracking-tighter: var(--tracking-title);
+  --tracking-wide: 0;
+  --tracking-wider: 0;
+  --tracking-widest: 0;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -71,6 +102,24 @@
   --color-emerald-100: var(--emerald-100);
   --color-rose-500: var(--rose-500);
   --color-rose-100: var(--rose-100);
+}
+
+/* Typographie : les valeurs que lisent à la fois les utilitaires Tailwind
+   (@theme inline ci-dessus) et les feuilles CSS de chaque écran. */
+:root {
+  --text-13: 13px;
+  --text-15: 15px;
+  --text-17: 17px;
+  --text-20: 20px;
+  --text-24: 24px;
+  --text-30: 30px;
+  --text-38: 38px;
+  --text-56: 56px;
+  --w-regular: 400;
+  --w-semibold: 600;
+  --w-bold: 700;
+  /* Seul resserrement autorisé, réservé aux titres à partir de 24 px. */
+  --tracking-title: -0.01em;
 }
 
 :root {
@@ -335,7 +384,6 @@
   --accent-foreground: #b5e5cf;
 }
 * {
-  letter-spacing: 0 !important;
 }
 button,
 a {
@@ -379,8 +427,8 @@ a {
 .presence-brand {
   display: inline-flex;
   align-items: center;
-  font-size: 23px;
-  font-weight: 800;
+  font-size: var(--text-24);
+  font-weight: var(--w-bold);
   color: var(--ink-900);
 }
 .brand-mark {
@@ -435,20 +483,20 @@ a {
 }
 .eyebrow {
   color: var(--muted-foreground);
-  font-size: 10px;
-  font-weight: 650;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
   line-height: 1.6;
 }
 .welcome-copy h1 {
   font-family: var(--font-display), sans-serif;
-  font-size: 30px;
-  font-weight: 600;
+  font-size: var(--text-30);
+  font-weight: var(--w-semibold);
   line-height: 1.2;
   margin-top: 8px;
   overflow-wrap: anywhere;
 }
 .welcome-subtitle {
-  font-size: 13px;
+  font-size: var(--text-13);
   margin-top: 9px;
   color: var(--muted-foreground);
 }
@@ -457,13 +505,13 @@ a {
   align-items: center;
   gap: 9px;
   color: var(--ink-700);
-  font-size: 12px;
+  font-size: var(--text-13);
 }
 .date-stamp > svg {
   color: #b95c49;
 }
 .date-stamp span::first-letter {
-  text-transform: uppercase;
+  text-transform: capitalize;
 }
 .dashboard-columns {
   display: grid;
@@ -481,11 +529,11 @@ a {
   margin-bottom: 17px;
 }
 .section-heading h2 {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: var(--text-15);
+  font-weight: var(--w-bold);
 }
 .quiet-count {
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--muted-foreground);
 }
 .session {
@@ -514,20 +562,20 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--text-13);
+  font-weight: var(--w-bold);
 }
 .session-live .session-label {
   color: #b4edbf;
 }
 .session-code {
-  font-size: 9px;
+  font-size: var(--text-13);
   opacity: 0.65;
 }
 .session-featured h3 {
   font-family: var(--font-display), sans-serif;
-  font-size: 25px;
-  font-weight: 500;
+  font-size: var(--text-24);
+  font-weight: var(--w-semibold);
   line-height: 1.18;
   max-width: 420px;
   overflow-wrap: anywhere;
@@ -538,7 +586,7 @@ a {
   gap: 8px 14px;
   color: var(--muted-foreground);
   margin-top: 12px;
-  font-size: 11px;
+  font-size: var(--text-13);
 }
 .session-details > span {
   display: inline-flex;
@@ -561,7 +609,7 @@ a {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--text-13);
 }
 .session-live .session-hours {
   border-color: #466456;
@@ -571,7 +619,7 @@ a {
   opacity: 0.6;
 }
 .session-presence {
-  font-size: 10px;
+  font-size: var(--text-13);
   margin-left: auto;
   opacity: 0.75;
 }
@@ -584,8 +632,8 @@ a {
   border-radius: 6px;
   background: #c6f2a5;
   color: #1d392b;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--text-13);
+  font-weight: var(--w-bold);
   box-shadow: none;
   padding: 0 16px;
   transition:
@@ -602,7 +650,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--muted-foreground);
 }
 .attendance-status svg {
@@ -625,8 +673,8 @@ a {
   margin: 27px 0 8px;
 }
 .agenda-heading h3 {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--text-13);
+  font-weight: var(--w-bold);
 }
 .agenda-filter {
   display: flex;
@@ -639,7 +687,7 @@ a {
   min-height: 36px;
   padding: 0 12px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--muted-foreground);
   cursor: pointer;
 }
@@ -663,11 +711,11 @@ a {
   padding-right: 10px;
 }
 .session-time strong {
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .session-time > span:not(.timeline-dot) {
-  font-size: 10px;
+  font-size: var(--text-13);
   margin-top: 5px;
   color: var(--muted-foreground);
 }
@@ -692,14 +740,14 @@ a {
   right: -11px;
 }
 .session-row h3 {
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--text-15);
+  font-weight: var(--w-semibold);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .session-row .session-details {
   margin-top: 6px;
-  font-size: 10px;
+  font-size: var(--text-13);
   gap: 7px 12px;
 }
 .session-row .session-actions {
@@ -713,7 +761,7 @@ a {
 .role-actions > button {
   min-height: 44px;
   flex-grow: 1;
-  font-size: 12px;
+  font-size: var(--text-13);
   border-radius: 6px;
 }
 .session-live .role-actions > button {
@@ -772,18 +820,18 @@ a {
 }
 .attendance-value strong {
   font-family: var(--font-display), sans-serif;
-  font-size: 43px;
-  font-weight: 600;
+  font-size: var(--text-38);
+  font-weight: var(--w-semibold);
   line-height: 1.1;
 }
 .attendance-value strong span {
   font-family: var(--font-body), sans-serif;
-  font-size: 18px;
+  font-size: var(--text-17);
   margin-left: 2px;
-  font-weight: 500;
+  font-weight: var(--w-semibold);
 }
 .attendance-value > span {
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--muted-foreground);
   margin-top: 5px;
 }
@@ -807,13 +855,13 @@ a {
   justify-content: center;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--text-13);
   color: var(--muted-foreground);
   margin: 5px 0 19px;
 }
 .attendance-summary strong {
   color: var(--ink-900);
-  font-weight: 600;
+  font-weight: var(--w-semibold);
 }
 .metric-marker {
   display: inline-block;
@@ -829,8 +877,8 @@ a {
   justify-content: space-between;
   gap: 12px;
   min-height: 40px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .text-link:hover {
   color: var(--primary);
@@ -847,15 +895,15 @@ a {
   padding: 2px;
 }
 .academic-heading h3 {
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--text-15);
+  font-weight: var(--w-semibold);
   margin-top: 2px;
 }
 .academic-section dl {
   margin: 22px 0 12px;
   display: grid;
   gap: 14px;
-  font-size: 11px;
+  font-size: var(--text-13);
 }
 .academic-section dl > div {
   display: flex;
@@ -867,7 +915,7 @@ a {
 }
 .academic-section dd {
   text-align: right;
-  font-weight: 550;
+  font-weight: var(--w-semibold);
   overflow-wrap: anywhere;
 }
 .dashboard-footer {
@@ -876,7 +924,7 @@ a {
   align-items: center;
   gap: 7px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: var(--text-13);
   border-top: 1px solid var(--line);
   margin-top: 34px;
   padding-top: 23px;
@@ -893,11 +941,11 @@ a {
   background: var(--surface-2);
 }
 .dashboard-empty h3 {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--text-17);
+  font-weight: var(--w-semibold);
 }
 .dashboard-empty p {
-  font-size: 12px;
+  font-size: var(--text-13);
   color: var(--muted-foreground);
 }
 .dashboard-empty a,
@@ -905,7 +953,7 @@ a {
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--text-13);
 }
 .agenda-done {
   color: var(--muted-foreground);
@@ -946,11 +994,11 @@ a {
   background: var(--indigo-50);
 }
 .nav-label {
-  font-size: 9px;
-  font-weight: 550;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
 }
 .nav-item-active .nav-label {
-  font-weight: 750;
+  font-weight: var(--w-bold);
 }
 .nav-brand,
 .nav-caption,
@@ -962,7 +1010,7 @@ a {
     padding: 28px 40px 110px;
   }
   .welcome-copy h1 {
-    font-size: 36px;
+    font-size: var(--text-38);
   }
   .welcome-section {
     flex-direction: row;
@@ -985,7 +1033,7 @@ a {
     padding: 28px;
   }
   .session-featured h3 {
-    font-size: 30px;
+    font-size: var(--text-30);
   }
 }
 @media (min-width: 1024px) {
@@ -1005,12 +1053,12 @@ a {
   }
   .nav-brand {
     display: flex;
-    font-size: 22px;
+    font-size: var(--text-24);
     margin-bottom: 65px;
   }
   .nav-caption {
     display: block;
-    font-size: 9px;
+    font-size: var(--text-13);
     color: var(--muted-foreground);
     margin: 0 12px 16px;
   }
@@ -1027,19 +1075,19 @@ a {
     min-height: 45px;
   }
   .nav-label {
-    font-size: 12px;
+    font-size: var(--text-13);
   }
   .nav-footnote {
     display: block;
     position: absolute;
     bottom: 30px;
     left: 29px;
-    font-size: 11px;
+    font-size: var(--text-13);
     line-height: 2;
   }
   .nav-footnote > span:last-child {
     color: var(--muted-foreground);
-    font-size: 9px;
+    font-size: var(--text-13);
   }
   .nav-footnote .metric-marker {
     margin-right: 5px;
@@ -1048,8 +1096,8 @@ a {
     padding-bottom: 24px;
   }
   .dashboard-topbar .presence-brand {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: var(--text-17);
+    font-weight: var(--w-semibold);
   }
   .dashboard-topbar .brand-mark {
     display: none;
@@ -1076,10 +1124,10 @@ a {
     padding: 38px 0 42px;
   }
   .welcome-copy h1 {
-    font-size: 38px;
+    font-size: var(--text-38);
   }
   .session-featured h3 {
-    font-size: 30px;
+    font-size: var(--text-30);
   }
   .dashboard-footer {
     justify-content: flex-start;
@@ -1101,20 +1149,20 @@ a {
     padding-right: 16px;
   }
   .welcome-copy h1 {
-    font-size: 27px;
+    font-size: var(--text-30);
   }
   .session-featured {
     padding: 18px;
   }
   .session-featured h3 {
-    font-size: 23px;
+    font-size: var(--text-24);
   }
   .session-presence {
     flex-basis: 100%;
     margin-left: 24px;
   }
   .nav-label {
-    font-size: 8px;
+    font-size: var(--text-13);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1159,9 +1207,8 @@ a {
 .ziris-wordmark {
   display: inline-block;
   font-family: var(--font-display), sans-serif;
-  font-weight: 800;
+  font-weight: var(--w-bold);
   font-style: normal;
-  letter-spacing: 0;
   line-height: 1.1;
 }
 .ziris-iris {

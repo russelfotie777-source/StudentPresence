@@ -21,15 +21,15 @@ export function SeanceCard({
           <span className="session-label">
             {seance.is_active ? (
               <>
-                <Radio size={14} /> EN COURS
+                <Radio size={14} /> En cours
               </>
             ) : (
               <>
-                <Clock3 size={14} /> PROCHAINE SÉANCE
+                <Clock3 size={14} /> Prochaine séance
               </>
             )}
           </span>
-          <span className="session-code">GROUPE {seance.groupe}</span>
+          <span className="session-code">Groupe {seance.groupe}</span>
         </div>
       ) : (
         <div className="session-time">
