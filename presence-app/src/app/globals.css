@@ -1231,3 +1231,49 @@ a {
 .ziris-iris {
   color: #07956b;
 }
+
+/* Le sommet (onglet Migration, troisième année) : la scène occupe la
+   largeur de la carte, le repli est un escalier en CSS. */
+.summit-scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.15;
+  max-height: 340px;
+}
+.summit-sculpture {
+  position: absolute;
+  inset: 0;
+  touch-action: pan-y;
+}
+.summit-sculpture canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.summit-fallback {
+  position: absolute;
+  inset: 12% 14%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+}
+.summit-fallback > span {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink-500);
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
+}
+.summit-fallback > span[data-sommet] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.summit-sculpture[data-ready] .summit-fallback {
+  display: none;
+}

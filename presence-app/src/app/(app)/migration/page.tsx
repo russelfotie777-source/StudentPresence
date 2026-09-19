@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { motion } from "motion/react";
 import { ArrowRight, Check, Clock3, DoorOpen, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,12 @@ import {
   useWithdrawFormationRequest,
 } from "@/hooks/use-formation-requests";
 import type { DemandeFormation, SituationMigration } from "@/types/api";
+
+// three.js ne se charge que pour ceux qui verront la scène : les troisièmes années.
+const SummitSculpture = dynamic(
+  () => import("@/components/summit-sculpture").then((module) => module.SummitSculpture),
+  { ssr: false },
+);
 
 /**
  * Migration FA → FI : l'étudiant en alternance demande à suivre les cours de
@@ -50,6 +57,8 @@ export default function MigrationPage() {
             <DemandeEnAttente situation={situation.data} />
           ) : situation.data.eligible ? (
             <Formulaire situation={situation.data} />
+          ) : situation.data.formation === "FA" && auSommet(situation.data) ? (
+            <Sommet situation={situation.data} />
           ) : (
             situation.data.formation === "FA" && (
               <p className="text-sm leading-relaxed text-ink-500">{situation.data.empechement}</p>
@@ -62,6 +71,46 @@ export default function MigrationPage() {
         <Historique demandes={historique.data.filter((d) => d.statut !== "en_attente")} />
       )}
     </div>
+  );
+}
+
+/** "L3" → 3 : le rang du niveau, comme le calcule l'API. */
+function chiffre(niveau: string | null): number {
+  const m = niveau?.match(/(\d+)/);
+  return m ? Number(m[1]) : 1;
+}
+
+/** Fermé parce qu'on est au-delà du dernier niveau ouvert — pas pour une autre raison. */
+function auSommet(s: SituationMigration): boolean {
+  return chiffre(s.niveau) > s.niveau_max;
+}
+
+/**
+ * Troisième année : il n'y a plus de salle à changer. Plutôt qu'une phrase
+ * de refus, la scène du sommet — trois paliers, la bille qui monte et
+ * s'installe sur le dernier — et ce que ça veut dire.
+ */
+function Sommet({ situation: s }: { situation: SituationMigration }) {
+  const paliers = Array.from({ length: Math.max(3, chiffre(s.niveau)) }, (_, i) => `L${i + 1}`).slice(-3);
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col gap-4 rounded-2xl border border-line bg-card p-4"
+    >
+      <SummitSculpture niveaux={paliers} />
+      <div className="flex flex-col gap-2">
+        <h2 className="font-display text-lg font-semibold text-ink-900">
+          {s.niveau} : le dernier palier.
+        </h2>
+        <p className="text-sm leading-relaxed text-ink-500">
+          La migration se décide en première et deuxième année. Ici, le parcours se termine
+          là où il a été construit — avec votre salle, votre promotion, et le diplôme au bout.
+        </p>
+      </div>
+    </motion.section>
   );
 }
 
