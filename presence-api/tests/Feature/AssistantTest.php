@@ -329,23 +329,119 @@ class AssistantTest extends TestCase
         $reponse = $this->actingAs($this->admin, 'sanctum')
             ->postJson("/api/assistant/conversations/{$conversation->id}/appliquer", ['ids' => ['a1', 'a2']]);
 
-        $reponse->assertOk()->assertJsonPath('appliquees', 1)->assertJsonPath('echouees', 1);
+        $reponse->assertOk()->assertJsonPath('appliquees', 2)->assertJsonPath('echouees', 0);
         $actions = collect($reponse->json('actions'))->keyBy('id');
         $this->assertSame('appliquee', $actions['a1']['statut']);
         $this->assertSame(2, $actions['a1']['resultat']['details']['seances_creees'], 'Une séance par semaine du semestre.');
-        $this->assertSame('echouee', $actions['a2']['statut']);
-        $this->assertStringContainsString('Pr. Inconnu', $actions['a2']['resultat']['message']);
+        $this->assertNull($actions['a1']['resultat']['details']['enseignant_cree']);
+        $this->assertSame('appliquee', $actions['a2']['statut']);
         $this->assertSame('en_attente', $actions['a3']['statut']);
 
+        // L'enseignant inconnu a reçu un compte : sans titre, identifiant
+        // provisoire, mot de passe initial commun — remis à l'admin.
+        $this->assertSame(
+            ['nom' => 'Inconnu', 'identifiant' => 'ENS0001', 'mot_de_passe_initial' => '12345678'],
+            $actions['a2']['resultat']['details']['enseignant_cree'],
+        );
+        $this->assertStringContainsString('compte enseignant créé pour Inconnu (ENS0001)', $actions['a2']['resultat']['message']);
+        $inconnu = User::where('phone', 'ENS0001')->first();
+        $this->assertSame('Enseignant', $inconnu->role->value);
+        $this->assertSame('approved', $inconnu->validation_status->value);
+        $this->assertTrue(Hash::check('12345678', $inconnu->password));
+
         $this->assertDatabaseHas('matieres', ['code' => 'INF321', 'nom' => 'Maths Discrètes']);
-        $this->assertDatabaseCount('course_templates', 1);
-        $this->assertDatabaseCount('seances', 2);
+        $this->assertDatabaseHas('course_templates', ['enseignant_id' => $inconnu->id]);
+        $this->assertDatabaseCount('course_templates', 2);
+        $this->assertDatabaseCount('seances', 4);
         $this->assertSame('2026-09-14', Seance::orderBy('date_seance')->first()->date_seance->toDateString());
 
         // Le modèle est informé de ce qui a été fait.
         $dernier = collect($conversation->fresh()->messages)->reverse()->values();
         $this->assertStringContainsString('[Système] Actions traitées', $dernier[1]['content'][0]['text']);
-        $this->assertStringContainsString('ÉCHEC', $dernier[1]['content'][0]['text']);
+    }
+
+    /**
+     * Un enseignant cité sous une autre forme que son nom enregistré —
+     * titre, ordre des mots, nom de famille seul — est reconnu, pas
+     * dupliqué. Deux homonymes possibles : on demande, on ne devine pas.
+     */
+    public function test_a_known_teacher_is_recognised_however_the_timetable_names_them(): void
+    {
+        $this->scenario(new ModeleFictif([]));
+        $cours = fn (string $nom, string $id) => $this->action('creer_cours', [
+            'salle_id' => $this->salle->id, 'matiere_id' => null, 'matiere_nom' => 'Réseaux', 'matiere_code' => null,
+            'enseignant_id' => null, 'enseignant_nom' => $nom, 'enseignant_telephone' => null,
+            'jour' => 'LUNDI', 'heure_debut' => '08:00', 'heure_fin' => '10:00', 'date_debut' => null, 'date_fin' => null,
+        ], $id);
+
+        $conversation = $this->conversation();
+        $conversation->fill(['actions' => [$cours('Pr. MBALLA Etienne', 'a1'), $cours('mballa', 'a2'), $cours('M. Mballa', 'a3')]])->save();
+
+        $reponse = $this->actingAs($this->admin, 'sanctum')
+            ->postJson("/api/assistant/conversations/{$conversation->id}/appliquer", ['ids' => ['a1', 'a2', 'a3']]);
+
+        // Reconnu trois fois : un seul cours passe (les deux autres tombent
+        // sur le même créneau), aucun compte n'est créé.
+        $reponse->assertJsonPath('appliquees', 1);
+        $this->assertSame(1, User::where('role', 'Enseignant')->count());
+        $this->assertDatabaseHas('course_templates', ['enseignant_id' => $this->prof->id]);
+        foreach (collect($reponse->json('actions'))->whereIn('id', ['a2', 'a3']) as $a) {
+            $this->assertStringNotContainsString('introuvable', $a['resultat']['message']);
+        }
+
+        // Un second Mballa : « Mballa » seul devient ambigu.
+        $autre = User::factory()->enseignant()->create(['name' => 'Rose Mballa']);
+        $conversation = $this->conversation();
+        $conversation->fill(['actions' => [$cours('Mballa', 'b1')]])->save();
+        $reponse = $this->actingAs($this->admin, 'sanctum')
+            ->postJson("/api/assistant/conversations/{$conversation->id}/appliquer", ['ids' => ['b1']]);
+
+        $reponse->assertJsonPath('echouees', 1);
+        $message = $reponse->json('actions.0.resultat.message');
+        $this->assertStringContainsString('peut désigner', $message);
+        $this->assertStringContainsString("Étienne Mballa (id {$this->prof->id})", $message);
+        $this->assertStringContainsString("Rose Mballa (id {$autre->id})", $message);
+        $this->assertSame(2, User::where('role', 'Enseignant')->count(), 'Aucun compte créé dans le doute.');
+    }
+
+    /**
+     * Les comptes enseignants se créent aussi seuls (sans cours) : avec le
+     * téléphone comme identifiant quand on le connaît, sinon le numéro
+     * provisoire suivant ; toujours le mot de passe initial commun.
+     */
+    public function test_teacher_accounts_are_created_with_their_phone_or_the_next_provisional_identifier(): void
+    {
+        config(['presence.mot_de_passe_initial' => '87654321']);
+        User::factory()->enseignant()->create(['name' => 'Ancien', 'phone' => 'ENS0007']);
+        $this->scenario(new ModeleFictif([]));
+        $conversation = $this->conversation();
+        $conversation->fill(['actions' => [
+            $this->action('creer_enseignant', ['nom' => 'Dr. Awa Ndiaye', 'telephone' => '699000123', 'email' => null], 'a1'),
+            $this->action('creer_enseignant', ['nom' => 'Paul Essomba', 'telephone' => null, 'email' => 'paul@example.com'], 'a2'),
+            $this->action('creer_cours', [
+                'salle_id' => $this->salle->id, 'matiere_id' => null, 'matiere_nom' => 'Réseaux', 'matiere_code' => null,
+                'enseignant_id' => null, 'enseignant_nom' => 'Marie Nkolo', 'enseignant_telephone' => '677000001',
+                'jour' => 'LUNDI', 'heure_debut' => '08:00', 'heure_fin' => '10:00', 'date_debut' => null, 'date_fin' => null,
+            ], 'a3'),
+            $this->action('creer_enseignant', ['nom' => 'Doublon', 'telephone' => '699000123', 'email' => null], 'a4'),
+        ]])->save();
+
+        $reponse = $this->actingAs($this->admin, 'sanctum')
+            ->postJson("/api/assistant/conversations/{$conversation->id}/appliquer", ['ids' => ['a1', 'a2', 'a3', 'a4']]);
+
+        $reponse->assertJsonPath('appliquees', 3)->assertJsonPath('echouees', 1);
+        $actions = collect($reponse->json('actions'))->keyBy('id');
+
+        $this->assertSame(['telephone' => '699000123', 'mot_de_passe_initial' => '87654321'], collect($actions['a1']['resultat']['details'])->only('telephone', 'mot_de_passe_initial')->all());
+        $this->assertDatabaseHas('users', ['name' => 'Awa Ndiaye', 'phone' => '699000123', 'role' => 'Enseignant', 'validation_status' => 'approved']);
+        $this->assertSame('ENS0008', $actions['a2']['resultat']['details']['telephone'], 'Le numéro provisoire suit le plus haut attribué.');
+        $this->assertDatabaseHas('users', ['name' => 'Paul Essomba', 'phone' => 'ENS0008', 'email' => 'paul@example.com']);
+        $this->assertSame('677000001', $actions['a3']['resultat']['details']['enseignant_cree']['identifiant'], 'Le téléphone donné avec le cours sert d\'identifiant.');
+        $this->assertStringContainsString('téléphone', $actions['a4']['resultat']['message']);
+
+        foreach (['699000123', 'ENS0008', '677000001'] as $identifiant) {
+            $this->assertTrue(Hash::check('87654321', User::where('phone', $identifiant)->first()->password));
+        }
     }
 
     public function test_an_existing_subject_is_reused_rather_than_duplicated(): void
@@ -396,7 +492,7 @@ class AssistantTest extends TestCase
         $this->assertDatabaseHas('course_templates', ['matiere_id' => $creee->id]);
     }
 
-    public function test_applying_a_student_enrolment_creates_the_account_with_an_initial_password(): void
+    public function test_applying_a_student_enrolment_creates_the_account_with_the_initial_password(): void
     {
         $this->scenario(new ModeleFictif([]));
         $conversation = $this->conversation();
@@ -411,7 +507,7 @@ class AssistantTest extends TestCase
 
         $reponse->assertOk()->assertJsonPath('appliquees', 1)->assertJsonPath('echouees', 2);
         $actions = collect($reponse->json('actions'))->keyBy('id');
-        $this->assertMatchesRegularExpression('/^\d{8}$/', $actions['a1']['resultat']['details']['mot_de_passe_initial']);
+        $this->assertSame('12345678', $actions['a1']['resultat']['details']['mot_de_passe_initial'], 'Le mot de passe initial commun, celui de config/presence.php.');
         $this->assertStringContainsString('matricule', $actions['a2']['resultat']['message']);
         $this->assertStringContainsString("n'accueille pas", $actions['a3']['resultat']['message']);
 

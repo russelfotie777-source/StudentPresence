@@ -58,6 +58,22 @@ return [
     ],
 
     /*
+     * Mot de passe initial de tout compte créé par l'administration ou par
+     * l'assistant (étudiant inscrit, enseignant cité par un emploi du
+     * temps). Le même pour tous, communiqué avec l'identifiant ; la personne
+     * le changera elle-même — parcours prévu plus tard, avec vérification
+     * par e-mail.
+     */
+    'mot_de_passe_initial' => env('PRESENCE_MOT_DE_PASSE_INITIAL', '12345678'),
+
+    /*
+     * Identifiant de connexion provisoire d'un enseignant créé sans numéro
+     * de téléphone (un emploi du temps ne le donne jamais) : ce préfixe
+     * suivi d'un numéro d'ordre, ENS0001, ENS0002…
+     */
+    'prefixe_identifiant_enseignant' => env('PRESENCE_PREFIXE_ENSEIGNANT', 'ENS'),
+
+    /*
      * Migration FA → FI : un étudiant en alternance peut demander à suivre
      * les cours de jour dans une salle FI de son département et de son
      * niveau. Ouverte aux premières années seulement — en troisième année,
