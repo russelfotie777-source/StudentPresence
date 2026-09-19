@@ -227,7 +227,7 @@ export function ActionsProposees({ conversationId, actions }: { conversationId: 
                         {a.resultat.message}
                       </p>
                     )}
-                    <Identifiants details={a.resultat?.details} />
+                    <Identifiants action={a} />
                     {estImport(a) && a.statut !== "ignoree" && (
                       <ResultatImport conversationId={conversationId} action={a} />
                     )}
@@ -239,9 +239,7 @@ export function ActionsProposees({ conversationId, actions }: { conversationId: 
         </div>
       )}
 
-      {traitees.some((a) => a.resultat?.details?.mot_de_passe_initial) && (
-        <CopierIdentifiants actions={traitees} />
-      )}
+      {traitees.some((a) => comptesCrees(a).length > 0) && <CopierIdentifiants actions={traitees} />}
     </div>
   );
 }
@@ -380,28 +378,54 @@ function ResultatImport({ conversationId, action }: { conversationId: number; ac
   );
 }
 
-/** Matricule et mot de passe initial d'un compte créé : à remettre à la personne. */
-function Identifiants({ details }: { details?: Record<string, unknown> }) {
-  const mdp = details?.mot_de_passe_initial;
-  if (typeof mdp !== "string") return null;
-  const identifiant = (details?.matricule ?? details?.telephone) as string | undefined;
+/** Un compte créé par l'assistant, tel que l'admin le remet à la personne. */
+interface CompteCree {
+  nom: string;
+  identifiant: string;
+  mot_de_passe_initial: string;
+}
+
+/**
+ * Les comptes qu'une action a créés : celui d'une inscription ou d'un
+ * enseignant (identifiants au premier niveau), celui de l'enseignant qu'un
+ * cours a fait naître, ceux d'un import d'emploi du temps.
+ */
+function comptesCrees(action: ActionIA): CompteCree[] {
+  const d = action.resultat?.details;
+  if (!d) return [];
+  if (typeof d.mot_de_passe_initial === "string") {
+    return [{ nom: action.resume, identifiant: String(d.matricule ?? d.telephone ?? ""), mot_de_passe_initial: d.mot_de_passe_initial }];
+  }
+  const cours = d.enseignant_cree as CompteCree | null | undefined;
+  if (cours) return [cours];
+  return Array.isArray(d.enseignants_crees) ? (d.enseignants_crees as CompteCree[]) : [];
+}
+
+/** Identifiant et mot de passe initial des comptes créés : à remettre aux personnes. */
+function Identifiants({ action }: { action: ActionIA }) {
+  const comptes = comptesCrees(action);
+  if (comptes.length === 0) return null;
+  const depuisCours = typeof action.resultat?.details?.mot_de_passe_initial !== "string";
 
   return (
-    <p className="mt-1 inline-flex items-center gap-2 rounded-lg bg-muted px-2 py-1 font-mono text-[12px] text-foreground">
-      {identifiant && <span>{identifiant}</span>}
-      <span className="text-muted-foreground">·</span>
-      <span>mot de passe {mdp}</span>
-    </p>
+    <ul className="mt-1 flex flex-col gap-1">
+      {comptes.map((c) => (
+        <li key={c.identifiant} className="inline-flex flex-wrap items-center gap-2 rounded-lg bg-muted px-2 py-1 text-[12px] text-foreground">
+          {depuisCours && <span>Compte enseignant créé pour {c.nom} :</span>}
+          <span className="font-mono">{c.identifiant}</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="font-mono">mot de passe {c.mot_de_passe_initial}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
 function CopierIdentifiants({ actions }: { actions: ActionIA[] }) {
   const lignes = actions
-    .filter((a) => a.statut === "appliquee" && typeof a.resultat?.details?.mot_de_passe_initial === "string")
-    .map((a) => {
-      const d = a.resultat!.details;
-      return `${a.resume} — identifiant ${d.matricule ?? d.telephone} — mot de passe ${d.mot_de_passe_initial}`;
-    });
+    .filter((a) => a.statut === "appliquee")
+    .flatMap((a) => comptesCrees(a))
+    .map((c) => `${c.nom} — identifiant ${c.identifiant} — mot de passe ${c.mot_de_passe_initial}`);
 
   if (lignes.length === 0) return null;
 
