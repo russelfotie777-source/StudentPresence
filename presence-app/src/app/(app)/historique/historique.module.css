@@ -69,9 +69,10 @@
   background: var(--primary);
 }
 .heading h1 {
-  font:
-    600 34px/1.2 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-38);
+  font-weight: var(--w-semibold);
+  line-height: 1.2;
   margin-top: 9px;
   overflow-wrap: anywhere;
 }
@@ -83,26 +84,10 @@
   max-width: 240px;
 }
 .total {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
   flex: none;
-  padding-left: 16px;
-  border-left: 1px solid var(--line);
-}
-.total > strong {
-  font:
-    500 30px/1.1 var(--font-display),
-    sans-serif;
-  font-variant-numeric: tabular-nums;
-  color: var(--history-blue);
-}
-.total > span {
-  text-align: right;
   font-size: var(--text-13);
   color: var(--ink-500);
-  line-height: 1.5;
-  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
 }
 .toolbar {
   display: flex;
@@ -206,9 +191,10 @@
   border-bottom: 1px solid var(--line);
 }
 .dayNumber {
-  font:
-    500 28px/1 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-30);
+  font-weight: var(--w-semibold);
+  line-height: 1;
   color: var(--ink-900);
   font-variant-numeric: tabular-nums;
 }
@@ -225,12 +211,6 @@
 .dateWords > span {
   color: var(--ink-500);
   font-size: var(--text-13);
-}
-.dayCount {
-  margin-left: auto;
-  color: var(--ink-500);
-  font-size: var(--text-13);
-  font-weight: var(--w-regular);
 }
 .sessions {
   list-style: none;
@@ -254,9 +234,10 @@
   font-variant-numeric: tabular-nums;
 }
 .time time:first-child {
-  font:
-    600 14px/1.5 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-15);
+  font-weight: var(--w-semibold);
+  line-height: 1.5;
   color: var(--ink-900);
 }
 .time > span {
@@ -269,9 +250,10 @@
   min-width: 0;
 }
 .sessionBody h3 {
-  font:
-    600 16px/1.45 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-17);
+  font-weight: var(--w-semibold);
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .teacher {
@@ -385,9 +367,10 @@
   margin-bottom: 20px;
 }
 .empty h2 {
-  font:
-    600 21px/1.4 var(--font-display),
-    sans-serif;
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-20);
+  font-weight: var(--w-semibold);
+  line-height: 1.4;
 }
 .empty p {
   font-size: var(--text-13);
@@ -470,17 +453,7 @@
     padding: 34px 0;
   }
   .total {
-    flex-direction: row;
-    gap: 12px;
-    align-items: center;
-    padding-left: 24px;
-  }
-  .total > strong {
-    font-size: var(--text-38);
-  }
-  .total > span {
-    text-align: left;
-    margin-top: 0;
+    font-size: var(--text-15);
   }
   .day {
     display: grid;
@@ -498,11 +471,6 @@
     justify-content: flex-start;
     border-bottom: 0;
     padding-top: 21px;
-  }
-  .dayCount {
-    width: 100%;
-    margin-left: 0;
-    padding-left: 47px;
   }
   .row {
     grid-template-columns: 54px minmax(0, 1fr);
@@ -540,14 +508,8 @@
   .heading h1 {
     font-size: var(--text-30);
   }
-  .total > strong {
-    font-size: var(--text-24);
-  }
   .heading {
     gap: 10px;
-  }
-  .total {
-    padding-left: 10px;
   }
   .filters button {
     font-size: var(--text-13);

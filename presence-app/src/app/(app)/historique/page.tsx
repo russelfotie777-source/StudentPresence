@@ -115,14 +115,11 @@ export default function HistoriquePage() {
             Historique<span>.</span>
           </h1>
         </div>
-        <div className={styles.total}>
-          <strong>{isLoading ? "…" : data ? total(data.pages) : "—"}</strong>
-          <span>
-            séance{total(data?.pages) === 1 ? "" : "s"}
-            <br />
-            au total
+        {data && (
+          <span className={styles.total}>
+            {total(data.pages)} séance{total(data.pages) === 1 ? "" : "s"}
           </span>
-        </div>
+        )}
       </div>
 
       <div className={styles.toolbar}>
@@ -166,18 +163,10 @@ export default function HistoriquePage() {
         </div>
       </div>
 
-      {!isLoading && data && (
+      {!isLoading && data && hasFilters && (
         <p className={styles.resultCount} role="status">
-          {hasFilters
-            ? `${filtered.length} résultat${filtered.length === 1 ? "" : "s"}`
-            : `${seances.length} séance${seances.length === 1 ? "" : "s"}`}
-          {hasFilters && hasNextPage
-            ? ` parmi ${seances.length} séances chargées sur ${total(data.pages)}`
-            : hasNextPage
-              ? ` chargées sur ${total(data.pages)}`
-              : hasFilters
-                ? ` sur ${seances.length} séances`
-                : " dans votre historique"}
+          {filtered.length} résultat{filtered.length === 1 ? "" : "s"}
+          {hasNextPage ? " parmi les séances déjà affichées" : ""}
         </p>
       )}
 
@@ -233,8 +222,10 @@ export default function HistoriquePage() {
       )}
 
       <div className={styles.timeline}>
-        {groups.map(([date, items]) => {
+        {groups.map(([date, items], index) => {
           const day = date ? new Date(`${date}T00:00:00`) : null;
+          const precedent = groups[index - 1]?.[0];
+          const nouveauMois = !precedent || precedent.slice(0, 7) !== (date ?? "").slice(0, 7);
           return (
             <section
               key={date ?? "sans-date"}
@@ -253,15 +244,14 @@ export default function HistoriquePage() {
                     {day?.toLocaleDateString("fr-FR", { weekday: "long" }) ??
                       "Date inconnue"}
                   </strong>
-                  <span>
-                    {day?.toLocaleDateString("fr-FR", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </span>
-                </span>
-                <span className={styles.dayCount}>
-                  {items.length} séance{items.length === 1 ? "" : "s"}
+                  {nouveauMois && (
+                    <span>
+                      {day?.toLocaleDateString("fr-FR", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </span>
+                  )}
                 </span>
               </h2>
               <ol className={styles.sessions}>
@@ -295,7 +285,9 @@ export default function HistoriquePage() {
       {hasNextPage && (
         <div className={styles.more}>
           <span>
-            {seances.length} / {total(data?.pages)} séances chargées
+            {total(data?.pages) - seances.length} séance
+            {total(data?.pages) - seances.length === 1 ? "" : "s"} plus ancienne
+            {total(data?.pages) - seances.length === 1 ? "" : "s"}
           </span>
           <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
             {isFetchingNextPage ? (
@@ -309,7 +301,7 @@ export default function HistoriquePage() {
               ? "Chargement…"
               : isFetchNextPageError
                 ? "Réessayer"
-                : "Charger la suite"}
+                : "Voir plus"}
           </button>
         </div>
       )}
@@ -351,7 +343,6 @@ function HistoriqueRow({ seance, role }: { seance: Seance; role?: UserRole }) {
             <MapPin size={12} />
             {seance.salle}
           </span>
-          {seance.groupe && <span>{seance.groupe}</span>}
           <span
             className={`${styles.status} ${statut === "present" ? styles.present : statut === "absent" ? styles.absent : styles.pending}`}
           >
