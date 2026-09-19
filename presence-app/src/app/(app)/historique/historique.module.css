@@ -1,9 +1,9 @@
 .history {
-  --history-blue: #326aab;
-  --history-blue-soft: #f2f7fb;
-  --history-green-soft: #e7f5ed;
-  --history-red: #b54857;
-  --history-red-soft: #fcf0f1;
+  --history-blue: var(--primary);
+  --history-blue-soft: var(--indigo-50);
+  --history-green-soft: var(--indigo-100);
+  --history-red: var(--destructive);
+  --history-red-soft: var(--rose-100);
   min-width: 0;
 }
 .topbar {
@@ -26,8 +26,8 @@
   width: 32px;
   height: 32px;
   border-radius: 7px;
-  background: #183e31;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 .topbar > button {
   margin-left: auto;
@@ -42,7 +42,7 @@
   gap: 12px;
 }
 .context > span {
-  color: #b0c1ba;
+  color: var(--ink-300);
 }
 .heading {
   display: flex;
@@ -141,7 +141,7 @@
 .filters button[aria-pressed="true"] {
   color: var(--ink-900);
   background: var(--card);
-  box-shadow: 0 1px 4px #18272314;
+  box-shadow: var(--relief);
 }
 .filters button:hover {
   color: var(--ink-900);
@@ -444,13 +444,6 @@
   to {
     transform: rotate(360deg);
   }
-}
-:global(.dark) .history {
-  --history-blue: #95bfdc;
-  --history-blue-soft: #1c2b32;
-  --history-green-soft: #234433;
-  --history-red: #ef9aa8;
-  --history-red-soft: #38272b;
 }
 @media (min-width: 640px) {
   .toolbar {

@@ -339,49 +339,87 @@
 }
 
 /* Shared application palette and mobile workspace. */
+/* Le bloc de position vit sur le héros : mêmes réglages de verre que ses boutons (voir plus bas). */
 .session-live .gps-position-control {
-  --ink-900: #ffffff;
-  --ink-500: #d7e7dd;
-  --card: #2b4c3e;
-  --line: #496858;
-  --foreground: #ffffff;
-  --secondary: #e5efe8;
-  --secondary-foreground: #203d32;
+  --ink-900: var(--hero-ink);
+  --ink-500: var(--hero-muted);
+  --muted-foreground: var(--hero-muted);
+  --card: rgb(255 255 255 / 0.14);
+  --background: rgb(255 255 255 / 0.14);
+  --muted: rgb(255 255 255 / 0.24);
+  --line: var(--hero-line);
+  --border: var(--hero-line);
+  --input: var(--hero-line);
+  --foreground: var(--hero-ink);
+  --secondary: rgb(255 255 255 / 0.92);
+  --secondary-foreground: #0b3d2c;
+  --destructive: #ffd1d1;
 }
 
+/* Palette : des surfaces neutres et profondes, une seule couleur vive —
+   la menthe — réservée à ce qu'on peut faire (pointer, l'onglet actif, la
+   séance en cours). C'est la parcimonie qui la fait ressortir : tout le
+   reste est encre, papier ou nuit. */
 :root {
-  --ink-900: #202b28;
-  --ink-700: #465650;
-  --ink-500: #65766e;
-  --ink-300: #74857d;
-  --surface-0: #f7f9f8;
+  --ink-900: #0f1512;
+  --ink-700: #3b4842;
+  --ink-500: #67736c;
+  --ink-300: #9aa59f;
+  --surface-0: #f4f7f5;
   --surface-1: #ffffff;
-  --surface-2: #edf2ef;
-  --line: #e0e7e3;
-  --indigo-600: #18745a;
-  --indigo-500: #24886b;
-  --indigo-100: #dfefe7;
-  --indigo-50: #edf6f1;
-  --emerald-500: #18745a;
-  --rose-500: #c3574f;
-  --radius: 0.5rem;
+  --surface-2: #e9efeb;
+  --line: #dde4df;
+  --indigo-600: #0f9d68;
+  --indigo-500: #12b075;
+  --indigo-100: #d6f4e6;
+  --indigo-50: #ebf9f2;
+  --emerald-500: #0f9d68;
+  --emerald-100: #d6f4e6;
+  --amber-500: #d98b1f;
+  --amber-100: #fbeed2;
+  --rose-500: #d64545;
+  --rose-100: #fbe3e3;
+  --radius: 0.75rem;
+  /* La menthe elle-même, pour ce qui ne passe pas par --primary (le bouton de pointage). */
+  --menthe: #2ee59d;
+  --menthe-ink: #06140d;
+  /* Mat et plein : pas de dégradé, pas de halo — c'est la couleur qui porte, pas la lumière. */
+  --hero: #0e8a5f;
+  --hero-ink: #ffffff;
+  --hero-muted: #d2efe2;
+  --hero-line: rgb(255 255 255 / 0.22);
+  --verre: #ffffff;
+  --relief: inset 0 1px 0 rgb(255 255 255 / 0.9);
 }
 .dark {
-  --ink-900: #edf3ef;
-  --ink-700: #c4d1ca;
-  --ink-500: #a1b1a8;
-  --ink-300: #92a299;
-  --surface-0: #141a17;
-  --surface-1: #1c2520;
-  --surface-2: #27352d;
-  --line: #344239;
-  --indigo-600: #82ceae;
-  --indigo-500: #73c6a3;
-  --indigo-100: #2a4737;
-  --indigo-50: #21382c;
-  --primary-foreground: #14271d;
-  --emerald-500: #82ceae;
-  --accent-foreground: #b5e5cf;
+  --ink-900: #f4f7f5;
+  --ink-700: #cbd3ce;
+  --ink-500: #8e9a93;
+  --ink-300: #5f6b65;
+  --surface-0: #0f1311;
+  --surface-1: #171c19;
+  --surface-2: #1f2622;
+  --line: #283029;
+  --indigo-600: #2ee59d;
+  --indigo-500: #5cefb5;
+  --indigo-100: #163a2c;
+  --indigo-50: #12291f;
+  --primary-foreground: #06140d;
+  --emerald-500: #2ee59d;
+  --emerald-100: #12331f;
+  --amber-500: #f5b342;
+  --amber-100: #3a2a10;
+  --rose-500: #ff6b6b;
+  --rose-100: #3d1a1a;
+  --accent-foreground: #7cf0c1;
+  --success-foreground: #06140d;
+  --warning-foreground: #2a1704;
+  --hero: #0d6f4f;
+  --hero-ink: #f7fffb;
+  --hero-muted: #c9ecdc;
+  --hero-line: rgb(255 255 255 / 0.18);
+  --verre: #141917;
+  --relief: inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
 * {
 }
@@ -432,8 +470,8 @@ a {
   color: var(--ink-900);
 }
 .brand-mark {
-  background: var(--ink-900);
-  color: var(--background);
+  background: var(--primary);
+  color: var(--primary-foreground);
   width: 33px;
   height: 33px;
   display: grid;
@@ -462,6 +500,7 @@ a {
   border-radius: 50%;
   background: var(--card);
   border: 1px solid var(--line);
+  box-shadow: var(--relief);
 }
 .notification-control {
   position: relative;
@@ -543,13 +582,18 @@ a {
   position: relative;
   padding: 22px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--card);
+  box-shadow: var(--relief);
 }
+/* La séance en cours est la seule surface colorée de l'écran : c'est elle
+   qu'on doit voir en premier. Pleine et mate — un halo ou un dégradé, c'est
+   la lumière qui attire l'œil, pas le contenu. */
 .session-live {
-  background: #203d32;
-  color: #fff;
-  border-color: #203d32;
+  background: var(--hero);
+  color: var(--hero-ink);
+  border-color: rgb(0 0 0 / 0.12);
+  box-shadow: none;
 }
 .session-topline {
   display: flex;
@@ -566,7 +610,10 @@ a {
   font-weight: var(--w-bold);
 }
 .session-live .session-label {
-  color: #b4edbf;
+  color: var(--hero-ink);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.16);
 }
 .session-code {
   font-size: var(--text-13);
@@ -599,7 +646,7 @@ a {
   flex: none;
 }
 .session-live .session-details {
-  color: #b9d0c3;
+  color: var(--hero-muted);
 }
 .session-hours {
   margin-top: 24px;
@@ -612,7 +659,7 @@ a {
   font-size: var(--text-13);
 }
 .session-live .session-hours {
-  border-color: #466456;
+  border-color: var(--hero-line);
 }
 .time-separator {
   padding: 0 5px;
@@ -627,12 +674,12 @@ a {
   margin-top: 18px;
 }
 .checkin-primary {
-  height: 48px;
+  height: 52px;
   width: 100%;
-  border-radius: 6px;
-  background: #c6f2a5;
-  color: #1d392b;
-  font-size: var(--text-13);
+  border-radius: 12px;
+  background: var(--menthe);
+  color: var(--menthe-ink);
+  font-size: var(--text-15);
   font-weight: var(--w-bold);
   box-shadow: none;
   padding: 0 16px;
@@ -641,7 +688,7 @@ a {
     transform 0.2s;
 }
 .checkin-primary:hover {
-  background: #daf8c4;
+  background: #5cefb5;
 }
 .checkin-primary:active {
   transform: scale(0.985);
@@ -660,10 +707,10 @@ a {
   color: var(--primary);
 }
 .session-live .attendance-status {
-  color: #d0e5d9;
+  color: var(--hero-muted);
 }
 .session-live .attendance-status.confirmed {
-  color: #c6f2a5;
+  color: var(--hero-ink);
 }
 .agenda-heading {
   display: flex;
@@ -728,7 +775,7 @@ a {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  border: 2px solid #a8b9af;
+  border: 2px solid var(--ink-300);
   background: var(--background);
 }
 .timeline-dot.done {
@@ -764,12 +811,24 @@ a {
   font-size: var(--text-13);
   border-radius: 6px;
 }
+/* Sur le héros, les boutons sont en verre clair : lisibles sur le dégradé,
+   sans rivaliser avec le bouton de pointage. */
 .session-live .role-actions > button {
-  --card: #fff;
-  --foreground: #203d32;
-  --secondary: #dbe9df;
-  --secondary-foreground: #203d32;
-  --input: #b3c6b9;
+  --card: rgb(255 255 255 / 0.14);
+  --background: rgb(255 255 255 / 0.14);
+  --muted: rgb(255 255 255 / 0.24);
+  --border: var(--hero-line);
+  --foreground: var(--hero-ink);
+  --secondary: rgb(255 255 255 / 0.92);
+  --secondary-foreground: #0b3d2c;
+  --input: var(--hero-line);
+  --primary: #ffffff;
+  --primary-foreground: #0b3d2c;
+  --success: #ffffff;
+  --success-foreground: #0b3d2c;
+  --destructive: #ff8f8f;
+  --destructive-foreground: #3d0e0e;
+  backdrop-filter: blur(6px);
 }
 .insights-column {
   display: flex;
@@ -967,7 +1026,7 @@ a {
   z-index: 40;
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
-  background: var(--card);
+  background: var(--verre);
 }
 .nav-items {
   display: grid;
@@ -984,14 +1043,14 @@ a {
   gap: 5px;
   color: var(--muted-foreground);
   position: relative;
-  border-radius: 6px;
+  border-radius: 12px;
   transition:
     background 0.2s,
     color 0.2s;
 }
 .nav-item-active {
   color: var(--primary);
-  background: var(--indigo-50);
+  background: var(--indigo-100);
 }
 .nav-label {
   font-size: var(--text-13);

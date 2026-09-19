@@ -44,7 +44,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             className="flex items-center justify-center"
           >
             {isDark ? (
-              <Moon className="h-[18px] w-[18px] text-indigo-400" />
+              <Moon className="h-[18px] w-[18px] text-primary" />
             ) : (
               <Sun className="h-[18px] w-[18px] text-amber-500" />
             )}

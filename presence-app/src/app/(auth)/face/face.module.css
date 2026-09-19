@@ -78,10 +78,10 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #187958;
+  color: #0f9d68;
 }
 .steps li + li {
-  color: #376696;
+  color: #0f9d68;
   border-left: 1px solid var(--face-line);
   padding-left: 20px;
 }
@@ -96,7 +96,7 @@
   line-height: 1.08;
 }
 .intro h1 em {
-  color: #087953;
+  color: #0f9d68;
   font-style: normal;
 }
 .description {
@@ -118,10 +118,10 @@
   place-items: center;
   width: 45px;
   height: 45px;
-  color: #3977a9;
-  border: 1px solid #d3e1ec;
+  color: #0f9d68;
+  border: 1px solid #d6f4e6;
   border-radius: 8px;
-  background: #f5f8fc;
+  background: #ebf9f2;
 }
 .desktopIdentity > div {
   display: flex;
@@ -147,7 +147,7 @@
 }
 .assurance > svg {
   flex: none;
-  color: #087953;
+  color: #0f9d68;
   margin-top: 2px;
 }
 .assurance strong {
@@ -306,7 +306,7 @@
   position: absolute;
   inset: 0 10% auto;
   height: 1px;
-  background: #95f5d0;
+  background: #2ee59d;
   box-shadow: 0 -5px 16px 4px #81e7c341;
   animation: scan 2.2s ease-in-out infinite alternate;
 }
@@ -314,7 +314,7 @@
   position: absolute;
   inset: 0;
   background: #e6f5ef;
-  color: #087953;
+  color: #0f9d68;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -356,7 +356,7 @@
 }
 .page[data-status="ready"] .telemetry > div:nth-child(2) strong,
 .page[data-status="success"] .telemetry strong {
-  color: #087953;
+  color: #0f9d68;
 }
 .feedback {
   min-height: 82px;
@@ -402,7 +402,7 @@
   width: 100%;
   min-height: 56px;
   border-radius: 8px;
-  background: #087953;
+  background: #0f9d68;
   color: #fff;
   padding: 10px 17px;
   font-size: var(--text-13);
@@ -410,18 +410,18 @@
   cursor: pointer;
   box-shadow:
     inset 0 1px 0 #ffffff30,
-    0 5px 10px #08795318;
-  border: 1px solid #066d4a;
+    0 5px 10px #0f9d6818;
+  border: 1px solid #0b7a4f;
   transition:
     background 0.2s,
     box-shadow 0.2s,
     transform 0.2s;
 }
 .captureButton:hover:not(:disabled) {
-  background: #066443;
+  background: #0b7a4f;
   box-shadow:
     inset 0 1px 0 #ffffff30,
-    0 7px 18px #0879532a;
+    0 7px 18px #0f9d682a;
 }
 .captureButton:active:not(:disabled) {
   transform: translateY(1px);
@@ -486,14 +486,14 @@
   cursor: pointer;
 }
 .footer button:hover:not(:disabled) {
-  color: #087953;
+  color: #0f9d68;
 }
 .footer button:disabled {
   opacity: 0.5;
   cursor: default;
 }
 .page button:focus-visible {
-  outline: 2px solid #3977a9;
+  outline: 2px solid #0f9d68;
   outline-offset: 4px;
 }
 .spinner {
@@ -526,22 +526,22 @@
   background: #111b17;
 }
 :global(.dark) .identityGlyph {
-  background: #1b2b32;
-  border-color: #345665;
-  color: #87b6d9;
+  background: #12291f;
+  border-color: #1f4a3a;
+  color: #7fd8b3;
 }
 :global(.dark) .intro h1 em {
-  color: #72d9b0;
+  color: #2ee59d;
 }
 :global(.dark) .steps li {
-  color: #72d9b0;
+  color: #2ee59d;
 }
 :global(.dark) .steps li + li {
-  color: #98bddd;
+  color: #7fd8b3;
 }
 :global(.dark) .page[data-status="ready"] .telemetry > div:nth-child(2) strong,
 :global(.dark) .page[data-status="success"] .telemetry strong {
-  color: #72d9b0;
+  color: #2ee59d;
 }
 :global(.dark) .cameraPlaceholder {
   color: var(--face-muted);

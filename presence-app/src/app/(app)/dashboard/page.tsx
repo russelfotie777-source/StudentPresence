@@ -52,6 +52,20 @@ const AttendanceSculpture = dynamic(
   { ssr: false },
 );
 
+/**
+ * Le prénom tel qu'on le dit, pas tel qu'il a été tapé : « RUSSEL » ou
+ * « jean-paul » à l'inscription deviennent « Russel » et « Jean-Paul » dans
+ * le bonjour. Le nom complet reste intact partout ailleurs.
+ */
+function prenom(nomComplet: string): string {
+  const premier = nomComplet.trim().split(/\s+/)[0] ?? "";
+  return premier
+    .toLocaleLowerCase("fr")
+    .split("-")
+    .map((partie) => partie.charAt(0).toLocaleUpperCase("fr") + partie.slice(1))
+    .join("-");
+}
+
 export default function DashboardPage() {
   const { data: me } = useMe();
   const {
@@ -152,7 +166,7 @@ export default function DashboardPage() {
             )}
           </p>
           <h1>
-            Bonjour, {me?.user.name.trim().split(/\s+/)[0]}
+            Bonjour, {me?.user.name && prenom(me.user.name)}
             <span className="brand-period">.</span>
           </h1>
         </div>

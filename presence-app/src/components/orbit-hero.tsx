@@ -42,20 +42,20 @@ export function OrbitHero({
       <div
         aria-hidden
         className="absolute inset-0"
-        style={{ background: "linear-gradient(175deg, #0c0a26 0%, #181246 46%, #2f2394 100%)" }}
+        style={{ background: "linear-gradient(175deg, #07100d 0%, #0e2a21 46%, #12664f 100%)" }}
       />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
         style={{
           background:
-            "radial-gradient(60% 100% at 50% 100%, rgba(129,111,255,.4) 0%, transparent 70%)",
+            "radial-gradient(60% 100% at 50% 100%, rgba(46,229,157,.35) 0%, transparent 70%)",
         }}
       />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ boxShadow: "inset 0 0 60px 10px rgba(5,4,20,.6)" }}
+        style={{ boxShadow: "inset 0 0 60px 10px rgba(3,10,8,.6)" }}
       />
 
       {STARS.map((s, i) => (
@@ -114,7 +114,7 @@ export function OrbitHero({
                 style={{
                   width: r.dotSize,
                   height: r.dotSize,
-                  boxShadow: "0 0 10px 2px rgba(196,181,253,.85)",
+                  boxShadow: "0 0 10px 2px rgba(200,255,230,.85)",
                 }}
               />
             </motion.div>
@@ -126,7 +126,7 @@ export function OrbitHero({
           aria-hidden
           className="absolute h-32 w-32 rounded-full blur-2xl"
           style={{
-            background: "radial-gradient(circle, rgba(140,124,255,.65) 0%, transparent 72%)",
+            background: "radial-gradient(circle, rgba(46,229,157,.6) 0%, transparent 72%)",
           }}
           animate={{ opacity: [0.55, 0.9, 0.55], scale: [1, 1.1, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -137,8 +137,8 @@ export function OrbitHero({
           className="relative h-[72px] w-[72px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle at 34% 28%, #e9e6ff 0%, #7c6cf5 42%, #4630c9 78%, #2c2073 100%)",
-            boxShadow: "0 0 0 1px rgba(255,255,255,.12), 0 14px 32px -8px rgba(30,20,90,.7)",
+              "radial-gradient(circle at 34% 28%, #e6fff5 0%, #5cefb5 42%, #0f9d68 78%, #0b4a3a 100%)",
+            boxShadow: "0 0 0 1px rgba(255,255,255,.12), 0 14px 32px -8px rgba(3,30,20,.7)",
           }}
           animate={{ scale: [1, 1.045, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}

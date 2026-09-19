@@ -49,7 +49,8 @@ export default function SalairePage() {
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-indigo-500 to-indigo-600 p-5 shadow-[0_24px_48px_-16px_rgba(79,70,229,.55)]"
+            className="relative overflow-hidden rounded-[26px] p-5 shadow-[0_24px_48px_-16px_rgba(15,157,104,.55)]"
+            style={{ background: "var(--hero)" }}
           >
             <GrainOverlay className="rounded-[26px]" />
             <div
