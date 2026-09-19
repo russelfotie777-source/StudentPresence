@@ -32,6 +32,8 @@ export interface EtudiantFeuille {
   formation: FormationType | null;
   statut_compte: StatutCompte;
   motif_statut: string | null;
+  presence_automatique?: boolean;
+  presence_automatique_motif?: string | null;
   /** seance_id → état retenu, null quand il n'y a rien à dire. */
   presences: Record<string, PresenceState | null>;
 }

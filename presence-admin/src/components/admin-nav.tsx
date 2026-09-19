@@ -15,6 +15,7 @@ import {
   Users,
   ScanFace,
   UserCheck,
+  UsersRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ const SECTIONS: NavSection[] = [
     titre: "Suivi",
     items: [
       { href: "/etudiants", label: "Étudiants", icon: Users },
+      { href: "/gestion", label: "Gestion des étudiants", icon: UsersRound },
       { href: "/validations", label: "Validations", icon: BadgeCheck },
       { href: "/requetes", label: "Requêtes enseignants", icon: MessageSquareWarning },
       { href: "/demandes-formation", label: "Migrations FA → FI", icon: ArrowLeftRight },

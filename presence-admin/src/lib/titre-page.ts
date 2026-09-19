@@ -8,6 +8,7 @@ const TITRES: Record<string, string> = {
   "/catalogue": "Catalogue",
   "/emplois-du-temps": "Emplois du temps",
   "/etudiants": "Étudiants",
+  "/gestion": "Gestion des étudiants",
   "/validations": "Validations",
   "/requetes": "Requêtes enseignants",
   "/demandes-formation": "Migrations FA → FI",
