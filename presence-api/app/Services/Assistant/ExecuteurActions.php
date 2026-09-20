@@ -55,6 +55,7 @@ class ExecuteurActions
                 'inscrire_etudiant' => $this->inscrireEtudiant($action['parametres']),
                 'creer_enseignant' => $this->creerEnseignant($action['parametres']),
                 'modifier_seance' => $this->modifierSeance($action['parametres']),
+                'modifier_cours' => $this->modifierCours($action['parametres']),
                 'supprimer_seance' => $this->supprimerSeance($action['parametres']),
                 'supprimer_cours' => $this->supprimerCours($action['parametres']),
                 'changer_salle_etudiant' => $this->changerSalle($action['parametres']),
@@ -448,6 +449,55 @@ class ExecuteurActions
                 isset($changements['enseignant_id']) ? ', avec '.$seance->enseignant->name : '',
             ),
             'seance_id' => $seance->id,
+        ];
+    }
+
+    /**
+     * Modifier la règle d'un cours : ses séances à venir suivent (voir
+     * RetouchesPlanning::modifierCours), celles en conflit sont signalées.
+     *
+     * @param  array<string, mixed>  $p
+     * @return array<string, mixed>
+     */
+    private function modifierCours(array $p): array
+    {
+        $cours = CourseTemplate::with('matiere')->find($p['cours_id'] ?? 0)
+            ?? throw ValidationException::withMessages(['cours_id' => ['Cours introuvable.']]);
+
+        $changements = Validator::make(array_filter([
+            'jour' => $p['jour'] ?? null,
+            'heure_debut' => $p['heure_debut'] ?? null,
+            'heure_fin' => $p['heure_fin'] ?? null,
+            'enseignant_id' => $p['enseignant_id'] ?? null,
+            'salle_id' => $p['salle_id'] ?? null,
+        ], fn ($v) => $v !== null && $v !== ''), [
+            'jour' => ['sometimes', Rule::in(array_column(Weekday::cases(), 'value'))],
+            'heure_debut' => ['sometimes', 'date_format:H:i'],
+            'heure_fin' => ['sometimes', 'date_format:H:i'],
+            'enseignant_id' => ['sometimes', Rule::exists('users', 'id')->where('role', 'Enseignant')],
+            'salle_id' => ['sometimes', 'exists:salles,id'],
+        ])->validate();
+
+        if ($changements === []) {
+            throw ValidationException::withMessages(['changements' => ['Aucun changement indiqué.']]);
+        }
+
+        $debut = $changements['heure_debut'] ?? substr($cours->heure_debut, 0, 5);
+        $fin = $changements['heure_fin'] ?? substr($cours->heure_fin, 0, 5);
+        if ($fin <= $debut) {
+            throw ValidationException::withMessages(['heure_fin' => ["L'heure de fin doit être après l'heure de début."]]);
+        }
+
+        $resultat = $this->retouches->modifierCours($cours, $changements);
+
+        return [
+            'message' => sprintf(
+                '%s modifié : %d séance%s à venir mise%s à jour%s.',
+                $cours->matiere?->nom ?? 'Cours', $resultat['modifiees'], $resultat['modifiees'] > 1 ? 's' : '', $resultat['modifiees'] > 1 ? 's' : '',
+                $resultat['ignorees'] ? ', '.count($resultat['ignorees']).' laissée(s) telle(s) quelle(s) (créneau pris)' : '',
+            ),
+            'cours_id' => $cours->id,
+            ...$resultat,
         ];
     }
 
