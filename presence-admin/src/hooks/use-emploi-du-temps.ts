@@ -90,6 +90,28 @@ export function useModifierSeance() {
   });
 }
 
+export interface ModificationCours {
+  jour?: Weekday;
+  heure_debut?: string;
+  heure_fin?: string;
+  enseignant_id?: number;
+}
+
+export interface ResultatModificationCours {
+  modifiees: number;
+  ignorees: { seance_id: number; date: string; reason: string }[];
+}
+
+/** Modifier la règle du cours : ses séances à venir suivent, les tenues restent. */
+export function useModifierCours() {
+  const invalider = useInvaliderSeances();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: ModificationCours }) =>
+      apiFetch<ResultatModificationCours>(`/api/course-templates/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    onSuccess: invalider,
+  });
+}
+
 export function useAnnulerSeance() {
   const invalider = useInvaliderSeances();
   return useMutation({

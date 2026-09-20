@@ -8,6 +8,7 @@ export type TypeAction =
   | "inscrire_etudiant"
   | "creer_enseignant"
   | "modifier_seance"
+  | "modifier_cours"
   | "supprimer_seance"
   | "supprimer_cours"
   | "changer_salle_etudiant"
