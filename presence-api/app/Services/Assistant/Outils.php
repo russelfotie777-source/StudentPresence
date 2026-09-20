@@ -28,7 +28,7 @@ class Outils
 
     /** Types d'action que l'admin peut appliquer, un par outil de proposition. */
     public const ACTIONS = [
-        'creer_cours', 'inscrire_etudiant', 'creer_enseignant', 'modifier_seance',
+        'creer_cours', 'inscrire_etudiant', 'creer_enseignant', 'modifier_seance', 'modifier_cours',
         'supprimer_seance', 'supprimer_cours', 'changer_salle_etudiant',
         'importer_etudiants', 'importer_cours',
     ];
@@ -192,6 +192,20 @@ class Outils
                     'resume' => $texte("Une phrase pour l'admin, qui décrit exactement l'action (ex. « Maths Discrètes avec Pr. Mballa, lundi 08:00–10:00 en A23-FI, tout le semestre »)"),
                     'seance_id' => $entier('Séance à retoucher'),
                     'date_seance' => $dateOuNul('Nouvelle date ; null pour ne pas changer'),
+                    'heure_debut' => $heureOuNul('Nouveau début ; null pour ne pas changer'),
+                    'heure_fin' => $heureOuNul('Nouvelle fin ; null pour ne pas changer'),
+                    'enseignant_id' => $entierOuNul('Nouvel enseignant ; null pour ne pas changer'),
+                    'salle_id' => $entierOuNul('Nouvelle salle ; null pour ne pas changer'),
+                ]),
+            ],
+            [
+                'name' => 'proposer_modifier_cours',
+                'description' => "Propose de modifier un cours récurrent — jour, horaires, enseignant ou salle — pour toutes ses séances à venir d'un coup (les séances déjà tenues ne bougent pas ; une séance qui tomberait en conflit est laissée telle quelle et signalée). Pour une seule occurrence, utilise proposer_modifier_seance.",
+                'strict' => true,
+                'inputSchema' => $schema([
+                    'resume' => $texte("Une phrase pour l'admin, qui décrit exactement l'action (ex. « Passer Maths Discrètes du lundi au vendredi 08:00–10:00 pour le reste du semestre »)"),
+                    'cours_id' => $entier('Cours récurrent (course_template) à modifier'),
+                    'jour' => ['anyOf' => [$jour, ['type' => 'null']], 'description' => 'Nouveau jour ; null pour ne pas changer'],
                     'heure_debut' => $heureOuNul('Nouveau début ; null pour ne pas changer'),
                     'heure_fin' => $heureOuNul('Nouvelle fin ; null pour ne pas changer'),
                     'enseignant_id' => $entierOuNul('Nouvel enseignant ; null pour ne pas changer'),

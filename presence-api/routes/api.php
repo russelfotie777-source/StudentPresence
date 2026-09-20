@@ -104,6 +104,8 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::apiResource('semaines', SemaineController::class);
     Route::post('/semaines/generate-semester', [SemaineController::class, 'generateSemester']);
 
+    // Avant la ressource : « prolonger » n'est pas un identifiant de cours.
+    Route::post('/course-templates/prolonger', [CourseTemplateController::class, 'prolonger']);
     Route::apiResource('course-templates', CourseTemplateController::class);
     Route::post('/course-templates/{courseTemplate}/generate', [CourseTemplateController::class, 'generate']);
 
