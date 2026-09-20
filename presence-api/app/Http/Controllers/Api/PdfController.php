@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Enums\PresenceState;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OptionsListeRequest;
 use App\Models\Departement;
-use App\Models\Parametre;
 use App\Models\Salle;
 use App\Models\Seance;
 use App\Models\Semaine;
@@ -14,7 +14,6 @@ use App\Services\ListeHebdomadaire;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class PdfController extends Controller
 {
@@ -57,9 +56,9 @@ class PdfController extends Controller
      * tableau des séances de la semaine prérempli depuis l'emploi du temps.
      * Réservée à l'admin (groupe de routes).
      */
-    public function listeHebdomadaire(Request $request, Salle $salle, ListeHebdomadaire $liste)
+    public function listeHebdomadaire(OptionsListeRequest $request, Salle $salle, ListeHebdomadaire $liste)
     {
-        $data = $this->optionsDeListe($request);
+        $data = $request->validated();
 
         $semaine = Semaine::findOrFail($data['semaine_id']);
         $migrants = $request->boolean('migrants');
@@ -77,9 +76,9 @@ class PdfController extends Controller
      * page par salle — ce que l'admin imprime pour tout le GI (ou tout le
      * GRT) d'un coup, au lieu de salle par salle.
      */
-    public function listeDepartement(Request $request, Departement $departement, ListeHebdomadaire $liste)
+    public function listeDepartement(OptionsListeRequest $request, Departement $departement, ListeHebdomadaire $liste)
     {
-        $data = $this->optionsDeListe($request);
+        $data = $request->validated();
 
         $semaine = Semaine::findOrFail($data['semaine_id']);
         $donnees = $liste->pourDepartement($departement, $semaine, $data['semestre'] ?? null, $data['annee'] ?? null, $data['symboles'] ?? null);
@@ -91,21 +90,5 @@ class PdfController extends Controller
         $nom = 'listes_presence_'.Str::slug($departement->code).'_S'.$semaine->numero.'.pdf';
 
         return $pdf->download($nom);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function optionsDeListe(Request $request): array
-    {
-        return $request->validate([
-            'semaine_id' => ['required', 'integer', 'exists:semaines,id'],
-            'semestre' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:6'],
-            'annee' => ['sometimes', 'nullable', 'regex:/^\d{4}-\d{4}$/'],
-            // Sans valeur : le réglage enregistré par l'admin (Parametre::symbolesPresence).
-            'symboles' => ['sometimes', 'nullable', Rule::in(Parametre::SYMBOLES_PRESENCE_CHOIX)],
-            // Vrai : seuls les étudiants migrants (FM) de la salle figurent sur la liste.
-            'migrants' => ['sometimes', 'boolean'],
-        ]);
     }
 }
