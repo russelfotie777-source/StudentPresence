@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { CalendarPlus, Trash2 } from "lucide-react";
+import { CalendarPlus, Repeat, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { semaineHooks, type Semaine } from "@/hooks/use-catalog";
-import { useGenerateSemester } from "@/hooks/use-scheduling";
+import { Checkbox } from "@/components/ui/checkbox";
+import { resumerProlongation, useGenerateSemester, useProlongerCours } from "@/hooks/use-scheduling";
 import { ApiError } from "@/lib/api-client";
 import { ajouterJours, formaterYmd, plageSemaine, type Ymd } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -32,14 +33,20 @@ interface Props {
  */
 export function DialogueSemestre({ semaines, semaineCouranteId, onFermer }: Props) {
   const generer = useGenerateSemester();
+  const prolonger = useProlongerCours();
   const supprimer = semaineHooks.useRemove();
   const [dateDebut, setDateDebut] = useState<Ymd>(() =>
     semaines.length ? ajouterJours(semaines[semaines.length - 1].date_fin, 1) : "",
   );
   const [nombre, setNombre] = useState(semaines.length ? 4 : 14);
+  const [prolongerCours, setProlongerCours] = useState(true);
 
   const premiere = semaines[0];
   const derniere = semaines.at(-1);
+  // Des semaines en bout de calendrier sans aucune séance alors que d'autres
+  // en ont : l'emploi du temps s'arrête avant la fin, on propose de le prolonger.
+  const aProlonger =
+    !!derniere && (derniere.seances_count ?? 0) === 0 && semaines.some((s) => (s.seances_count ?? 0) > 0);
 
   return (
     <Dialog open onOpenChange={(o) => !o && onFermer()}>
@@ -85,9 +92,16 @@ export function DialogueSemestre({ semaines, semaineCouranteId, onFermer }: Prop
             disabled={!dateDebut || nombre < 1 || generer.isPending}
             onClick={() =>
               generer.mutate(
-                { date_debut: dateDebut, nombre_semaines: nombre },
+                { date_debut: dateDebut, nombre_semaines: nombre, prolonger_cours: semaines.length > 0 && prolongerCours },
                 {
-                  onSuccess: (r) => toast.success(`${r.length} semaine(s) ajoutée(s).`),
+                  onSuccess: (r) => {
+                    const n = r.semaines.length;
+                    toast.success(
+                      r.prolongation
+                        ? `${n} semaine${n > 1 ? "s" : ""} ajoutée${n > 1 ? "s" : ""}. ${resumerProlongation(r.prolongation)}`
+                        : `${n} semaine${n > 1 ? "s" : ""} ajoutée${n > 1 ? "s" : ""}.`,
+                    );
+                  },
                   onError: (e) =>
                     toast.error(e instanceof ApiError ? e.message : "La génération a échoué."),
                 },
@@ -97,7 +111,40 @@ export function DialogueSemestre({ semaines, semaineCouranteId, onFermer }: Prop
             <CalendarPlus className="size-4" />
             {generer.isPending ? "Création…" : "Créer"}
           </Button>
+          {semaines.length > 0 && (
+            <label className="flex w-full cursor-pointer items-start gap-2.5 pt-1 text-[13px] text-muted-foreground">
+              <Checkbox checked={prolongerCours} onCheckedChange={(v) => setProlongerCours(v === true)} className="mt-0.5" />
+              <span>
+                <span className="font-medium text-foreground">Prolonger l&apos;emploi du temps sur ces semaines.</span>{" "}
+                Les cours qui vont jusqu&apos;au bout du calendrier continuent, avec leurs séances.
+                Décochez pour un semestre au programme différent.
+              </span>
+            </label>
+          )}
         </div>
+
+        {aProlonger && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3 text-[13px]">
+            <span className="text-muted-foreground">
+              Les dernières semaines n&apos;ont aucune séance : l&apos;emploi du temps s&apos;arrête avant S{derniere!.numero}.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={prolonger.isPending}
+              onClick={() =>
+                prolonger.mutate(undefined, {
+                  onSuccess: (r) => toast.success(resumerProlongation(r)),
+                  onError: (e) => toast.error(e instanceof ApiError ? e.message : "La prolongation a échoué."),
+                })
+              }
+            >
+              <Repeat className="size-3.5" />
+              {prolonger.isPending ? "Prolongation…" : `Prolonger les cours jusqu'à S${derniere!.numero}`}
+            </Button>
+          </div>
+        )}
 
         {semaines.length > 0 && (
           <ul className="flex max-h-72 flex-col divide-y divide-border overflow-y-auto rounded-xl border border-border">
