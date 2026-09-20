@@ -50,11 +50,20 @@ export default function PremiereConnexionPage() {
         <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-ink-900">
           {etapeEmail ? "Une adresse pour vous dépanner" : `Bienvenue, ${prenom(user.name)}`}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          {etapeEmail
-            ? "Si vous oubliez votre mot de passe, c'est à cette adresse que vous recevrez le code pour en choisir un autre. Sans elle, il faudra passer par l'administration."
-            : "Le mot de passe qui vous a été remis est le même pour tous les nouveaux comptes. Choisissez-en un qui n'appartient qu'à vous : il protège votre présence en cours."}
-        </p>
+        {etapeEmail ? (
+          <p className="mt-3 text-sm leading-relaxed text-ink-500">
+            Si vous oubliez votre mot de passe, le code pour en choisir un autre arrivera ici.
+          </p>
+        ) : (
+          <>
+            <p className="mt-3 text-sm leading-relaxed text-ink-500">
+              Le mot de passe qui vous a été remis est le même pour tous les nouveaux comptes.
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-ink-500">
+              Choisissez-en un qui n&apos;appartient qu&apos;à vous.
+            </p>
+          </>
+        )}
       </div>
 
       {etapeEmail ? (

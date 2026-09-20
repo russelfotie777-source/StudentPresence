@@ -57,11 +57,10 @@ export default function MotDePasseOubliePage() {
       >
         <div>
           <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">Code envoyé</h2>
-          <p className="mt-2 text-sm text-ink-500">
-            Un code à six chiffres est parti à{" "}
-            <span className="font-medium text-ink-900">{demander.data.email_masque}</span>. Il reste
-            valable trente minutes.
+          <p className="mt-3 text-sm text-ink-900">
+            Code envoyé à <span className="font-medium">{demander.data.email_masque}</span>.
           </p>
+          <p className="mt-1.5 text-sm text-ink-500">Il est valable trente minutes.</p>
         </div>
         <Erreur message={erreurGenerale(reinitialiser.error, ["code", "mot_de_passe"])} />
         <Champ label="Code reçu" htmlFor="code" error={erreurChamp(reinitialiser.error, "code")}>
@@ -134,9 +133,8 @@ export default function MotDePasseOubliePage() {
     >
       <div>
         <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">Mot de passe oublié</h2>
-        <p className="mt-2 text-sm text-ink-500">
-          Indiquez votre identifiant : un code partira à l&apos;adresse e-mail vérifiée de votre
-          compte.
+        <p className="mt-3 text-sm text-ink-500">
+          Un code partira à l&apos;adresse e-mail de votre compte.
         </p>
       </div>
       <Erreur message={erreurGenerale(demander.error, ["phone"])} />

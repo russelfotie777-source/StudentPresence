@@ -80,8 +80,8 @@ export function CarteConnexion({ me }: { me: MeResponse }) {
                 <DialogTitle>{user.email_verifie ? "Changer d'adresse e-mail" : "Adresse e-mail"}</DialogTitle>
                 <DialogDescription>
                   {user.email_verifie
-                    ? `L'adresse actuelle, ${user.email}, reste en place tant que la nouvelle n'est pas confirmée.`
-                    : "C'est à cette adresse que vous recevrez le code pour retrouver un mot de passe oublié."}
+                    ? `${user.email} reste en place tant que la nouvelle adresse n'est pas confirmée.`
+                    : "Elle sert à retrouver un mot de passe oublié."}
                 </DialogDescription>
               </DialogHeader>
               <FormulaireEmail

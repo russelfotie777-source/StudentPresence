@@ -199,7 +199,7 @@ export function FormulaireTelephone({ actuel, onDone }: { actuel: string; onDone
         label="Numéro de téléphone"
         htmlFor="telephone"
         error={erreurChamp(changer.error, "telephone")}
-        aide="C'est avec ce numéro que vous vous connecterez désormais."
+        aide="Vous vous connecterez avec ce numéro."
       >
         <Input
           id="telephone"
@@ -291,11 +291,12 @@ export function FormulaireEmail({
   if (etapeCode) {
     return (
       <form onSubmit={confirmer} className="flex flex-col gap-4">
-        <p className="text-sm text-ink-500">
-          Un code à six chiffres a été envoyé à{" "}
-          <span className="font-medium text-ink-900">{adresseVisee}</span>. Regardez aussi dans
-          les courriers indésirables.
-        </p>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <p className="text-ink-900">
+            Code envoyé à <span className="font-medium">{adresseVisee}</span>.
+          </p>
+          <p className="text-ink-500">Rien reçu ? Regardez dans les courriers indésirables.</p>
+        </div>
         <Erreur message={messageGeneral(verifier.error ?? renvoyer.error, ["code"])} />
         <Champ label="Code reçu" htmlFor="code" error={erreurChamp(verifier.error ?? renvoyer.error, "code")}>
           <Input
@@ -349,7 +350,7 @@ export function FormulaireEmail({
         label="Adresse e-mail"
         htmlFor="email"
         error={erreurChamp(definir.error, "email")}
-        aide="Vous y recevrez un code à saisir ici. Elle servira à retrouver votre mot de passe si vous l'oubliez."
+        aide="Un code vous y sera envoyé."
       >
         <Input
           id="email"
