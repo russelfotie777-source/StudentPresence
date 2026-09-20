@@ -28,6 +28,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace("/face");
       return;
     }
+    if (!isLoading && user?.doit_changer_mot_de_passe) {
+      router.replace("/premiere-connexion");
+      return;
+    }
     if (
       !isLoading &&
       user &&
