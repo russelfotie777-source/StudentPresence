@@ -171,9 +171,9 @@
   box-shadow: var(--relief);
 }
 .dashboard :global(.session-live) {
-  background: var(--hero);
-  color: var(--hero-ink);
-  border-color: rgb(0 0 0 / 0.12);
+  background: var(--live-bg);
+  color: var(--live-ink);
+  border-color: var(--live-line);
   box-shadow: none;
 }
 .dashboard :global(.session-topline) {
@@ -183,17 +183,14 @@
   font-size: var(--text-13);
   color: var(--dash-blue);
 }
-.dashboard :global(.session-live .session-label) {
-  color: var(--hero-ink);
-}
 .dashboard :global(.session-live .session-code),
 .dashboard :global(.session-live .session-details),
 .dashboard :global(.session-live .session-presence),
 .dashboard :global(.session-live .attendance-status) {
-  color: var(--hero-muted);
+  color: var(--live-muted);
 }
 .dashboard :global(.session-live .session-hours) {
-  border-color: var(--hero-line);
+  border-color: var(--live-line);
 }
 .dashboard :global(.session-code) {
   font-size: var(--text-13);
@@ -229,14 +226,14 @@
 }
 .dashboard :global(.checkin-primary) {
   height: 52px;
-  background: var(--menthe);
-  color: var(--menthe-ink);
+  background: var(--action);
+  color: var(--action-ink);
   border-radius: 12px;
   font-weight: var(--w-bold);
   box-shadow: none;
 }
 .dashboard :global(.checkin-primary:hover) {
-  background: #5cefb5;
+  background: var(--action-hover);
 }
 .dashboard :global(.attendance-status) {
   color: var(--dash-muted);
@@ -247,14 +244,8 @@
   color: var(--dash-accent);
 }
 .dashboard :global(.session-featured .attendance-status.confirmed) {
-  padding: 10px 12px;
-  background: var(--dash-mint);
+  padding: 6px 0 2px;
   width: 100%;
-  border-radius: 10px;
-}
-.dashboard :global(.session-live .attendance-status.confirmed) {
-  background: rgb(255 255 255 / 0.16);
-  color: var(--hero-ink);
 }
 .dashboard :global(.agenda-heading) {
   margin-top: 25px;

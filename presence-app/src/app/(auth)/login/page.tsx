@@ -59,6 +59,7 @@ export default function LoginPage() {
             data.user.validation_status !== "approved"
           )
             router.replace("/validation-en-attente");
+          else if (data.user.doit_changer_mot_de_passe) router.replace("/premiere-connexion");
           else router.replace("/dashboard");
         },
         onError: () => requestAnimationFrame(() => errorRef.current?.focus()),
@@ -255,7 +256,9 @@ export default function LoginPage() {
             </form>
 
             <div className={styles.signup}>
-              <span>Pas encore de compte ?</span>
+              <Link href="/mot-de-passe-oublie" className={styles.forgot}>
+                Mot de passe oublié ?
+              </Link>
               <Link href="/register">
                 Créer un compte <ArrowUpRight size={15} />
               </Link>

@@ -2,11 +2,13 @@
 
 import {
   ArrowLeftRight,
+  AtSign,
   BadgeCheck,
   BookOpen,
   Crown,
   DoorOpen,
   GraduationCap,
+  KeyRound,
   Phone,
   ShieldBan,
   ShieldOff,
@@ -131,6 +133,11 @@ export function PanneauEtudiant({ etudiant: e, feuille, symboles, onAction, onFe
                 <Ligne icone={DoorOpen} label="Salle" valeur={`${feuille.salle.nom} · ${feuille.salle.formation}`} />
                 {feuille.salle.filiere && <Ligne icone={BookOpen} label="Filière" valeur={feuille.salle.filiere} />}
                 {feuille.salle.niveau && <Ligne icone={GraduationCap} label="Niveau" valeur={feuille.salle.niveau} />}
+                <Ligne
+                  icone={AtSign}
+                  label="E-mail"
+                  valeur={e.email ? `${e.email}${e.email_verifie ? "" : " · non vérifié"}` : "aucune adresse"}
+                />
               </div>
             </section>
 
@@ -194,6 +201,9 @@ export function PanneauEtudiant({ etudiant: e, feuille, symboles, onAction, onFe
                 >
                   <BadgeCheck className="size-4" />
                   {e.presence_automatique ? "Retirer le privilège" : "Toujours présent"}
+                </Button>
+                <Button variant="outline" className="justify-start gap-2" onClick={() => onAction("mot_de_passe")}>
+                  <KeyRound className="size-4" /> Réinitialiser le mot de passe
                 </Button>
                 {e.statut_compte !== "actif" && (
                   <Button variant="outline" className="justify-start gap-2 text-success" onClick={() => onAction("retablir")}>

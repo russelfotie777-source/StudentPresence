@@ -2,7 +2,7 @@
   --login-ink: #182624;
   --login-muted: #586967;
   color: var(--login-ink);
-  background: #ffffff;
+  background: var(--surface-1);
   min-height: 100svh;
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -54,10 +54,10 @@
   border-bottom: 1px solid #abbcb0;
 }
 .header a:hover {
-  color: #0f9d68;
+  color: var(--primary);
 }
 .visual {
-  background: #f4f7f5;
+  background: var(--surface-0);
   min-height: 780px;
   height: 100svh;
   max-height: 1200px;
@@ -78,7 +78,7 @@
 .visualEyebrow > span {
   width: 5px;
   height: 5px;
-  background: #0f9d68;
+  background: var(--primary);
 }
 .scene {
   position: absolute;
@@ -99,7 +99,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  color: #0f9d68;
+  color: var(--primary);
 }
 .fallback svg {
   width: 150px;
@@ -172,7 +172,7 @@
   background: #dfe8df;
 }
 .formSection {
-  background: #fff;
+  background: var(--surface-1);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -192,7 +192,7 @@
   border: 1px solid #d6f4e6;
   border-radius: 8px;
   background: #ebf9f2;
-  color: #0f9d68;
+  color: var(--primary);
   margin-bottom: 28px;
 }
 .formEyebrow {
@@ -230,7 +230,7 @@
   align-items: center;
   border: 1px solid #d9e1e5;
   border-radius: 8px;
-  background: #f4f7f5;
+  background: var(--surface-0);
   height: 56px;
   padding: 0 15px;
   gap: 12px;
@@ -240,9 +240,9 @@
     background 0.2s;
 }
 .inputWrap:focus-within {
-  background: #fff;
-  border-color: #0f9d68;
-  box-shadow: 0 0 0 4px #0f9d6812, 0 2px 5px #18262408;
+  background: var(--surface-1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgb(29 92 68 / 0.1), 0 2px 5px #18262408;
 }
 .inputWrap > svg {
   flex: none;
@@ -265,16 +265,16 @@
   outline: none;
 }
 .inputWrap:has(input:autofill) {
-  background: #f0f6f3;
+  background: var(--surface-2);
 }
 .inputWrap input:autofill {
   -webkit-text-fill-color: var(--login-ink);
   caret-color: var(--login-ink);
-  box-shadow: 0 0 0 1000px #f0f6f3 inset;
+  box-shadow: 0 0 0 1000px var(--surface-2) inset;
 }
 .page a:focus-visible,
 .page button:focus-visible {
-  outline: 2px solid #0f9d68;
+  outline: 2px solid var(--primary);
   outline-offset: 4px;
 }
 .inputWrap button {
@@ -293,10 +293,10 @@
   align-items: center;
   width: 100%;
   height: 54px;
-  background: #0f9d68;
+  background: var(--primary);
   color: #fff;
   border-radius: 8px;
-  box-shadow: 0 4px 10px #0f9d6820;
+  box-shadow: 0 4px 10px rgb(29 92 68 / 0.14);
   padding: 0 19px;
   cursor: pointer;
   font-size: var(--text-13);
@@ -309,7 +309,7 @@
 }
 .submit:hover:not(:disabled) {
   background: #0b7a4f;
-  box-shadow: 0 8px 20px #0f9d6828;
+  box-shadow: 0 8px 20px rgb(29 92 68 / 0.18);
 }
 .submit:active:not(:disabled) {
   transform: scale(0.985);
@@ -353,7 +353,11 @@
   font-weight: var(--w-semibold);
 }
 .signup > a:hover {
-  color: #0f9d68;
+  color: var(--primary);
+}
+.signup > .forgot {
+  font-weight: var(--w-regular);
+  color: var(--login-muted);
 }
 .institution {
   position: absolute;
@@ -487,7 +491,7 @@
   .visual {
     height: 246px;
     min-height: 0;
-    background: #fff;
+    background: var(--surface-1);
   }
   .visualEyebrow {
     display: none;
@@ -529,7 +533,7 @@
   .formEyebrow {
     font-size: var(--text-13);
     margin-bottom: 12px;
-    color: #0f9d68;
+    color: var(--primary);
   }
   .formInner h2 {
     font-size: var(--text-38);

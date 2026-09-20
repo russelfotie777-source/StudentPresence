@@ -251,6 +251,77 @@
   }
 }
 
+/* Le tampon (voir components/tampon.tsx) : encre, cadre double, légèrement
+   de travers. Le masque bruité rend l'encre inégale, comme un vrai coup de
+   tampon ; de jour elle se fond au papier en multiply. */
+.tampon {
+  --encre: var(--live-bar);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px 8px;
+  border: 3px double var(--encre);
+  border-radius: 9px;
+  color: var(--encre);
+  font-family: var(--font-display), serif;
+  line-height: 1;
+  transform: rotate(-5deg);
+  transform-origin: 50% 50%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.55 1.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.55 1.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)'/%3E%3C/svg%3E");
+  -webkit-mask-size: 140px 140px;
+  mask-size: 140px 140px;
+}
+html:not(.dark) .tampon {
+  mix-blend-mode: multiply;
+}
+.tampon-absent {
+  --encre: var(--destructive);
+}
+.tampon-mot {
+  font-size: var(--text-24);
+  font-weight: var(--w-bold);
+}
+.tampon-detail {
+  margin-top: 5px;
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.tampon-mini {
+  padding: 3px 8px 2px;
+  border-width: 2px;
+  border-radius: 6px;
+  transform: rotate(-3deg);
+}
+.tampon-mini .tampon-mot {
+  font-size: var(--text-13);
+}
+.tampon-anime {
+  animation: tampon-frapper 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+@keyframes tampon-frapper {
+  from {
+    transform: rotate(-9deg) scale(1.7);
+    opacity: 0;
+  }
+  55% {
+    transform: rotate(-5deg) scale(0.96);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(-5deg) scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tampon-anime {
+    animation: none;
+  }
+}
+
 /* Micro-interactions du design canvas premium */
 @keyframes dc-pulse {
   0% {
@@ -341,53 +412,66 @@
 /* Shared application palette and mobile workspace. */
 /* Le bloc de position vit sur le héros : mêmes réglages de verre que ses boutons (voir plus bas). */
 .session-live .gps-position-control {
-  --ink-900: var(--hero-ink);
-  --ink-500: var(--hero-muted);
-  --muted-foreground: var(--hero-muted);
-  --card: rgb(255 255 255 / 0.14);
-  --background: rgb(255 255 255 / 0.14);
-  --muted: rgb(255 255 255 / 0.24);
-  --line: var(--hero-line);
-  --border: var(--hero-line);
-  --input: var(--hero-line);
-  --foreground: var(--hero-ink);
-  --secondary: rgb(255 255 255 / 0.92);
-  --secondary-foreground: #0b3d2c;
-  --destructive: #ffd1d1;
+  --ink-900: var(--live-ink);
+  --ink-500: var(--live-muted);
+  --muted-foreground: var(--live-muted);
+  --card: var(--live-panel);
+  --background: var(--live-panel);
+  --muted: var(--live-panel-hover);
+  --line: var(--live-line);
+  --border: var(--live-line);
+  --input: var(--live-line);
+  --foreground: var(--live-ink);
+  --secondary: var(--live-panel-hover);
+  --secondary-foreground: var(--live-ink);
 }
 
 /* Palette : des surfaces neutres et profondes, une seule couleur vive —
    la menthe — réservée à ce qu'on peut faire (pointer, l'onglet actif, la
    séance en cours). C'est la parcimonie qui la fait ressortir : tout le
    reste est encre, papier ou nuit. */
+/* Clair : des surfaces neutres et nettes, comme une application mobile, et
+   un vert bouteille — profond, un peu bleuté — qu'on ne trouve dans aucune
+   palette toute faite. Le vert est choisi, et rare. */
 :root {
-  --ink-900: #0f1512;
-  --ink-700: #3b4842;
-  --ink-500: #67736c;
-  --ink-300: #9aa59f;
-  --surface-0: #f4f7f5;
+  --ink-900: #141715;
+  --ink-700: #3f4542;
+  --ink-500: #6b726e;
+  --ink-300: #a0a6a2;
+  --surface-0: #f4f5f4;
   --surface-1: #ffffff;
-  --surface-2: #e9efeb;
-  --line: #dde4df;
-  --indigo-600: #0f9d68;
-  --indigo-500: #12b075;
-  --indigo-100: #d6f4e6;
-  --indigo-50: #ebf9f2;
-  --emerald-500: #0f9d68;
-  --emerald-100: #d6f4e6;
-  --amber-500: #d98b1f;
-  --amber-100: #fbeed2;
-  --rose-500: #d64545;
-  --rose-100: #fbe3e3;
+  --surface-2: #eceeed;
+  --line: #e2e5e3;
+  --indigo-600: #1d5c44;
+  --indigo-500: #24704f;
+  --indigo-100: #dcebe1;
+  --indigo-50: #edf4ef;
+  --emerald-500: #1d5c44;
+  --emerald-100: #dcebe1;
+  --amber-500: #c47f1a;
+  --amber-100: #f6e8cf;
+  --rose-500: #c24747;
+  --rose-100: #f7e1e1;
   --radius: 0.75rem;
-  /* La menthe elle-même, pour ce qui ne passe pas par --primary (le bouton de pointage). */
+  /* La menthe, réservée à la nuit : de jour, l'action est en vert bouteille. */
   --menthe: #2ee59d;
   --menthe-ink: #06140d;
-  /* Mat et plein : pas de dégradé, pas de halo — c'est la couleur qui porte, pas la lumière. */
-  --hero: #0e8a5f;
-  --hero-ink: #ffffff;
-  --hero-muted: #d2efe2;
-  --hero-line: rgb(255 255 255 / 0.22);
+  --action: var(--indigo-600);
+  --action-ink: #ffffff;
+  --action-hover: var(--indigo-500);
+  /* La séance en cours : une carte teintée, un bord vert, le titre en vert
+     profond — pas un aplat. C'est un accent qu'on remarque, pas une bannière. */
+  --hero: var(--indigo-600);
+  --live-bg: #e7f1eb;
+  --live-bar: #1d5c44;
+  --live-ink: #10382a;
+  --live-muted: #52705f;
+  --live-line: rgb(29 92 68 / 0.18);
+  --live-panel: rgb(255 255 255 / 0.62);
+  --live-panel-hover: rgb(255 255 255 / 0.9);
+  --hero-ink: var(--live-ink);
+  --hero-muted: var(--live-muted);
+  --hero-line: var(--live-line);
   --verre: #ffffff;
   --relief: inset 0 1px 0 rgb(255 255 255 / 0.9);
 }
@@ -414,10 +498,20 @@
   --accent-foreground: #7cf0c1;
   --success-foreground: #06140d;
   --warning-foreground: #2a1704;
+  --action: var(--menthe);
+  --action-ink: var(--menthe-ink);
+  --action-hover: #5cefb5;
   --hero: #0d6f4f;
-  --hero-ink: #f7fffb;
-  --hero-muted: #c9ecdc;
-  --hero-line: rgb(255 255 255 / 0.18);
+  --live-bg: #13251c;
+  --live-bar: #2ee59d;
+  --live-ink: #eafff4;
+  --live-muted: #9cc4b0;
+  --live-line: rgb(46 229 157 / 0.22);
+  --live-panel: rgb(255 255 255 / 0.07);
+  --live-panel-hover: rgb(255 255 255 / 0.12);
+  --hero-ink: var(--live-ink);
+  --hero-muted: var(--live-muted);
+  --hero-line: var(--live-line);
   --verre: #141917;
   --relief: inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
@@ -583,14 +677,18 @@ a {
   background: var(--card);
   box-shadow: var(--relief);
 }
-/* La séance en cours est la seule surface colorée de l'écran : c'est elle
-   qu'on doit voir en premier. Pleine et mate — un halo ou un dégradé, c'est
-   la lumière qui attire l'œil, pas le contenu. */
+/* La séance en cours est la seule surface teintée de l'écran : c'est elle
+   qu'on doit voir en premier. Une carte pâle, le titre en vert profond — et
+   rien qui brille. Ni barre de couleur sur le bord, ni étiquette « En cours »
+   avec son point : ce sont les ornements de tous les gabarits. */
 .session-live {
-  background: var(--hero);
-  color: var(--hero-ink);
-  border-color: rgb(0 0 0 / 0.12);
+  background: var(--live-bg);
+  color: var(--live-ink);
+  border-color: var(--live-line);
   box-shadow: none;
+}
+.session-live h3 {
+  color: var(--live-ink);
 }
 .session-topline {
   display: flex;
@@ -605,12 +703,6 @@ a {
   gap: 7px;
   font-size: var(--text-13);
   font-weight: var(--w-bold);
-}
-.session-live .session-label {
-  color: var(--hero-ink);
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.16);
 }
 .session-code {
   font-size: var(--text-13);
@@ -645,7 +737,7 @@ a {
   opacity: 0.55;
 }
 .session-live .session-details {
-  color: var(--hero-muted);
+  color: var(--live-muted);
 }
 .session-hours {
   margin-top: 24px;
@@ -658,16 +750,52 @@ a {
   font-size: var(--text-13);
 }
 .session-live .session-hours {
-  border-color: var(--hero-line);
+  border-color: var(--live-line);
 }
 .time-separator {
   padding: 0 5px;
   opacity: 0.6;
 }
+/* Le temps qui passe (composant Progress) : les horaires, ce qu'il reste,
+   et dessous la part du cours déjà faite. La seule chose qui bouge sur la
+   carte, parce que le temps bouge. */
+.session-temps {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.session-live .session-temps {
+  border-color: var(--live-line);
+}
+.session-live .session-temps [data-slot="progress-value"] {
+  color: var(--live-muted);
+}
+.session-live .session-temps [data-slot="progress-track"] {
+  background: var(--live-line);
+}
+.session-live .session-temps [data-slot="progress-indicator"] {
+  background: var(--live-bar);
+}
 .session-presence {
+  margin-top: 10px;
   font-size: var(--text-13);
-  margin-left: auto;
-  opacity: 0.75;
+  color: var(--muted-foreground);
+}
+/* Qui est là : les visages, puis la phrase comme on la dirait en entrant. */
+.session-presents {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: var(--text-15);
+  line-height: 1.45;
+  color: var(--ink-700);
+}
+.session-presents > p {
+  min-width: 0;
+}
+.session-live .session-presents {
+  color: var(--live-ink);
 }
 .session-actions {
   margin-top: 18px;
@@ -676,8 +804,8 @@ a {
   height: 52px;
   width: 100%;
   border-radius: 12px;
-  background: var(--menthe);
-  color: var(--menthe-ink);
+  background: var(--action);
+  color: var(--action-ink);
   font-size: var(--text-15);
   font-weight: var(--w-bold);
   box-shadow: none;
@@ -687,7 +815,7 @@ a {
     transform 0.2s;
 }
 .checkin-primary:hover {
-  background: #5cefb5;
+  background: var(--action-hover);
 }
 .checkin-primary:active {
   transform: scale(0.985);
@@ -706,10 +834,10 @@ a {
   color: var(--primary);
 }
 .session-live .attendance-status {
-  color: var(--hero-muted);
+  color: var(--live-muted);
 }
 .session-live .attendance-status.confirmed {
-  color: var(--hero-ink);
+  color: var(--live-ink);
 }
 .agenda-heading {
   display: flex;
@@ -728,6 +856,13 @@ a {
   gap: 20px;
   padding: 22px 0;
   border-bottom: 1px solid var(--line);
+}
+/* Une séance en cours dans la liste garde sa teinte, avec l'espace qu'il faut. */
+.session-row.session-live {
+  padding: 18px 16px;
+  margin: 6px 0;
+  border: 1px solid var(--live-line);
+  border-radius: 12px;
 }
 .session-time {
   position: relative;
@@ -769,24 +904,21 @@ a {
   font-size: var(--text-13);
   border-radius: 6px;
 }
-/* Sur le héros, les boutons sont en verre clair : lisibles sur le dégradé,
-   sans rivaliser avec le bouton de pointage. */
+/* Sur la carte en cours, les boutons secondaires sont des panneaux
+   translucides : lisibles sur la teinte, sans rivaliser avec le pointage. */
 .session-live .role-actions > button {
-  --card: rgb(255 255 255 / 0.14);
-  --background: rgb(255 255 255 / 0.14);
-  --muted: rgb(255 255 255 / 0.24);
-  --border: var(--hero-line);
-  --foreground: var(--hero-ink);
-  --secondary: rgb(255 255 255 / 0.92);
-  --secondary-foreground: #0b3d2c;
-  --input: var(--hero-line);
-  --primary: #ffffff;
-  --primary-foreground: #0b3d2c;
-  --success: #ffffff;
-  --success-foreground: #0b3d2c;
-  --destructive: #ff8f8f;
-  --destructive-foreground: #3d0e0e;
-  backdrop-filter: blur(6px);
+  --card: var(--live-panel);
+  --background: var(--live-panel);
+  --muted: var(--live-panel-hover);
+  --border: var(--live-line);
+  --foreground: var(--live-ink);
+  --secondary: var(--live-panel-hover);
+  --secondary-foreground: var(--live-ink);
+  --input: var(--live-line);
+  --primary: var(--live-bar);
+  --primary-foreground: var(--live-bg);
+  --success: var(--live-bar);
+  --success-foreground: var(--live-bg);
 }
 .insights-column {
   display: flex;
@@ -1173,10 +1305,6 @@ a {
   }
   .session-featured h3 {
     font-size: var(--text-24);
-  }
-  .session-presence {
-    flex-basis: 100%;
-    margin-left: 24px;
   }
   .nav-label {
     font-size: var(--text-13);

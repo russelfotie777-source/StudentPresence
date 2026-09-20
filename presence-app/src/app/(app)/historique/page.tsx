@@ -20,6 +20,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 import { useHistorySeances } from "@/hooks/use-seances";
 import { useMe } from "@/hooks/use-auth";
+import { Tampon } from "@/components/tampon";
 import { lignes, total } from "@/lib/pagination";
 import type { Seance, UserRole } from "@/types/api";
 import styles from "./historique.module.css";
@@ -343,12 +344,14 @@ function HistoriqueRow({ seance, role }: { seance: Seance; role?: UserRole }) {
             <MapPin size={12} />
             {seance.salle}
           </span>
-          <span
-            className={`${styles.status} ${statut === "present" ? styles.present : statut === "absent" ? styles.absent : styles.pending}`}
-          >
-            <Icon size={12} strokeWidth={2.3} />
-            {label}
-          </span>
+          {statut === "present" || statut === "absent" ? (
+            <Tampon mot={label} ton={statut} taille="mini" />
+          ) : (
+            <span className={`${styles.status} ${styles.pending}`}>
+              <Icon size={12} strokeWidth={2.3} />
+              {label}
+            </span>
+          )}
         </div>
       </div>
     </article>

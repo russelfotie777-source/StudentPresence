@@ -34,6 +34,8 @@ export interface EtudiantFeuille {
   motif_statut: string | null;
   presence_automatique?: boolean;
   presence_automatique_motif?: string | null;
+  email?: string | null;
+  email_verifie?: boolean;
   /** seance_id → état retenu, null quand il n'y a rien à dire. */
   presences: Record<string, PresenceState | null>;
 }

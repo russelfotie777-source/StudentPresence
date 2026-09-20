@@ -4,7 +4,6 @@ import { motion, type Variants } from "motion/react";
 import { AlertTriangle, TrendingDown, Wallet } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GrainOverlay } from "@/components/grain-overlay";
 import { AnimatedNumber } from "@/components/animated-number";
 import { useMyPayroll } from "@/hooks/use-payroll";
 
@@ -49,29 +48,25 @@ export default function SalairePage() {
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-[26px] p-5 shadow-[0_24px_48px_-16px_rgba(15,157,104,.55)]"
-            style={{ background: "var(--hero)" }}
+            className="relative rounded-2xl border p-5"
+            style={{ background: "var(--live-bg)", borderColor: "var(--live-line)", color: "var(--live-ink)" }}
           >
-            <GrainOverlay className="rounded-[26px]" />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full opacity-50 blur-3xl"
-              style={{ background: "radial-gradient(circle, rgba(255,255,255,.55) 0%, transparent 70%)" }}
-            />
-
-            <div className="relative flex items-center gap-2 text-white/80">
+            <div className="flex items-center gap-2" style={{ color: "var(--live-muted)" }}>
               <Wallet className="h-4 w-4" />
               <span className="text-xs font-bold">Total gagné</span>
             </div>
-            <p className="relative mt-2 font-display text-3xl font-extrabold leading-none text-white">
+            <p className="mt-2 font-display text-3xl font-bold leading-none">
               <AnimatedNumber value={data.total_salaire} formatter={formatFcfa} />
             </p>
 
-            <div className="relative mt-4 flex items-center gap-2 border-t border-white/20 pt-3.5 text-white/85">
+            <div
+              className="mt-4 flex items-center gap-2 border-t pt-3.5"
+              style={{ borderColor: "var(--live-line)", color: "var(--live-muted)" }}
+            >
               <TrendingDown className="h-3.5 w-3.5" />
               <span className="text-xs">
                 Dont{" "}
-                <span className="font-semibold text-white">
+                <span className="font-semibold" style={{ color: "var(--live-ink)" }}>
                   <AnimatedNumber value={data.total_penalite_retard} formatter={formatFcfa} />
                 </span>{" "}
                 de pénalités de retard

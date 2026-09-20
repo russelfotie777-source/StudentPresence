@@ -303,6 +303,7 @@ class ExecuteurActions
         return User::create([
             ...$data,
             'password' => Hash::make(self::motDePasseInitial()),
+            'doit_changer_mot_de_passe' => true,
             'role' => UserRole::Enseignant,
             'validation_status' => ValidationStatus::Approved,
         ]);
@@ -370,6 +371,7 @@ class ExecuteurActions
             'phone' => $data['phone'],
             'email' => $data['email'],
             'password' => Hash::make(self::motDePasseInitial()),
+            'doit_changer_mot_de_passe' => true,
             'role' => UserRole::Etudiant,
             'validation_status' => ValidationStatus::Approved,
             'formation' => $data['formation'],

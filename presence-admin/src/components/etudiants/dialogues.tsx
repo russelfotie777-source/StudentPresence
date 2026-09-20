@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldBan, ShieldOff, Trash2, ArrowLeftRight, UserCheck, BadgeCheck } from "lucide-react";
+import { ShieldBan, ShieldOff, Trash2, ArrowLeftRight, UserCheck, BadgeCheck, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +31,58 @@ export type ActionEtudiant =
   | { type: "bloquer"; etudiant: User }
   | { type: "retablir"; etudiant: User }
   | { type: "presence_auto"; etudiant: User }
+  | { type: "mot_de_passe"; etudiant: User }
   | { type: "supprimer"; etudiant: User };
+
+// --- Réinitialiser le mot de passe ------------------------------------------
+
+/**
+ * Pour l'étudiant qui a oublié son mot de passe sans adresse e-mail vérifiée
+ * : son compte revient au mot de passe initial, qu'il devra remplacer dès sa
+ * prochaine connexion. On le lui communique de vive voix.
+ */
+export function DialogueMotDePasse({
+  etudiant,
+  enCours,
+  onConfirmer,
+  onFermer,
+}: {
+  etudiant: User;
+  enCours: boolean;
+  onConfirmer: () => void;
+  onFermer: () => void;
+}) {
+  return (
+    <Dialog open onOpenChange={(o) => !o && onFermer()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <KeyRound className="size-4 text-primary" />
+            Réinitialiser le mot de passe de {etudiant.name}
+          </DialogTitle>
+          <DialogDescription>
+            Son mot de passe redevient celui remis à la création des comptes, à lui
+            communiquer directement. Il devra en choisir un autre dès sa prochaine
+            connexion, et ses appareils actuels sont déconnectés.
+            {etudiant.email_verifie && (
+              <>
+                {" "}
+                Il a pourtant une adresse vérifiée ({etudiant.email}) : « Mot de passe oublié »
+                sur l&apos;écran de connexion lui suffirait.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onFermer}>Annuler</Button>
+          <Button disabled={enCours} onClick={onConfirmer}>
+            {enCours ? "En cours…" : "Réinitialiser"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // --- Présence automatique (privilège admin) ---------------------------------
 

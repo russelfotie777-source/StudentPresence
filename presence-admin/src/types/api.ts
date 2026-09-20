@@ -27,6 +27,9 @@ export interface User {
   /** Privilège admin : compté présent à chaque séance de sa salle sans pointer. */
   presence_automatique?: boolean;
   presence_automatique_motif?: string | null;
+  email?: string | null;
+  /** Adresse confirmée par code : c'est elle qui reçoit le « mot de passe oublié ». */
+  email_verifie?: boolean;
   formation: FormationType | null;
   salle: { id: number; nom: string } | null;
   niveau: { id: number; nom: string } | null;

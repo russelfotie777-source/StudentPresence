@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ComptabiliteController;
+use App\Http\Controllers\Api\CompteController;
 use App\Http\Controllers\Api\CourseTemplateController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartementController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\HeureController;
 use App\Http\Controllers\Api\ListePresenceSettingController;
 use App\Http\Controllers\Api\MatiereController;
 use App\Http\Controllers\Api\MigrantController;
+use App\Http\Controllers\Api\MotDePasseOublieController;
 use App\Http\Controllers\Api\NiveauController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayrollController;
@@ -29,6 +31,7 @@ use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\PushSubscriptionController;
+use App\Http\Controllers\Api\ReinitialisationController;
 use App\Http\Controllers\Api\RequeteController;
 use App\Http\Controllers\Api\SalleController;
 use App\Http\Controllers\Api\SeanceController;
@@ -46,10 +49,25 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:inscription');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:connexion');
 
+    // Mot de passe oublié : un code à l'adresse vérifiée du compte, comptée
+    // comme une connexion (par compte visé et par adresse).
+    Route::post('/mot-de-passe-oublie', [MotDePasseOublieController::class, 'demander'])->middleware('throttle:connexion');
+    Route::post('/mot-de-passe-oublie/reinitialiser', [MotDePasseOublieController::class, 'reinitialiser'])->middleware('throttle:connexion');
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/request-validation', [AuthController::class, 'requestValidation']);
+
+        // Identifiants du compte : accessibles avant les routes métier, puisque
+        // remplacer le mot de passe initial est justement ce qui les ouvre.
+        Route::middleware('face-verified')->prefix('compte')->group(function () {
+            Route::put('/mot-de-passe', [CompteController::class, 'changerMotDePasse']);
+            Route::put('/telephone', [CompteController::class, 'changerTelephone']);
+            Route::put('/email', [CompteController::class, 'definirEmail']);
+            Route::post('/email/renvoyer', [CompteController::class, 'renvoyerCode']);
+            Route::post('/email/verifier', [CompteController::class, 'verifierEmail'])->middleware('throttle:10,1');
+        });
 
         // Second facteur (étudiants) : échange le jeton "en attente" émis par
         // login/register contre un jeton complet, voir FaceController.
@@ -138,6 +156,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     Route::get('/comptabilite', [ComptabiliteController::class, 'index']);
 
     // Gestion des comptes étudiants (délégués compris : ce sont des étudiants).
+    Route::post('/comptes/{utilisateur}/reinitialiser-mot-de-passe', [ReinitialisationController::class, 'motDePasse']);
     Route::get('/etudiants', [EtudiantController::class, 'index']);
     Route::put('/etudiants/{etudiant}/salle', [EtudiantController::class, 'changerSalle']);
     Route::post('/etudiants/{etudiant}/restreindre', [EtudiantController::class, 'restreindre']);
@@ -178,6 +197,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/seances/{seance}/position', [PositionController::class, 'store'])->middleware('throttle:20,1');
 
     Route::post('/seances/{seance}/check-in', [PresenceController::class, 'checkIn'])->middleware('throttle:20,1');
+    Route::get('/seances/{seance}/presents', [PresenceController::class, 'presents']);
     Route::get('/seances/{seance}/roster', [PresenceController::class, 'roster']);
     Route::post('/seances/{seance}/confirm-roster', [PresenceController::class, 'confirmRoster']);
     Route::get('/seances/{seance}/presence-list.pdf', [PdfController::class, 'presenceList']);

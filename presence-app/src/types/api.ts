@@ -18,6 +18,11 @@ export interface User {
   id: number;
   name: string;
   phone: string;
+  email: string | null;
+  /** Une adresse ne compte qu'une fois confirmée par son code : c'est elle qui reçoit le mot de passe oublié. */
+  email_verifie: boolean;
+  /** Le mot de passe initial commun est encore en place : tout est fermé tant qu'il n'est pas remplacé. */
+  doit_changer_mot_de_passe: boolean;
   role: UserRole;
   effective_role: UserRole;
   validation_status: ValidationStatus;
@@ -43,6 +48,8 @@ export interface MeResponse {
   user: User;
   face_pending?: boolean;
   face_enrolled?: boolean;
+  /** Adresse dont un code de vérification est encore attendu. */
+  email_en_attente?: string | null;
 }
 
 export interface Seance {
@@ -69,6 +76,8 @@ export interface Seance {
   matiere?: string;
   push?: { etudiants_presents: number; status: PushStatus } | null;
   ma_presence?: PresenceState | null;
+  /** Heure du pointage (« 09h12 »), heure de Douala. */
+  ma_presence_a?: string | null;
   position_envoyee?: boolean;
   geolocation?: {
     max_position_accuracy_meters: number;
