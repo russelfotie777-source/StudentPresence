@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, FileDown } from "lucide-react";
+import { Building2, FileDown, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Departement, Semaine } from "@/hooks/use-catalog";
-import { useTelechargerListe, useTelechargerListesDepartement } from "@/hooks/use-etudiants";
+import { useTelechargerListe, useTelechargerListesDepartement, type FormatExport } from "@/hooks/use-etudiants";
 import type { SalleFeuille, Symboles } from "@/hooks/use-feuille-presence";
 import { plageSemaine } from "@/lib/dates";
 import { SelecteurSymboles } from "./selecteur-symboles";
@@ -46,12 +46,13 @@ export function DialogueListe({ cible, semaine, symboles, onFermer }: Props) {
   const enCours = telechargerSalle.isPending || telechargerDepartement.isPending;
   const departement = cible.type === "departement";
 
-  function telecharger() {
+  function telecharger(format: FormatExport) {
     const options = {
       semaineId: semaine.id,
       semestre: semestre ? Number(semestre) : undefined,
       annee: annee || undefined,
       symboles,
+      format,
     };
     if (cible.type === "salle") telechargerSalle.mutate({ ...options, salleId: cible.salle.id });
     else telechargerDepartement.mutate({ ...options, departementId: cible.departement.id });
@@ -139,9 +140,13 @@ export function DialogueListe({ cible, semaine, symboles, onFermer }: Props) {
           <Button variant="outline" onClick={onFermer}>
             Fermer
           </Button>
-          <Button className="gap-1.5" disabled={enCours} onClick={telecharger}>
+          <Button variant="outline" className="gap-1.5" disabled={enCours} onClick={() => telecharger("xlsx")}>
+            <FileSpreadsheet className="size-4" />
+            {departement ? "Toutes les listes en Excel" : "Excel"}
+          </Button>
+          <Button className="gap-1.5" disabled={enCours} onClick={() => telecharger("pdf")}>
             <FileDown className="size-4" />
-            {enCours ? "Génération…" : departement ? "Télécharger toutes les listes" : "Télécharger le PDF"}
+            {enCours ? "Génération…" : departement ? "Toutes les listes en PDF" : "PDF"}
           </Button>
         </DialogFooter>
       </DialogContent>
