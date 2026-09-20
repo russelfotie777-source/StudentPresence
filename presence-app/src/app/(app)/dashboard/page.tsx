@@ -4,9 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { motion } from "motion/react";
 import {
-  ArrowUpRight,
   Bell,
   CalendarDays,
   Check,
@@ -16,9 +14,7 @@ import {
   RefreshCw,
   Users,
   X,
-  ArrowRight,
   CalendarCheck2,
-  GraduationCap,
   UserCheck,
 } from "lucide-react";
 import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
@@ -167,18 +163,8 @@ export default function DashboardPage() {
           </Link>
         </div>
       </header>
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="welcome-section"
-      >
+      <section className="welcome-section">
         <div className="welcome-copy">
-          <p className={`eyebrow ${styles.role}`}>
-            {roleLabel}
-            {me?.user.salle?.nom && (
-              <span className={styles.classLabel}> · {me.user.salle.nom}</span>
-            )}
-          </p>
           <h1>
             {salutation(today)}, {me?.user.name && prenom(me.user.name)}
             <span>.</span>
@@ -207,7 +193,7 @@ export default function DashboardPage() {
             </span>
           </span>
         </div>
-      </motion.section>
+      </section>
       {me?.user && <BanniereRestriction user={me.user} />}
       {me?.user && <RappelEmail user={me.user} />}
       <div className="dashboard-columns">
@@ -246,15 +232,9 @@ export default function DashboardPage() {
             </div>
           )}
           {!isLoading && !isError && focus && (
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45 }}
-            >
-              <SeanceCard seance={focus} featured>
-                {actions(focus)}
-              </SeanceCard>
-            </motion.div>
+            <SeanceCard seance={focus} featured role={role}>
+              {actions(focus)}
+            </SeanceCard>
           )}
           {!isLoading && !isError && seances?.length === 0 && (
             <div className={styles.freeDay}>
@@ -263,9 +243,7 @@ export default function DashboardPage() {
               </span>
               <div>
                 <h3>Pas de cours aujourd’hui.</h3>
-                <Link href="/historique">
-                  Voir mes dernières séances <ArrowRight size={14} />
-                </Link>
+                <Link href="/historique">Voir mes dernières séances</Link>
               </div>
             </div>
           )}
@@ -283,17 +261,10 @@ export default function DashboardPage() {
                 <h3>Le reste de la journée</h3>
               </div>
               <div className="agenda-list">
-                {shown.map((seance, index) => (
-                  <motion.div
-                    key={seance.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <SeanceCard seance={seance}>
-                      {seance.is_active || seance.is_past ? actions(seance) : null}
-                    </SeanceCard>
-                  </motion.div>
+                {shown.map((seance) => (
+                  <SeanceCard key={seance.id} seance={seance}>
+                    {seance.is_active || seance.is_past ? actions(seance) : null}
+                  </SeanceCard>
                 ))}
               </div>
             </>
@@ -388,7 +359,7 @@ export default function DashboardPage() {
               </>
             )}
             <Link href="/historique" className="text-link">
-              Voir mon historique <ArrowUpRight size={17} />
+              Voir mon historique
             </Link>
           </section>
           <section className="academic-section">
@@ -418,10 +389,7 @@ export default function DashboardPage() {
               </div>
             </dl>
             <Link href="/profil" className="text-link">
-              <span className={styles.profileLink}>
-                <GraduationCap size={16} /> Mon profil
-              </span>
-              <ArrowUpRight size={17} />
+              Mon profil
             </Link>
           </section>
         </aside>
@@ -496,7 +464,6 @@ function StudentActions({
   return (
     <Button className="checkin-primary" onClick={onCheckIn}>
       <MapPin size={18} /> Je suis présent(e)
-      <ArrowUpRight size={19} className="ml-auto" />
     </Button>
   );
 }

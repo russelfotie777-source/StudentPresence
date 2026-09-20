@@ -22,6 +22,15 @@ import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { Seance } from "@/types/api";
 
+/** Le téléphone tressaille quand le tampon tombe : un geste qui répond au geste (Android le permet). */
+function tressaillir(): void {
+  try {
+    navigator.vibrate?.([35, 45, 70]);
+  } catch {
+    // Pas de retour haptique ici : tant pis, le tampon suffit.
+  }
+}
+
 /** L'heure du coup de tampon, celle de Douala — comme sur la feuille. */
 function heureDouala(): string {
   return new Intl.DateTimeFormat("fr-FR", { timeZone: FUSEAU, hour: "2-digit", minute: "2-digit" })
@@ -63,7 +72,7 @@ export function CheckInDialog({
     // la convergence, `coords` contient déjà le meilleur point provisoire, qui
     // peut encore être très imprécis.
     if (geo.status !== "success" || !geo.coords) return;
-    checkIn.mutate(geo.coords);
+    checkIn.mutate(geo.coords, { onSuccess: tressaillir });
   }
 
   const apiError =
@@ -77,7 +86,7 @@ export function CheckInDialog({
             Confirmer ma présence
           </DialogTitle>
           <DialogDescription>
-            {seance.matiere} — {seance.salle}, {seance.heure_debut.slice(0, 5)}
+            {seance.matiere}, en {seance.salle}, à {seance.heure_debut.slice(0, 5)}
           </DialogDescription>
         </DialogHeader>
 

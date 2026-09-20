@@ -244,6 +244,51 @@ class PresenceController extends Controller
      * accueille aussi les étudiants "migrants" FM, une salle FA n'accueille
      * que des FA.
      */
+    /**
+     * Qui est là, en direct : le nombre de présents sur l'effectif de la
+     * salle et les prénoms des derniers arrivés. Visible par la classe
+     * elle-même (l'appel se fait à voix haute, la liste s'affiche au mur),
+     * par l'enseignant de la séance et par l'admin — personne d'autre.
+     */
+    public function presents(Request $request, Seance $seance)
+    {
+        $user = $request->user();
+        $deLaClasse = in_array($user->role, [UserRole::Etudiant, UserRole::Delegue], true) && $user->salle_id === $seance->salle_id;
+        abort_unless($deLaClasse || $user->id === $seance->enseignant_id || $user->role === UserRole::Admin, 403);
+
+        $seance->loadMissing('salle');
+        $effectif = User::query()
+            ->whereIn('role', [UserRole::Etudiant->value, UserRole::Delegue->value])
+            ->where('salle_id', $seance->salle_id)
+            ->whereIn('formation', $seance->salle->formationsAccueillies())
+            ->count();
+
+        $presents = $seance->presences()
+            ->where('etat', PresenceState::Present->value)
+            ->with('etudiant:id,name')
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return response()->json([
+            'presents' => $presents->count(),
+            'effectif' => $effectif,
+            'moi' => $presents->contains(fn ($p) => $p->etudiant_id === $user->id),
+            // Les derniers arrivés, par leur prénom — c'est ainsi qu'on se
+            // nomme en classe — sans celui qui regarde : il sait qu'il est là.
+            'prenoms' => $presents->where('etudiant_id', '!=', $user->id)->take(4)
+                ->map(fn ($p) => self::prenom($p->etudiant?->name ?? ''))->filter()->values(),
+        ]);
+    }
+
+    /** « MBALLA Étienne » ou « Étienne Mballa » → « Étienne » : le mot qui n'est pas tout en capitales, sinon le premier. */
+    private static function prenom(string $nom): string
+    {
+        $mots = preg_split('/\s+/', trim($nom)) ?: [];
+        $prenom = collect($mots)->first(fn ($m) => mb_strtoupper($m) !== $m) ?? ($mots[0] ?? '');
+
+        return mb_convert_case(mb_strtolower($prenom), MB_CASE_TITLE);
+    }
+
     private function rosterQuery(Seance $seance, User $delegue)
     {
         return User::query()

@@ -322,20 +322,6 @@ html:not(.dark) .tampon {
   }
 }
 
-/* De jour, un grain de papier à peine perceptible sur toute la page : c'est
-   ce qui sépare une feuille d'un écran blanc. Une texture procédurale, pas
-   une image — rien à charger. La nuit s'en passe. */
-html:not(.dark) body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-  opacity: 0.06;
-  mix-blend-mode: multiply;
-}
-
 /* Micro-interactions du design canvas premium */
 @keyframes dc-pulse {
   0% {
@@ -444,19 +430,18 @@ html:not(.dark) body::before {
    la menthe — réservée à ce qu'on peut faire (pointer, l'onglet actif, la
    séance en cours). C'est la parcimonie qui la fait ressortir : tout le
    reste est encre, papier ou nuit. */
-/* Clair : du papier légèrement chaud, une encre chaude, et un vert bouteille
-   — profond, un peu bleuté — qu'on ne trouve dans aucune palette toute
-   faite. Les couleurs vives des palettes par défaut sont ce qui trahit une
-   interface sortie d'un générateur : ici, le vert est choisi, et rare. */
+/* Clair : des surfaces neutres et nettes, comme une application mobile, et
+   un vert bouteille — profond, un peu bleuté — qu'on ne trouve dans aucune
+   palette toute faite. Le vert est choisi, et rare. */
 :root {
-  --ink-900: #1b1a17;
-  --ink-700: #46443e;
-  --ink-500: #716e66;
-  --ink-300: #a4a198;
-  --surface-0: #f5f3ed;
-  --surface-1: #fffdf8;
-  --surface-2: #ece9e1;
-  --line: #e3dfd4;
+  --ink-900: #141715;
+  --ink-700: #3f4542;
+  --ink-500: #6b726e;
+  --ink-300: #a0a6a2;
+  --surface-0: #f4f5f4;
+  --surface-1: #ffffff;
+  --surface-2: #eceeed;
+  --line: #e2e5e3;
   --indigo-600: #1d5c44;
   --indigo-500: #24704f;
   --indigo-100: #dcebe1;
@@ -477,7 +462,7 @@ html:not(.dark) body::before {
   /* La séance en cours : une carte teintée, un bord vert, le titre en vert
      profond — pas un aplat. C'est un accent qu'on remarque, pas une bannière. */
   --hero: var(--indigo-600);
-  --live-bg: #e4eee7;
+  --live-bg: #e7f1eb;
   --live-bar: #1d5c44;
   --live-ink: #10382a;
   --live-muted: #52705f;
@@ -487,7 +472,7 @@ html:not(.dark) body::before {
   --hero-ink: var(--live-ink);
   --hero-muted: var(--live-muted);
   --hero-line: var(--live-line);
-  --verre: #fbf9f4;
+  --verre: #ffffff;
   --relief: inset 0 1px 0 rgb(255 255 255 / 0.9);
 }
 .dark {
@@ -771,10 +756,46 @@ a {
   padding: 0 5px;
   opacity: 0.6;
 }
+/* Le temps qui passe (composant Progress) : les horaires, ce qu'il reste,
+   et dessous la part du cours déjà faite. La seule chose qui bouge sur la
+   carte, parce que le temps bouge. */
+.session-temps {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.session-live .session-temps {
+  border-color: var(--live-line);
+}
+.session-live .session-temps [data-slot="progress-value"] {
+  color: var(--live-muted);
+}
+.session-live .session-temps [data-slot="progress-track"] {
+  background: var(--live-line);
+}
+.session-live .session-temps [data-slot="progress-indicator"] {
+  background: var(--live-bar);
+}
 .session-presence {
+  margin-top: 10px;
   font-size: var(--text-13);
-  margin-left: auto;
-  opacity: 0.75;
+  color: var(--muted-foreground);
+}
+/* Qui est là : les visages, puis la phrase comme on la dirait en entrant. */
+.session-presents {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: var(--text-15);
+  line-height: 1.45;
+  color: var(--ink-700);
+}
+.session-presents > p {
+  min-width: 0;
+}
+.session-live .session-presents {
+  color: var(--live-ink);
 }
 .session-actions {
   margin-top: 18px;
@@ -835,6 +856,13 @@ a {
   gap: 20px;
   padding: 22px 0;
   border-bottom: 1px solid var(--line);
+}
+/* Une séance en cours dans la liste garde sa teinte, avec l'espace qu'il faut. */
+.session-row.session-live {
+  padding: 18px 16px;
+  margin: 6px 0;
+  border: 1px solid var(--live-line);
+  border-radius: 12px;
 }
 .session-time {
   position: relative;
@@ -1277,10 +1305,6 @@ a {
   }
   .session-featured h3 {
     font-size: var(--text-24);
-  }
-  .session-presence {
-    flex-basis: 100%;
-    margin-left: 24px;
   }
   .nav-label {
     font-size: var(--text-13);

@@ -197,6 +197,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/seances/{seance}/position', [PositionController::class, 'store'])->middleware('throttle:20,1');
 
     Route::post('/seances/{seance}/check-in', [PresenceController::class, 'checkIn'])->middleware('throttle:20,1');
+    Route::get('/seances/{seance}/presents', [PresenceController::class, 'presents']);
     Route::get('/seances/{seance}/roster', [PresenceController::class, 'roster']);
     Route::post('/seances/{seance}/confirm-roster', [PresenceController::class, 'confirmRoster']);
     Route::get('/seances/{seance}/presence-list.pdf', [PdfController::class, 'presenceList']);

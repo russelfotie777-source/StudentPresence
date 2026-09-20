@@ -150,6 +150,24 @@ export function usePush(seanceId: number) {
   });
 }
 
+export interface PresentsEnDirect {
+  presents: number;
+  effectif: number;
+  moi: boolean;
+  prenoms: string[];
+}
+
+/** Qui est là pendant la séance : rafraîchi toutes les vingt secondes tant qu'elle est en cours. */
+export function usePresents(seanceId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["seances", seanceId, "presents"],
+    queryFn: () => apiFetch<PresentsEnDirect>(`/api/seances/${seanceId}/presents`),
+    enabled,
+    refetchInterval: enabled ? 20_000 : false,
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useRoster(seanceId: number, enabled: boolean) {
   return useQuery({
     queryKey: ["seances", seanceId, "roster"],
