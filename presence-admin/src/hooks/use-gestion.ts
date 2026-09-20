@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch, ApiError, telechargerFichier } from "@/lib/api-client";
+import type { FormatExport } from "@/hooks/use-etudiants";
 
 export interface MigrantEtudiant {
   id: number;
@@ -136,12 +137,26 @@ export function usePresenceAutomatique() {
 /** La liste de présence des seuls migrants d'une salle d'accueil, pour une semaine. */
 export function useTelechargerListeMigrants() {
   return useMutation({
-    mutationFn: ({ salleId, semaineId }: { salleId: number; semaineId: number }) =>
+    mutationFn: ({ salleId, semaineId, format = "pdf" }: { salleId: number; semaineId: number; format?: FormatExport }) =>
       telechargerFichier(
-        `/api/salles/${salleId}/liste-presence.pdf?semaine_id=${semaineId}&migrants=1`,
-        "liste-presence-migrants.pdf",
+        `/api/salles/${salleId}/liste-presence.${format}?semaine_id=${semaineId}&migrants=1`,
+        `liste-presence-migrants.${format}`,
       ),
     onSuccess: () => toast.success("Liste des migrants téléchargée."),
+    onError: (e) => toast.error(message(e, "La génération a échoué.")),
+  });
+}
+
+/** La comptabilité de la période affichée, en classeur : une feuille de synthèse, une feuille de paie. */
+export function useTelechargerComptabilite() {
+  return useMutation({
+    mutationFn: ({ du, au }: { du?: string; au?: string }) => {
+      const params = new URLSearchParams();
+      if (du) params.set("du", du);
+      if (au) params.set("au", au);
+      return telechargerFichier(`/api/comptabilite.xlsx?${params}`, "comptabilite.xlsx");
+    },
+    onSuccess: () => toast.success("Comptabilité téléchargée."),
     onError: (e) => toast.error(message(e, "La génération a échoué.")),
   });
 }
