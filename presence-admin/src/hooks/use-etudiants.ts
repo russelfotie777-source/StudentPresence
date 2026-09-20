@@ -80,6 +80,19 @@ export function useChangerStatut() {
   );
 }
 
+/**
+ * Le filet pour qui a tout perdu : le compte revient au mot de passe initial,
+ * à remplacer à sa prochaine connexion, et ses appareils sont déconnectés.
+ */
+export function useReinitialiserMotDePasse() {
+  return useMutationEtudiant(
+    (id: number) =>
+      apiFetch<{ mot_de_passe_initial: string }>(`/api/comptes/${id}/reinitialiser-mot-de-passe`, { method: "POST" }),
+    "Mot de passe remis à sa valeur initiale : à remplacer à la prochaine connexion.",
+    "La réinitialisation a échoué.",
+  );
+}
+
 export function useSupprimerEtudiant() {
   return useMutationEtudiant(
     (id: number) => apiFetch(`/api/etudiants/${id}`, { method: "DELETE" }),

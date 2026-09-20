@@ -72,6 +72,8 @@ class FeuillePresenceController extends Controller
                 'motif_statut' => $u->motif_statut,
                 'presence_automatique' => (bool) $u->presence_automatique,
                 'presence_automatique_motif' => $u->presence_automatique_motif,
+                'email' => $u->email,
+                'email_verifie' => $u->emailVerifie(),
                 'presences' => $seances->mapWithKeys(fn (Seance $s) => [
                     $s->id => $feuille->marque($s, $u)?->value,
                 ]),
