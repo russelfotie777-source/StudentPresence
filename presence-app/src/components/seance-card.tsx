@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, Radio } from "lucide-react";
+import { Clock3 } from "lucide-react";
 import type { Seance } from "@/types/api";
 
 export function SeanceCard({
@@ -21,7 +21,7 @@ export function SeanceCard({
           <span className="session-label">
             {seance.is_active ? (
               <>
-                <Radio size={14} /> En cours
+                <span className="live-dot" aria-hidden /> En cours
               </>
             ) : (
               <>
@@ -40,7 +40,7 @@ export function SeanceCard({
         <h3>{seance.matiere ?? "Séance de cours"}</h3>
         <div className="session-details">
           <span>{seance.salle}</span>
-          <span>{seance.enseignant}</span>
+          {seance.enseignant && <span>avec {seance.enseignant}</span>}
         </div>
         {featured && (
           <div className="session-hours">

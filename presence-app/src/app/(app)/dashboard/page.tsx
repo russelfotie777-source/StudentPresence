@@ -58,6 +58,17 @@ const AttendanceSculpture = dynamic(
  * « jean-paul » à l'inscription deviennent « Russel » et « Jean-Paul » dans
  * le bonjour. Le nom complet reste intact partout ailleurs.
  */
+/** « Bonsoir » à partir de 18 h, heure de Douala : on salue comme on le ferait en entrant. */
+function salutation(maintenant: Date | null): string {
+  if (!maintenant) return "Bonjour";
+  const heure = Number(
+    new Intl.DateTimeFormat("fr-FR", { timeZone: FUSEAU, hour: "numeric", hour12: false })
+      .formatToParts(maintenant)
+      .find((p) => p.type === "hour")?.value ?? 12,
+  );
+  return heure >= 18 || heure < 4 ? "Bonsoir" : "Bonjour";
+}
+
 /** Titres et civilités qui précèdent parfois le nom : on salue la personne, pas son grade. */
 const TITRES = /^(pr|prof|professeur|dr|docteur|m|mr|mme|mlle|ing)\.?$/i;
 
@@ -168,7 +179,7 @@ export default function DashboardPage() {
             )}
           </p>
           <h1>
-            Bonjour, {me?.user.name && prenom(me.user.name)}
+            {salutation(today)}, {me?.user.name && prenom(me.user.name)}
             <span>.</span>
           </h1>
         </div>
@@ -263,13 +274,15 @@ export default function DashboardPage() {
               <span>Votre journée de cours est terminée.</span>
             </div>
           )}
-          {!isError && !!seances?.length && (
+          {/* Quand la séance en cours est la seule de la journée, il n'y a
+              rien à annoncer : on ne titre pas une liste vide. */}
+          {!isError && !!shown?.length && (
             <>
               <div className="agenda-heading">
-                <h3>Au programme</h3>
+                <h3>Le reste de la journée</h3>
               </div>
               <div className="agenda-list">
-                {shown?.map((seance, index) => (
+                {shown.map((seance, index) => (
                   <motion.div
                     key={seance.id}
                     initial={{ opacity: 0, y: 12 }}
@@ -281,9 +294,6 @@ export default function DashboardPage() {
                     </SeanceCard>
                   </motion.div>
                 ))}
-                {shown?.length === 0 && (
-                  <p className="agenda-done">Aucune autre séance aujourd’hui.</p>
-                )}
               </div>
             </>
           )}
@@ -478,7 +488,7 @@ function StudentActions({
   if (!seance.position_envoyee)
     return (
       <span className="attendance-status">
-        <MapPin size={16} /> Position du délégué indisponible.
+        <MapPin size={16} /> Le délégué n’a pas encore envoyé la position.
       </span>
     );
   return (
