@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\CodesEmail;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -117,6 +118,9 @@ class AuthController extends Controller
             'user' => new UserResource($user->loadForResource()),
             'face_pending' => in_array('face-pending', $abilities, true),
             'face_enrolled' => $user->hasFaceEnrolled(),
+            // L'adresse dont un code de vérification est encore attendu, pour
+            // reprendre la saisie du code après un rechargement.
+            'email_en_attente' => app(CodesEmail::class)->adresseEnAttente($user),
         ]);
     }
 

@@ -348,6 +348,7 @@ class AssistantTest extends TestCase
         $this->assertSame('Enseignant', $inconnu->role->value);
         $this->assertSame('approved', $inconnu->validation_status->value);
         $this->assertTrue(Hash::check('12345678', $inconnu->password));
+        $this->assertTrue($inconnu->doit_changer_mot_de_passe, 'Le mot de passe initial est à remplacer à la première connexion.');
 
         $this->assertDatabaseHas('matieres', ['code' => 'INF321', 'nom' => 'Maths Discrètes']);
         $this->assertDatabaseHas('course_templates', ['enseignant_id' => $inconnu->id]);
@@ -516,6 +517,7 @@ class AssistantTest extends TestCase
         $this->assertSame($this->salle->id, $etudiant->salle_id);
         $this->assertSame($this->salle->filiere_id, $etudiant->filiere_id);
         $this->assertTrue(Hash::check($actions['a1']['resultat']['details']['mot_de_passe_initial'], $etudiant->password));
+        $this->assertTrue($etudiant->doit_changer_mot_de_passe);
     }
 
     public function test_session_changes_go_through_the_planning_rules(): void
