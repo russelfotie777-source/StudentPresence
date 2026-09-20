@@ -251,6 +251,77 @@
   }
 }
 
+/* Le tampon (voir components/tampon.tsx) : encre, cadre double, légèrement
+   de travers. Le masque bruité rend l'encre inégale, comme un vrai coup de
+   tampon ; de jour elle se fond au papier en multiply. */
+.tampon {
+  --encre: var(--live-bar);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px 8px;
+  border: 3px double var(--encre);
+  border-radius: 9px;
+  color: var(--encre);
+  font-family: var(--font-display), serif;
+  line-height: 1;
+  transform: rotate(-5deg);
+  transform-origin: 50% 50%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.55 1.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.55 1.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)'/%3E%3C/svg%3E");
+  -webkit-mask-size: 140px 140px;
+  mask-size: 140px 140px;
+}
+html:not(.dark) .tampon {
+  mix-blend-mode: multiply;
+}
+.tampon-absent {
+  --encre: var(--destructive);
+}
+.tampon-mot {
+  font-size: var(--text-24);
+  font-weight: var(--w-bold);
+}
+.tampon-detail {
+  margin-top: 5px;
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.tampon-mini {
+  padding: 3px 8px 2px;
+  border-width: 2px;
+  border-radius: 6px;
+  transform: rotate(-3deg);
+}
+.tampon-mini .tampon-mot {
+  font-size: var(--text-13);
+}
+.tampon-anime {
+  animation: tampon-frapper 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+@keyframes tampon-frapper {
+  from {
+    transform: rotate(-9deg) scale(1.7);
+    opacity: 0;
+  }
+  55% {
+    transform: rotate(-5deg) scale(0.96);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(-5deg) scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tampon-anime {
+    animation: none;
+  }
+}
+
 /* De jour, un grain de papier à peine perceptible sur toute la page : c'est
    ce qui sépare une feuille d'un écran blanc. Une texture procédurale, pas
    une image — rien à charger. La nuit s'en passe. */
@@ -622,54 +693,17 @@ a {
   box-shadow: var(--relief);
 }
 /* La séance en cours est la seule surface teintée de l'écran : c'est elle
-   qu'on doit voir en premier. Une carte pâle, un bord vert épais à gauche,
-   le titre en vert profond — et rien qui brille. */
+   qu'on doit voir en premier. Une carte pâle, le titre en vert profond — et
+   rien qui brille. Ni barre de couleur sur le bord, ni étiquette « En cours »
+   avec son point : ce sont les ornements de tous les gabarits. */
 .session-live {
   background: var(--live-bg);
   color: var(--live-ink);
   border-color: var(--live-line);
-  box-shadow: inset 5px 0 0 0 var(--live-bar);
-  padding-left: 26px;
+  box-shadow: none;
 }
 .session-live h3 {
   color: var(--live-ink);
-}
-/* Le point qui bat, à côté de « En cours » : le seul mouvement de la carte. */
-.live-dot {
-  position: relative;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--live-bar);
-  flex: none;
-}
-.live-dot::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 2px solid var(--live-bar);
-  opacity: 0;
-  animation: live-dot-pulse 2.2s ease-out infinite;
-}
-@keyframes live-dot-pulse {
-  0% {
-    transform: scale(0.55);
-    opacity: 0.7;
-  }
-  70% {
-    transform: scale(1.25);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.25);
-    opacity: 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .live-dot::after {
-    animation: none;
-  }
 }
 .session-topline {
   display: flex;
@@ -684,9 +718,6 @@ a {
   gap: 7px;
   font-size: var(--text-13);
   font-weight: var(--w-bold);
-}
-.session-live .session-label {
-  color: var(--live-bar);
 }
 .session-code {
   font-size: var(--text-13);

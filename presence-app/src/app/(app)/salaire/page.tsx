@@ -48,13 +48,8 @@ export default function SalairePage() {
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="relative rounded-2xl border p-5 pl-6"
-            style={{
-              background: "var(--live-bg)",
-              borderColor: "var(--live-line)",
-              boxShadow: "inset 5px 0 0 0 var(--live-bar)",
-              color: "var(--live-ink)",
-            }}
+            className="relative rounded-2xl border p-5"
+            style={{ background: "var(--live-bg)", borderColor: "var(--live-line)", color: "var(--live-ink)" }}
           >
             <div className="flex items-center gap-2" style={{ color: "var(--live-muted)" }}>
               <Wallet className="h-4 w-4" />

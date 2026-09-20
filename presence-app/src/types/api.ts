@@ -76,6 +76,8 @@ export interface Seance {
   matiere?: string;
   push?: { etudiants_presents: number; status: PushStatus } | null;
   ma_presence?: PresenceState | null;
+  /** Heure du pointage (« 09h12 »), heure de Douala. */
+  ma_presence_a?: string | null;
   position_envoyee?: boolean;
   geolocation?: {
     max_position_accuracy_meters: number;

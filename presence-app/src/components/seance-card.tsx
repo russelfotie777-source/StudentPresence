@@ -16,20 +16,16 @@ export function SeanceCard({
     <article
       className={`session ${featured ? "session-featured" : "session-row"} ${seance.is_active ? "session-live" : ""}`}
     >
+      {/* La séance en cours n'a pas d'étiquette : sa teinte et son bouton
+          disent tout. Seule la prochaine séance est annoncée comme telle. */}
       {featured ? (
-        <div className="session-topline">
-          <span className="session-label">
-            {seance.is_active ? (
-              <>
-                <span className="live-dot" aria-hidden /> En cours
-              </>
-            ) : (
-              <>
-                <Clock3 size={14} /> Prochaine séance
-              </>
-            )}
-          </span>
-        </div>
+        !seance.is_active && (
+          <div className="session-topline">
+            <span className="session-label">
+              <Clock3 size={14} /> Prochaine séance
+            </span>
+          </div>
+        )
       ) : (
         <div className="session-time">
           <strong>{seance.heure_debut.slice(0, 5)}</strong>

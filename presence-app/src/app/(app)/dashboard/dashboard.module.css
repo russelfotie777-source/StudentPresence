@@ -174,8 +174,7 @@
   background: var(--live-bg);
   color: var(--live-ink);
   border-color: var(--live-line);
-  box-shadow: inset 5px 0 0 0 var(--live-bar);
-  padding-left: 25px;
+  box-shadow: none;
 }
 .dashboard :global(.session-topline) {
   margin-bottom: 22px;
@@ -183,9 +182,6 @@
 .dashboard :global(.session-label) {
   font-size: var(--text-13);
   color: var(--dash-blue);
-}
-.dashboard :global(.session-live .session-label) {
-  color: var(--live-bar);
 }
 .dashboard :global(.session-live .session-code),
 .dashboard :global(.session-live .session-details),
@@ -248,14 +244,8 @@
   color: var(--dash-accent);
 }
 .dashboard :global(.session-featured .attendance-status.confirmed) {
-  padding: 10px 12px;
-  background: var(--dash-mint);
+  padding: 6px 0 2px;
   width: 100%;
-  border-radius: 10px;
-}
-.dashboard :global(.session-live .attendance-status.confirmed) {
-  background: var(--live-panel);
-  color: var(--live-ink);
 }
 .dashboard :global(.agenda-heading) {
   margin-top: 25px;

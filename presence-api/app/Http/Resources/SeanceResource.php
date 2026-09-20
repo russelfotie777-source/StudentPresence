@@ -35,6 +35,8 @@ class SeanceResource extends JsonResource
             // SeanceController::today() a chargé `presences` filtrée sur son
             // propre id (vue Étudiant uniquement).
             'ma_presence' => $this->whenLoaded('presences', fn () => $this->presences->first()?->etat?->value),
+            // L'heure du coup de tampon, heure de Douala, pour l'afficher tel quel.
+            'ma_presence_a' => $this->whenLoaded('presences', fn () => $this->presences->first()?->created_at?->timezone(config('app.timezone'))->format('H\hi')),
             'position_envoyee' => $this->whenLoaded('position', fn () => $this->position !== null),
             'groupe' => $this->groupe,
             'date_seance' => $this->date_seance?->toDateString(),

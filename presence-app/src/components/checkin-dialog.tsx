@@ -16,9 +16,18 @@ import { useGeolocation } from "@/hooks/use-geolocation";
 import { usePermission } from "@/hooks/use-permission";
 import { DemandePermission } from "@/components/demande-permission";
 import { useCheckIn } from "@/hooks/use-seances";
+import { FUSEAU } from "@/hooks/use-heure";
+import { Tampon } from "@/components/tampon";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { Seance } from "@/types/api";
+
+/** L'heure du coup de tampon, celle de Douala — comme sur la feuille. */
+function heureDouala(): string {
+  return new Intl.DateTimeFormat("fr-FR", { timeZone: FUSEAU, hour: "2-digit", minute: "2-digit" })
+    .format(new Date())
+    .replace(":", "h");
+}
 
 export function CheckInDialog({
   seance,
@@ -121,25 +130,14 @@ export function CheckInDialog({
 
           {checkIn.isSuccess && (
             <>
-              <div className="animate-dc-pop relative mb-1 flex h-[88px] w-[88px] items-center justify-center">
-                <span className="animate-dc-ray absolute top-0 left-1/2 h-3 w-[3px] -ml-[1.5px] rounded-full bg-emerald-500" />
-                <span className="animate-dc-ray absolute top-2.5 right-0.5 h-3 w-[3px] rounded-full bg-emerald-500" />
-                <span className="animate-dc-ray absolute top-1/2 right-0 h-[3px] w-3 -mt-[1.5px] rounded-full bg-emerald-500" />
-                <span className="animate-dc-ray absolute bottom-2.5 right-0.5 h-3 w-[3px] rounded-full bg-emerald-500" />
-                <span className="animate-dc-ray absolute bottom-2.5 left-0.5 h-3 w-[3px] rounded-full bg-emerald-500" />
-                <span className="animate-dc-ray absolute top-1/2 left-0 h-[3px] w-3 -mt-[1.5px] rounded-full bg-emerald-500" />
-                <div className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full bg-emerald-500 shadow-[0_20px_40px_-14px_rgba(15,165,114,.4)]">
-                  <CheckCircle2
-                    className="h-8 w-8 text-white"
-                    strokeWidth={2.2}
-                  />
-                </div>
+              <div className="flex h-[88px] items-center justify-center">
+                <Tampon detail={heureDouala()} anime />
               </div>
               <h2 className="font-display text-lg font-bold text-ink-900">
-                Présence confirmée
+                C&apos;est noté.
               </h2>
               <p className="text-xs text-ink-500">
-                À {checkIn.data?.distance}m du délégué &middot; {seance.matiere}
+                À {checkIn.data?.distance} m du délégué &middot; {seance.matiere}
               </p>
             </>
           )}

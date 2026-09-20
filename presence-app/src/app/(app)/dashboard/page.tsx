@@ -29,6 +29,7 @@ import { SeanceCard } from "@/components/seance-card";
 import { CheckInDialog } from "@/components/checkin-dialog";
 import { BanniereRestriction } from "@/components/banniere-restriction";
 import { RappelEmail } from "@/components/compte/rappel-email";
+import { Tampon } from "@/components/tampon";
 import { RosterDialog } from "@/components/roster-dialog";
 import { PushDialog } from "@/components/push-dialog";
 import { SendPositionButton } from "@/components/send-position-button";
@@ -463,10 +464,11 @@ function StudentActions({
   restreint: boolean;
   onCheckIn: () => void;
 }) {
+  // Présence prise : le tampon, avec l'heure — rien d'autre à dire.
   if (seance.ma_presence === "present")
     return (
       <span className="attendance-status confirmed">
-        <CheckCheck size={17} /> Présence confirmée
+        <Tampon detail={seance.ma_presence_a ?? undefined} />
       </span>
     );
   if (seance.presences_locked)
