@@ -95,6 +95,10 @@ export function DialogueCours({
   const [semaineAId, setSemaineAId] = useState(String(semaines.at(-1)?.id ?? ""));
   const [date, setDate] = useState<Ymd>(prerempli.date ?? semaineCourante?.date_debut ?? "");
 
+  const filiereDeLaSalle = salles.find((s) => String(s.id) === salleId)?.filiere_id ?? null;
+  const matieresDeLaSalle = salleId
+    ? matieres.filter((m) => m.filiere_id === null || m.filiere_id === filiereDeLaSalle)
+    : [];
   const semaineDe = semaines.find((s) => String(s.id) === semaineDeId);
   const semaineA = semaines.find((s) => String(s.id) === semaineAId);
   const ordreOk = !semaineDe || !semaineA || semaineDe.numero <= semaineA.numero;
@@ -192,17 +196,26 @@ export function DialogueCours({
               <Champ label="Salle" large>
                 <Selecteur
                   valeur={salleId}
-                  onChange={setSalleId}
+                  onChange={(v) => {
+                    setSalleId(v);
+                    // La matière choisie appartient à l'ancienne salle : elle ne vaut plus.
+                    setMatiereId("");
+                  }}
                   placeholder="Choisir une salle…"
                   options={salles.map((s) => ({ valeur: String(s.id), label: libelleSalle(s) }))}
                 />
               </Champ>
               <Champ label="Matière">
+                {/* Chaque filière a ses matières : celles de la salle choisie, et les communes. */}
                 <Selecteur
                   valeur={matiereId}
                   onChange={setMatiereId}
-                  placeholder="Choisir…"
-                  options={matieres.map((m) => ({ valeur: String(m.id), label: `${m.nom} (${m.code})` }))}
+                  placeholder={salleId ? "Choisir…" : "Choisissez d'abord la salle"}
+                  vide="Aucune matière pour cette filière : créez-la dans le catalogue."
+                  options={matieresDeLaSalle.map((m) => ({
+                    valeur: String(m.id),
+                    label: `${m.nom} (${m.code})${m.filiere_id === null ? " · commune" : ""}`,
+                  }))}
                 />
               </Champ>
               <Champ label="Enseignant">

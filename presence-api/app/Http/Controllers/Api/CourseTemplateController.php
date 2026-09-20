@@ -6,6 +6,8 @@ use App\Enums\Weekday;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SeanceResource;
 use App\Models\CourseTemplate;
+use App\Models\Matiere;
+use App\Models\Salle;
 use App\Models\Seance;
 use App\Services\RetouchesPlanning;
 use App\Services\SeanceGenerator;
@@ -122,6 +124,15 @@ class CourseTemplateController extends Controller
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
             'actif' => ['sometimes', 'boolean'],
         ]);
+
+        // Chaque filière a ses matières : un cours ne peut porter qu'une
+        // matière de la filière de sa salle, ou une matière commune.
+        $filiereId = Salle::whereKey($data['salle_id'])->value('filiere_id');
+        if (! Matiere::whereKey($data['matiere_id'])->pourFiliere($filiereId)->exists()) {
+            throw ValidationException::withMessages([
+                'matiere_id' => ["Cette matière n'appartient pas à la filière de la salle choisie."],
+            ]);
+        }
 
         // Un jour qui ne tombe jamais dans la plage (ex. « lundi » entre un
         // mardi et un jeudi) ne produirait aucune séance : le signaler tout

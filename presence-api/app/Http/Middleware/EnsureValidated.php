@@ -31,6 +31,13 @@ class EnsureValidated
             });
         }
 
+        // Le mot de passe initial est le même pour tous les comptes créés par
+        // l'administration : tant qu'il n'est pas remplacé, n'importe qui
+        // pourrait pointer à la place de son voisin. Voir CompteController.
+        if ($user->doit_changer_mot_de_passe) {
+            abort(403, 'Remplacez d\'abord le mot de passe initial de votre compte.');
+        }
+
         return $next($request);
     }
 }

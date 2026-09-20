@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SeanceCard } from "@/components/seance-card";
 import { CheckInDialog } from "@/components/checkin-dialog";
 import { BanniereRestriction } from "@/components/banniere-restriction";
+import { RappelEmail } from "@/components/compte/rappel-email";
 import { RosterDialog } from "@/components/roster-dialog";
 import { PushDialog } from "@/components/push-dialog";
 import { SendPositionButton } from "@/components/send-position-button";
@@ -57,8 +58,12 @@ const AttendanceSculpture = dynamic(
  * « jean-paul » à l'inscription deviennent « Russel » et « Jean-Paul » dans
  * le bonjour. Le nom complet reste intact partout ailleurs.
  */
+/** Titres et civilités qui précèdent parfois le nom : on salue la personne, pas son grade. */
+const TITRES = /^(pr|prof|professeur|dr|docteur|m|mr|mme|mlle|ing)\.?$/i;
+
 function prenom(nomComplet: string): string {
-  const premier = nomComplet.trim().split(/\s+/)[0] ?? "";
+  const mots = nomComplet.trim().split(/\s+/);
+  const premier = (TITRES.test(mots[0] ?? "") ? mots[1] : mots[0]) ?? "";
   return premier
     .toLocaleLowerCase("fr")
     .split("-")
@@ -192,6 +197,7 @@ export default function DashboardPage() {
         </div>
       </motion.section>
       {me?.user && <BanniereRestriction user={me.user} />}
+      {me?.user && <RappelEmail user={me.user} />}
       <div className="dashboard-columns">
         <div className="schedule-column">
           <div className="section-heading">

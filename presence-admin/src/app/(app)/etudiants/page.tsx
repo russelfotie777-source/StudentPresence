@@ -10,6 +10,7 @@ import {
   useChangerSalle,
   useChangerStatut,
   useForcerPresence,
+  useReinitialiserMotDePasse,
   useSupprimerEtudiant,
 } from "@/hooks/use-etudiants";
 import {
@@ -38,6 +39,7 @@ import { DialogueListe, type CibleListe } from "@/components/etudiants/dialogue-
 import { SelecteurSymboles } from "@/components/etudiants/selecteur-symboles";
 import {
   DialogueConfirmation,
+  DialogueMotDePasse,
   DialoguePresenceAuto,
   DialogueSalle,
   DialogueSanction,
@@ -399,6 +401,8 @@ function versUser(e: EtudiantFeuille, feuille: FeuillePresence): User {
     statut_modifie_le: null,
     presence_automatique: e.presence_automatique,
     presence_automatique_motif: e.presence_automatique_motif,
+    email: e.email,
+    email_verifie: e.email_verifie,
     formation: e.formation,
     salle: { id: feuille.salle.id, nom: feuille.salle.nom },
     niveau: null,
@@ -424,6 +428,7 @@ function Dialogues({
   const changerStatut = useChangerStatut();
   const supprimer = useSupprimerEtudiant();
   const presenceAuto = usePresenceAutomatique();
+  const reinitialiser = useReinitialiserMotDePasse();
   const apres = { onSuccess: onTermine };
 
   switch (action.type) {
@@ -456,6 +461,15 @@ function Dialogues({
           etudiant={action.etudiant}
           enCours={presenceAuto.isPending}
           onConfirmer={(actif, motif) => presenceAuto.mutate({ id: action.etudiant.id, actif, motif }, apres)}
+          onFermer={onFermer}
+        />
+      );
+    case "mot_de_passe":
+      return (
+        <DialogueMotDePasse
+          etudiant={action.etudiant}
+          enCours={reinitialiser.isPending}
+          onConfirmer={() => reinitialiser.mutate(action.etudiant.id, apres)}
           onFermer={onFermer}
         />
       );

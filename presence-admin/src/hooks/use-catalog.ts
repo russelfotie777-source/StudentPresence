@@ -41,6 +41,9 @@ export interface Matiere {
   id: number;
   nom: string;
   code: string;
+  /** Null : matière commune à toutes les filières. */
+  filiere_id: number | null;
+  filiere?: Filiere | null;
 }
 
 export interface Semaine {
@@ -70,13 +73,13 @@ export interface ArborescenceDepartement extends Departement {
 // La structure est un tout : une salle embarque sa filière, son niveau et son
 // département, l'arbre d'un département embarque tout le reste. Toucher à
 // l'un périme les listes des autres — comme le fait le cache de l'API.
-const STRUCTURE = ["departements", "niveaux", "filieres", "salles"];
+const STRUCTURE = ["departements", "niveaux", "filieres", "salles", "matieres"];
 
 export const departementHooks = makeCrudHooks<Departement>("departements", "departements", STRUCTURE);
 export const niveauHooks = makeCrudHooks<Niveau>("niveaux", "niveaux", STRUCTURE);
 export const filiereHooks = makeCrudHooks<Filiere>("filieres", "filieres", STRUCTURE);
 export const salleHooks = makeCrudHooks<Salle>("salles", "salles", STRUCTURE);
-export const matiereHooks = makeCrudHooks<Matiere>("matieres", "matieres");
+export const matiereHooks = makeCrudHooks<Matiere>("matieres", "matieres", STRUCTURE);
 export const semaineHooks = makeCrudHooks<Semaine>("semaines", "semaines");
 
 export function useArborescenceDepartement(id: number | null) {

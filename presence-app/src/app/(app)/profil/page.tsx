@@ -11,6 +11,7 @@ import { CarteAutorisations } from "@/components/carte-autorisations";
 import { CarteRappels } from "@/components/carte-rappels";
 import { CarteNotifications } from "@/components/carte-notifications";
 import { BanniereRestriction } from "@/components/banniere-restriction";
+import { CarteConnexion } from "@/components/compte/carte-connexion";
 import { useLogout, useMe } from "@/hooks/use-auth";
 import { useAttendanceTrend } from "@/hooks/use-attendance-stats";
 
@@ -23,7 +24,7 @@ export default function ProfilPage() {
   const { data: trend, isLoading: trendLoading } = useAttendanceTrend(isEtudiant);
   const isFA = isEtudiant && user?.formation === "FA";
 
-  if (!user) return null;
+  if (!data || !user) return null;
 
   const initials = user.name
     .split(" ")
@@ -47,17 +48,16 @@ export default function ProfilPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <InfoRow
-          icon={Phone}
-          label={isEtudiant ? "Matricule" : "Téléphone"}
-          value={user.phone}
-        />
+        {/* Le numéro de l'enseignant se règle plus bas, dans « Connexion » : il n'est pas répété ici. */}
+        {user.role !== "Enseignant" && <InfoRow icon={Phone} label="Matricule" value={user.phone} />}
         {user.salle && <InfoRow icon={School} label="Salle" value={user.salle.nom} />}
         {user.filiere && <InfoRow icon={BookOpen} label="Filière" value={user.filiere.nom} />}
         {user.niveau && <InfoRow icon={GraduationCap} label="Niveau" value={user.niveau.nom} />}
       </div>
 
       <BanniereRestriction user={user} />
+
+      <CarteConnexion me={data} />
 
       <CarteNotifications />
 

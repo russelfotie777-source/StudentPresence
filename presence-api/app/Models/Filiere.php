@@ -29,6 +29,11 @@ class Filiere extends Model
         return $this->hasMany(Salle::class);
     }
 
+    public function matieres(): HasMany
+    {
+        return $this->hasMany(Matiere::class);
+    }
+
     public function groupes(): HasMany
     {
         return $this->hasMany(Groupe::class);

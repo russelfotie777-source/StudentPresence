@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'phone', 'email', 'password', 'role', 'validation_status', 'statut_compte', 'motif_statut', 'statut_modifie_le', 'presence_automatique', 'presence_automatique_motif', 'presence_automatique_le', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
+#[Fillable(['name', 'phone', 'email', 'email_verified_at', 'password', 'doit_changer_mot_de_passe', 'role', 'validation_status', 'statut_compte', 'motif_statut', 'statut_modifie_le', 'presence_automatique', 'presence_automatique_motif', 'presence_automatique_le', 'formation', 'salle_id', 'niveau_id', 'filiere_id', 'quota', 'face_descriptor', 'face_enrolled_at'])]
 // face_descriptor est une donnée biométrique : jamais renvoyée par l'API,
 // même par accident (ex. un ->toArray() ajouté négligemment plus tard).
 #[Hidden(['password', 'remember_token', 'face_descriptor'])]
@@ -47,6 +47,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'doit_changer_mot_de_passe' => 'boolean',
             'role' => UserRole::class,
             'validation_status' => ValidationStatus::class,
             'statut_compte' => StatutCompte::class,
@@ -103,6 +104,17 @@ class User extends Authenticatable
     public function salle(): BelongsTo
     {
         return $this->belongsTo(Salle::class);
+    }
+
+    public function codesEmail(): HasMany
+    {
+        return $this->hasMany(CodeEmail::class);
+    }
+
+    /** Une adresse ne compte que confirmée par son code : c'est elle qui reçoit le mot de passe oublié. */
+    public function emailVerifie(): bool
+    {
+        return $this->email !== null && $this->email_verified_at !== null;
     }
 
     public function coursEnseignes(): HasMany

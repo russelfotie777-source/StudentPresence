@@ -355,6 +355,10 @@
 .signup > a:hover {
   color: #0f9d68;
 }
+.signup > .forgot {
+  font-weight: var(--w-regular);
+  color: var(--login-muted);
+}
 .institution {
   position: absolute;
   bottom: 28px;
