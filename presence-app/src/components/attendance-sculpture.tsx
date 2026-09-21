@@ -51,12 +51,12 @@ export function AttendanceSculpture({ percent }: { percent: number | null }) {
     scene.add(group);
     const geometry = new RoundedBoxGeometry(0.083, 0.34, 0.2, 2, 0.014);
     const green = new THREE.MeshStandardMaterial({
-      color: resolvedTheme === "dark" ? 0x2ee59d : 0x0f9d68,
+      color: resolvedTheme === "dark" ? 0x2ee59d : 0x00c257,
       metalness: 0.25,
       roughness: 0.35,
     });
     const gray = new THREE.MeshStandardMaterial({
-      color: resolvedTheme === "dark" ? 0x2a3530 : 0xd6dfda,
+      color: resolvedTheme === "dark" ? 0x2a3530 : 0xe6ebf2,
       metalness: 0.18,
       roughness: 0.5,
     });
