@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\PdfController;
 use App\Http\Controllers\Api\PointageSettingController;
+use App\Http\Controllers\Api\PositionAttendueController;
 use App\Http\Controllers\Api\PositionController;
 use App\Http\Controllers\Api\PresenceController;
 use App\Http\Controllers\Api\PromotionController;
@@ -202,6 +203,7 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified'])->group(functio
     Route::post('/seances/{seance}/position', [PositionController::class, 'store'])->middleware('throttle:20,1');
 
     Route::post('/seances/{seance}/check-in', [PresenceController::class, 'checkIn'])->middleware('throttle:20,1');
+    Route::post('/seances/{seance}/position-attendue', PositionAttendueController::class)->middleware('throttle:6,1');
     Route::get('/seances/{seance}/roster', [PresenceController::class, 'roster']);
     Route::post('/seances/{seance}/confirm-roster', [PresenceController::class, 'confirmRoster']);
     Route::get('/seances/{seance}/presence-list.pdf', [PdfController::class, 'presenceList']);

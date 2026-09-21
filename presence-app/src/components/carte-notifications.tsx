@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { AlarmClock, Bell, ShieldOff, ShieldBan, ShieldCheck, Check } from "lucide-react";
+import { AlarmClock, Bell, ShieldOff, ShieldBan, ShieldCheck, Check, Hand } from "lucide-react";
 import { useMarquerLue, useNotifications } from "@/hooks/use-notifications";
 import type { Notification } from "@/types/api";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,9 @@ function LigneNotification({ notification: n, onLue }: { notification: Notificat
     (n.statut && ICONES[n.statut]) ||
     (n.type === "rappel_pointage"
       ? { icon: AlarmClock, classe: "bg-primary/10 text-primary" }
-      : { icon: Bell, classe: "bg-secondary text-secondary-foreground" });
+      : n.type === "position_attendue"
+        ? { icon: Hand, classe: "bg-primary/10 text-primary" }
+        : { icon: Bell, classe: "bg-secondary text-secondary-foreground" });
   const Icone = ton.icon;
 
   return (

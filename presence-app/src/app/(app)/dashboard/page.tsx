@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SeanceCard } from "@/components/seance-card";
 import { CheckInDialog } from "@/components/checkin-dialog";
+import { AttentePosition } from "@/components/attente-position";
 import { BanniereRestriction } from "@/components/banniere-restriction";
 import { RappelEmail } from "@/components/compte/rappel-email";
 import { RosterDialog } from "@/components/roster-dialog";
@@ -99,6 +100,9 @@ export default function DashboardPage() {
   const focus = active ?? seances?.find((s) => !s.is_past && !s.is_active);
   const remaining = seances?.filter((s) => !s.is_past).length ?? 0;
   const shown = seances?.filter((s) => s.id !== focus?.id);
+  const checkInSeanceActuelle = checkInSeance
+    ? (seances?.find((s) => s.id === checkInSeance.id) ?? checkInSeance)
+    : null;
   const roleLabel =
     role === "Delegue"
       ? "Délégué"
@@ -419,13 +423,22 @@ export default function DashboardPage() {
         <ZirisWordmark />
         <span>IUT de Douala</span>
       </footer>
-      {checkInSeance && (
-        <CheckInDialog
-          seance={checkInSeance}
-          open
-          onOpenChange={(open) => !open && setCheckInSeance(null)}
-        />
-      )}
+      {/* La séance suivie en direct : quand la position du délégué arrive,
+          l'attente laisse place au pointage sans que l'étudiant ait à rouvrir. */}
+      {checkInSeanceActuelle &&
+        (checkInSeanceActuelle.position_envoyee ? (
+          <CheckInDialog
+            seance={checkInSeanceActuelle}
+            open
+            onOpenChange={(open) => !open && setCheckInSeance(null)}
+          />
+        ) : (
+          <AttentePosition
+            seance={checkInSeanceActuelle}
+            open
+            onOpenChange={(open) => !open && setCheckInSeance(null)}
+          />
+        ))}
       {rosterSeance && (
         <RosterDialog
           seance={rosterSeance}
@@ -475,12 +488,9 @@ function StudentActions({
         Pointage indisponible : compte restreint
       </span>
     );
-  if (!seance.position_envoyee)
-    return (
-      <span className="attendance-status">
-        <MapPin size={16} /> Position du délégué indisponible.
-      </span>
-    );
+  // Le bouton est là dès que l'heure est venue, position envoyée ou pas :
+  // sans position, il ouvre l'attente (voir AttentePosition) plutôt qu'un
+  // message qui ferme la porte.
   return (
     <Button className="checkin-primary" onClick={onCheckIn}>
       <MapPin size={18} /> Je suis présent(e)

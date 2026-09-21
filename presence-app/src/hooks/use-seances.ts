@@ -34,6 +34,22 @@ function useInvalidateToday() {
   return () => queryClient.invalidateQueries({ queryKey: ["seances", "today"] });
 }
 
+/**
+ * « Faire signe au délégué » : le pointage n'ouvre pas tant que la position
+ * de la salle n'est pas envoyée. Le serveur ne prévient qu'une fois par
+ * séance et dit qui a été prévenu, par son prénom.
+ */
+export function useFaireSigneDelegue(seanceId: number) {
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ deja_prevenu: boolean; delegues: string[] }>(
+        `/api/seances/${seanceId}/position-attendue`,
+        { method: "POST", body: "{}" },
+      ),
+    onError: (error) => toast.error(errorMessage(error, "Le délégué n'a pas pu être prévenu.")),
+  });
+}
+
 export function useSendPosition(seanceId: number) {
   const invalidate = useInvalidateToday();
 

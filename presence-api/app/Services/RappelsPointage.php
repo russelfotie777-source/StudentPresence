@@ -130,7 +130,7 @@ class RappelsPointage
      *
      * @return Collection<int, User>
      */
-    private function delegues(Seance $seance): Collection
+    public function delegues(Seance $seance): Collection
     {
         return User::query()
             ->where('salle_id', $seance->salle_id)
