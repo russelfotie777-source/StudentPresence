@@ -155,17 +155,15 @@
   text-underline-offset: 4px;
 }
 .dashboard :global(.session-featured) {
-  background: var(--card);
-  border: 1px solid var(--dash-border);
+  background: var(--prochaine);
+  color: var(--hero-ink);
+  border: 1px solid rgb(0 0 0 / 0.06);
   border-radius: 16px;
   padding: 21px;
-  box-shadow: var(--relief);
+  box-shadow: var(--ombre-carte);
 }
 .dashboard :global(.session-live) {
   background: var(--hero);
-  color: var(--hero-ink);
-  border-color: rgb(0 0 0 / 0.12);
-  box-shadow: none;
 }
 .dashboard :global(.session-topline) {
   margin-bottom: 22px;
@@ -174,16 +172,16 @@
   font-size: var(--text-13);
   color: var(--dash-blue);
 }
-.dashboard :global(.session-live .session-label) {
+.dashboard :global(.session-featured .session-label) {
   color: var(--hero-ink);
 }
-.dashboard :global(.session-live .session-code),
-.dashboard :global(.session-live .session-details),
-.dashboard :global(.session-live .session-presence),
-.dashboard :global(.session-live .attendance-status) {
+.dashboard :global(.session-featured .session-code),
+.dashboard :global(.session-featured .session-details),
+.dashboard :global(.session-featured .session-presence),
+.dashboard :global(.session-featured .attendance-status) {
   color: var(--hero-muted);
 }
-.dashboard :global(.session-live .session-hours) {
+.dashboard :global(.session-featured .session-hours) {
   border-color: var(--hero-line);
 }
 .dashboard :global(.session-code) {
@@ -227,7 +225,7 @@
   box-shadow: none;
 }
 .dashboard :global(.checkin-primary:hover) {
-  background: #5cefb5;
+  background: var(--menthe-hover);
 }
 .dashboard :global(.attendance-status) {
   color: var(--dash-muted);
@@ -239,12 +237,9 @@
 }
 .dashboard :global(.session-featured .attendance-status.confirmed) {
   padding: 10px 12px;
-  background: var(--dash-mint);
   width: 100%;
   border-radius: 10px;
-}
-.dashboard :global(.session-live .attendance-status.confirmed) {
-  background: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.18);
   color: var(--hero-ink);
 }
 .dashboard :global(.agenda-heading) {

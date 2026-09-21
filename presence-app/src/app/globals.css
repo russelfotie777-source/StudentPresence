@@ -251,6 +251,12 @@
   }
 }
 
+/* De jour, la page est blanche et les cartes aussi : c'est leur ombre qui
+   les pose, pas un bord ni un fond grisé. */
+html:not(.dark) .bg-card {
+  box-shadow: var(--ombre-carte);
+}
+
 /* Micro-interactions du design canvas premium */
 @keyframes dc-pulse {
   0% {
@@ -340,7 +346,7 @@
 
 /* Shared application palette and mobile workspace. */
 /* Le bloc de position vit sur le héros : mêmes réglages de verre que ses boutons (voir plus bas). */
-.session-live .gps-position-control {
+.session-featured .gps-position-control {
   --ink-900: var(--hero-ink);
   --ink-500: var(--hero-muted);
   --muted-foreground: var(--hero-muted);
@@ -360,36 +366,46 @@
    la menthe — réservée à ce qu'on peut faire (pointer, l'onglet actif, la
    séance en cours). C'est la parcimonie qui la fait ressortir : tout le
    reste est encre, papier ou nuit. */
+/* Clair : un blanc franc, des cartes blanches qui se détachent par leur
+   ombre, une encre bleu nuit — et deux couleurs qui vivent : le vert
+   printemps de la séance en cours, le bleu de la suivante, chacun en
+   dégradé du profond au clair. Relevées sur la maquette de référence
+   (#01e55c au cœur du vert, #0196e7 au cœur du bleu, titres #33507a). */
 :root {
-  --ink-900: #0f1512;
-  --ink-700: #3b4842;
-  --ink-500: #67736c;
-  --ink-300: #9aa59f;
-  --surface-0: #f4f7f5;
+  --ink-900: #33507a;
+  --ink-700: #48607a;
+  --ink-500: #7b8aa3;
+  --ink-300: #a9b4c6;
+  --surface-0: #ffffff;
   --surface-1: #ffffff;
-  --surface-2: #e9efeb;
-  --line: #dde4df;
-  --indigo-600: #0f9d68;
-  --indigo-500: #12b075;
-  --indigo-100: #d6f4e6;
-  --indigo-50: #ebf9f2;
-  --emerald-500: #0f9d68;
-  --emerald-100: #d6f4e6;
-  --amber-500: #d98b1f;
-  --amber-100: #fbeed2;
-  --rose-500: #d64545;
-  --rose-100: #fbe3e3;
+  --surface-2: #eef3f8;
+  --line: #e6ebf2;
+  --indigo-600: #00c257;
+  --indigo-500: #16d66a;
+  --indigo-100: #dcfbe6;
+  --indigo-50: #effdf4;
+  --emerald-500: #00c257;
+  --emerald-100: #dcfbe6;
+  --amber-500: #f2994a;
+  --amber-100: #fdead2;
+  --rose-500: #e14a63;
+  --rose-100: #fbe6ea;
   --radius: 0.75rem;
-  /* La menthe elle-même, pour ce qui ne passe pas par --primary (le bouton de pointage). */
-  --menthe: #2ee59d;
-  --menthe-ink: #06140d;
-  /* Mat et plein : pas de dégradé, pas de halo — c'est la couleur qui porte, pas la lumière. */
-  --hero: #0e8a5f;
+  /* Le bouton posé sur la carte verte : blanc, texte vert. */
+  --menthe: #ffffff;
+  --menthe-ink: #00a844;
+  --menthe-hover: #effdf4;
+  /* La séance en cours : le vert, profond en haut où se lit le titre, clair en bas. */
+  --hero: linear-gradient(160deg, #00d43b 0%, #01e55c 48%, #85f389 100%);
+  /* La prochaine : le bleu, même geste. */
+  --prochaine: linear-gradient(160deg, #0175e2 0%, #0196e7 48%, #00b9f1 100%);
   --hero-ink: #ffffff;
-  --hero-muted: #d2efe2;
-  --hero-line: rgb(255 255 255 / 0.22);
+  --hero-muted: rgb(255 255 255 / 0.86);
+  --hero-line: rgb(255 255 255 / 0.32);
   --verre: #ffffff;
-  --relief: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  /* Les cartes se détachent du blanc par une ombre douce, bleutée, jamais colorée. */
+  --relief: 0 12px 28px -16px rgb(52 80 122 / 0.28);
+  --ombre-carte: 0 16px 34px -18px rgb(52 80 122 / 0.38);
 }
 .dark {
   --ink-900: #f4f7f5;
@@ -414,12 +430,15 @@
   --accent-foreground: #7cf0c1;
   --success-foreground: #06140d;
   --warning-foreground: #2a1704;
+  --menthe-hover: #5cefb5;
   --hero: #0d6f4f;
+  --prochaine: linear-gradient(160deg, #0b3f74 0%, #0f5aa3 55%, #1a7fd0 100%);
   --hero-ink: #f7fffb;
   --hero-muted: #c9ecdc;
   --hero-line: rgb(255 255 255 / 0.18);
   --verre: #141917;
   --relief: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --ombre-carte: none;
 }
 * {
 }
@@ -575,22 +594,20 @@ a {
 .session {
   min-width: 0;
 }
+/* La carte du jour : bleue quand la séance est à venir, verte quand elle
+   est en cours. Même encre blanche sur les deux ; c'est la couleur qui dit
+   l'état, et elle se voit de loin. */
 .session-featured {
   position: relative;
   padding: 22px;
-  border: 1px solid var(--line);
+  border: 1px solid rgb(0 0 0 / 0.06);
   border-radius: 16px;
-  background: var(--card);
-  box-shadow: var(--relief);
+  background: var(--prochaine);
+  color: var(--hero-ink);
+  box-shadow: var(--ombre-carte);
 }
-/* La séance en cours est la seule surface colorée de l'écran : c'est elle
-   qu'on doit voir en premier. Pleine et mate — un halo ou un dégradé, c'est
-   la lumière qui attire l'œil, pas le contenu. */
 .session-live {
   background: var(--hero);
-  color: var(--hero-ink);
-  border-color: rgb(0 0 0 / 0.12);
-  box-shadow: none;
 }
 /* La journée finie, relue sur la carte verte du jour : un titre, la ligne
    du temps avec chaque séance à sa place, et la liste. Les segments pleins
@@ -601,7 +618,8 @@ a {
   border-radius: 16px;
   background: var(--hero);
   color: var(--hero-ink);
-  border: 1px solid rgb(0 0 0 / 0.12);
+  border: 1px solid rgb(0 0 0 / 0.06);
+  box-shadow: var(--ombre-carte);
 }
 .fin-journee h3 {
   font-family: var(--font-display), sans-serif;
@@ -628,10 +646,10 @@ a {
   box-sizing: border-box;
 }
 .fin-journee-seance.fin-journee-oui {
-  background: var(--menthe);
+  background: var(--hero-ink);
 }
 .fin-journee-seance.fin-journee-non {
-  background: rgb(255 255 255 / 0.28);
+  background: rgb(0 40 20 / 0.22);
 }
 .fin-journee-seance.fin-journee-sans {
   border: 1.5px dashed var(--hero-muted);
@@ -691,7 +709,7 @@ a {
   color: var(--hero-muted);
 }
 .fin-journee-mot.fin-journee-oui {
-  color: var(--menthe);
+  color: var(--hero-ink);
   font-weight: var(--w-semibold);
 }
 .session-topline {
@@ -708,11 +726,11 @@ a {
   font-size: var(--text-13);
   font-weight: var(--w-bold);
 }
-.session-live .session-label {
+.session-featured .session-label {
   color: var(--hero-ink);
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.18);
 }
 .session-code {
   font-size: var(--text-13);
@@ -746,7 +764,7 @@ a {
   margin-right: 3px;
   opacity: 0.55;
 }
-.session-live .session-details {
+.session-featured .session-details {
   color: var(--hero-muted);
 }
 .session-hours {
@@ -759,7 +777,7 @@ a {
   gap: 8px;
   font-size: var(--text-13);
 }
-.session-live .session-hours {
+.session-featured .session-hours {
   border-color: var(--hero-line);
 }
 .time-separator {
@@ -789,7 +807,7 @@ a {
     transform 0.2s;
 }
 .checkin-primary:hover {
-  background: #5cefb5;
+  background: var(--menthe-hover);
 }
 .checkin-primary:active {
   transform: scale(0.985);
@@ -807,10 +825,10 @@ a {
 .attendance-status.confirmed {
   color: var(--primary);
 }
-.session-live .attendance-status {
+.session-featured .attendance-status {
   color: var(--hero-muted);
 }
-.session-live .attendance-status.confirmed {
+.session-featured .attendance-status.confirmed {
   color: var(--hero-ink);
 }
 .agenda-heading {
@@ -871,9 +889,9 @@ a {
   font-size: var(--text-13);
   border-radius: 6px;
 }
-/* Sur le héros, les boutons sont en verre clair : lisibles sur le dégradé,
-   sans rivaliser avec le bouton de pointage. */
-.session-live .role-actions > button {
+/* Sur la carte du jour, les boutons sont en verre clair : lisibles sur le
+   dégradé, sans rivaliser avec le bouton de pointage. */
+.session-featured .role-actions > button {
   --card: rgb(255 255 255 / 0.14);
   --background: rgb(255 255 255 / 0.14);
   --muted: rgb(255 255 255 / 0.24);
