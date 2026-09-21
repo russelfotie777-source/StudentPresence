@@ -9,6 +9,8 @@ use App\Models\CourseTemplate;
 use App\Models\Matiere;
 use App\Models\Salle;
 use App\Models\Seance;
+use App\Models\Semaine;
+use App\Services\ProlongationCours;
 use App\Services\RetouchesPlanning;
 use App\Services\SeanceGenerator;
 use Carbon\Carbon;
@@ -77,13 +79,35 @@ class CourseTemplateController extends Controller
         return $courseTemplate->load(['matiere', 'enseignant', 'salle', 'seances']);
     }
 
-    public function update(Request $request, CourseTemplate $courseTemplate)
+    /**
+     * Modifier un cours modifie la règle : ses séances à venir suivent (jour,
+     * horaires, enseignant, salle), sauf celles qui tomberaient en conflit,
+     * renvoyées dans `ignorees`. Les séances tenues restent ce qu'elles sont.
+     */
+    public function update(Request $request, CourseTemplate $courseTemplate, RetouchesPlanning $retouches)
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, $courseTemplate);
 
-        $courseTemplate->update($data);
+        $resultat = $retouches->modifierCours($courseTemplate, $data);
 
-        return $courseTemplate->load(['matiere', 'enseignant', 'salle']);
+        return response()->json([
+            'template' => $courseTemplate->fresh(['matiere', 'enseignant', 'salle']),
+            ...$resultat,
+        ]);
+    }
+
+    /**
+     * Prolonge l'emploi du temps jusqu'à la dernière semaine du calendrier
+     * (ou une date donnée) : voir ProlongationCours.
+     */
+    public function prolonger(Request $request, ProlongationCours $prolongation)
+    {
+        $data = $request->validate(['jusqu_au' => ['sometimes', 'date']]);
+
+        $jusquAu = isset($data['jusqu_au']) ? Carbon::parse($data['jusqu_au']) : Semaine::max('date_fin');
+        abort_unless($jusquAu, 422, "Aucune semaine n'est définie : créez d'abord le calendrier.");
+
+        return response()->json($prolongation->jusquA(Carbon::parse($jusquAu)));
     }
 
     /**
@@ -110,25 +134,52 @@ class CourseTemplateController extends Controller
         ], 201);
     }
 
-    private function validated(Request $request): array
+    /**
+     * À la création, tout est requis ; à la modification, seuls les champs
+     * envoyés changent, et les règles se vérifient sur le cours résultant.
+     *
+     * @return array<string, mixed>
+     */
+    private function validated(Request $request, ?CourseTemplate $existant = null): array
     {
+        $requis = $existant ? 'sometimes' : 'required';
+
         $data = $request->validate([
-            'matiere_id' => ['required', 'exists:matieres,id'],
-            'enseignant_id' => ['required', Rule::exists('users', 'id')->where('role', 'Enseignant')],
-            'salle_id' => ['required', 'exists:salles,id'],
+            'matiere_id' => [$requis, 'exists:matieres,id'],
+            'enseignant_id' => [$requis, Rule::exists('users', 'id')->where('role', 'Enseignant')],
+            'salle_id' => [$requis, 'exists:salles,id'],
             'groupe' => ['sometimes', 'string', 'max:10'],
-            'jour' => ['required', Rule::in(array_column(Weekday::cases(), 'value'))],
-            'heure_debut' => ['required', 'date_format:H:i'],
-            'heure_fin' => ['required', 'date_format:H:i', 'after:heure_debut'],
-            'date_debut' => ['required', 'date'],
-            'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
+            'jour' => [$requis, Rule::in(array_column(Weekday::cases(), 'value'))],
+            'heure_debut' => [$requis, 'date_format:H:i'],
+            'heure_fin' => [$requis, 'date_format:H:i'],
+            'date_debut' => [$requis, 'date'],
+            'date_fin' => [$requis, 'date'],
             'actif' => ['sometimes', 'boolean'],
         ]);
 
+        // Le cours tel qu'il sera : ce qui est envoyé, complété par l'existant.
+        $cours = $existant ? array_merge([
+            'matiere_id' => $existant->matiere_id,
+            'enseignant_id' => $existant->enseignant_id,
+            'salle_id' => $existant->salle_id,
+            'jour' => $existant->jour instanceof Weekday ? $existant->jour->value : $existant->jour,
+            'heure_debut' => substr($existant->heure_debut, 0, 5),
+            'heure_fin' => substr($existant->heure_fin, 0, 5),
+            'date_debut' => $existant->date_debut->toDateString(),
+            'date_fin' => $existant->date_fin->toDateString(),
+        ], $data) : $data;
+
+        if ($cours['heure_fin'] <= $cours['heure_debut']) {
+            throw ValidationException::withMessages(['heure_fin' => ["L'heure de fin doit être après l'heure de début."]]);
+        }
+        if ($cours['date_fin'] < $cours['date_debut']) {
+            throw ValidationException::withMessages(['date_fin' => ['La date de fin doit suivre la date de début.']]);
+        }
+
         // Chaque filière a ses matières : un cours ne peut porter qu'une
         // matière de la filière de sa salle, ou une matière commune.
-        $filiereId = Salle::whereKey($data['salle_id'])->value('filiere_id');
-        if (! Matiere::whereKey($data['matiere_id'])->pourFiliere($filiereId)->exists()) {
+        $filiereId = Salle::whereKey($cours['salle_id'])->value('filiere_id');
+        if (! Matiere::whereKey($cours['matiere_id'])->pourFiliere($filiereId)->exists()) {
             throw ValidationException::withMessages([
                 'matiere_id' => ["Cette matière n'appartient pas à la filière de la salle choisie."],
             ]);
@@ -138,9 +189,9 @@ class CourseTemplateController extends Controller
         // mardi et un jeudi) ne produirait aucune séance : le signaler tout
         // de suite plutôt que de laisser l'admin chercher pourquoi la grille
         // reste vide.
-        $jour = Weekday::from($data['jour']);
+        $jour = Weekday::from($cours['jour']);
 
-        if (! $jour->tombeEntre(Carbon::parse($data['date_debut']), Carbon::parse($data['date_fin']))) {
+        if (! $jour->tombeEntre(Carbon::parse($cours['date_debut']), Carbon::parse($cours['date_fin']))) {
             throw ValidationException::withMessages([
                 'jour' => ['Aucun '.mb_strtolower($jour->value).' ne tombe entre ces deux dates.'],
             ]);

@@ -27,12 +27,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Enseignant } from "@/hooks/use-scheduling";
-import { useAnnulerSeance, useModifierSeance, useSupprimerCours } from "@/hooks/use-emploi-du-temps";
+import { useAnnulerSeance, useModifierCours, useModifierSeance, useSupprimerCours } from "@/hooks/use-emploi-du-temps";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError } from "@/lib/api-client";
 import { formaterYmd, hhmm } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import type { Seance } from "@/types/api";
-import { pastilleCours, seanceFigee } from "./constantes";
+import type { Seance, Weekday } from "@/types/api";
+import { JOURS, pastilleCours, seanceFigee } from "./constantes";
 import { Selecteur } from "./dialogue-cours";
 
 interface Props {
@@ -59,15 +60,40 @@ export function PanneauSeance({ seance, enseignants, onFermer }: Props) {
   const [confirmation, setConfirmation] = useState<"seance" | "cours" | null>(null);
 
   const modifier = useModifierSeance();
+  const modifierCours = useModifierCours();
   const annuler = useAnnulerSeance();
   const supprimerCours = useSupprimerCours();
 
+  // « Cette séance » retouche une occurrence ; « tout le cours » change la
+  // règle, et toutes les séances à venir suivent. Une séance sans cours
+  // (saisie à la main) n'a que le premier choix.
+  const [portee, setPortee] = useState<"seance" | "cours">("seance");
   const [date, setDate] = useState(seance.date_seance ?? "");
+  const [jour, setJour] = useState<Weekday>(seance.jour);
   const [debut, setDebut] = useState(hhmm(seance.heure_debut));
   const [fin, setFin] = useState(hhmm(seance.heure_fin));
   const [enseignantId, setEnseignantId] = useState(String(seance.enseignant_id));
+  const enregistrement = portee === "cours" ? modifierCours : modifier;
 
   function enregistrer() {
+    if (portee === "cours" && seance.course_template_id) {
+      modifierCours.mutate(
+        { id: seance.course_template_id, data: { jour, heure_debut: debut, heure_fin: fin, enseignant_id: Number(enseignantId) } },
+        {
+          onSuccess: (r) => {
+            const conflits = r.ignorees.length;
+            toast.success(
+              conflits
+                ? `Cours modifié : ${r.modifiees} séance${r.modifiees > 1 ? "s" : ""} à venir mise${r.modifiees > 1 ? "s" : ""} à jour, ${conflits} laissée${conflits > 1 ? "s" : ""} telle${conflits > 1 ? "s" : ""} quelle${conflits > 1 ? "s" : ""} (créneau pris).`
+                : `Cours modifié : ${r.modifiees} séance${r.modifiees > 1 ? "s" : ""} à venir mise${r.modifiees > 1 ? "s" : ""} à jour.`,
+            );
+            onFermer();
+          },
+          onError: (e) => toast.error(messageErreur(e, "La modification a échoué.")),
+        },
+      );
+      return;
+    }
     modifier.mutate(
       {
         id: seance.id,
@@ -188,11 +214,35 @@ export function PanneauSeance({ seance, enseignants, onFermer }: Props) {
             </div>
           ) : edition ? (
             <div className="flex flex-col gap-3 rounded-xl border border-border p-3.5">
+              {seance.course_template_id && (
+                <Tabs value={portee} onValueChange={(v) => setPortee(v as "seance" | "cours")}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="seance">Cette séance</TabsTrigger>
+                    <TabsTrigger value="cours">Tout le cours</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
+              {portee === "cours" && (
+                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  Toutes les séances à venir de ce cours suivront. Celles déjà tenues ne bougent pas.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 flex flex-col gap-1.5">
-                  <Label className="text-xs text-muted-foreground">Date</Label>
-                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-lg" />
-                </div>
+                {portee === "cours" ? (
+                  <div className="col-span-2 flex flex-col gap-1.5">
+                    <Label className="text-xs text-muted-foreground">Jour</Label>
+                    <Selecteur
+                      valeur={jour}
+                      onChange={(v) => setJour(v as Weekday)}
+                      options={JOURS.map((j) => ({ valeur: j.valeur, label: j.long }))}
+                    />
+                  </div>
+                ) : (
+                  <div className="col-span-2 flex flex-col gap-1.5">
+                    <Label className="text-xs text-muted-foreground">Date</Label>
+                    <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-lg" />
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs text-muted-foreground">Début</Label>
                   <Input type="time" step={300} value={debut} onChange={(e) => setDebut(e.target.value)} className="h-10 rounded-lg" />
@@ -210,18 +260,22 @@ export function PanneauSeance({ seance, enseignants, onFermer }: Props) {
                   />
                 </div>
               </div>
-              {modifier.error && (
+              {enregistrement.error && (
                 <div className="flex items-start gap-2 text-[13px] text-destructive">
                   <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                  <span>{messageErreur(modifier.error, "La modification a échoué.")}</span>
+                  <span>{messageErreur(enregistrement.error, "La modification a échoué.")}</span>
                 </div>
               )}
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => setEdition(false)}>
                   Annuler
                 </Button>
-                <Button size="sm" onClick={enregistrer} disabled={modifier.isPending || !date || fin <= debut}>
-                  {modifier.isPending ? "Enregistrement…" : "Enregistrer"}
+                <Button
+                  size="sm"
+                  onClick={enregistrer}
+                  disabled={enregistrement.isPending || (portee === "seance" && !date) || fin <= debut}
+                >
+                  {enregistrement.isPending ? "Enregistrement…" : portee === "cours" ? "Modifier tout le cours" : "Enregistrer"}
                 </Button>
               </div>
             </div>

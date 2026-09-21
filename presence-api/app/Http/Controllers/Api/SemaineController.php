@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Semaine;
+use App\Services\ProlongationCours;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -74,11 +75,15 @@ class SemaineController extends Controller
      * du tout dans l'ancienne app (la table `semaines` n'était jamais
      * alimentée par le code).
      */
-    public function generateSemester(Request $request)
+    public function generateSemester(Request $request, ProlongationCours $prolongation)
     {
         $data = $request->validate([
             'date_debut' => ['required', 'date'],
             'nombre_semaines' => ['required', 'integer', 'min:1', 'max:52'],
+            // Vrai : les cours en cours continuent sur ces nouvelles semaines
+            // (voir ProlongationCours). C'est ce que veut l'admin qui ajoute
+            // des semaines ; il décoche pour un semestre au programme nouveau.
+            'prolonger_cours' => ['sometimes', 'boolean'],
         ]);
 
         $startingNumero = (int) Semaine::max('numero') + 1;
@@ -99,7 +104,11 @@ class SemaineController extends Controller
             ]);
         });
 
-        return response()->json($created, 201);
+        $prolongation = $request->boolean('prolonger_cours')
+            ? $prolongation->jusquA(Carbon::parse($created->last()->date_fin))
+            : null;
+
+        return response()->json(['semaines' => $created, 'prolongation' => $prolongation], 201);
     }
 
     /**

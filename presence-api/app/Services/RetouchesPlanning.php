@@ -81,6 +81,58 @@ class RetouchesPlanning
     }
 
     /**
+     * Modifier un cours, c'est modifier la règle : jour, horaires,
+     * enseignant, salle ou matière se répercutent sur toutes ses séances à
+     * venir non tenues. Chaque séance est revérifiée pour les conflits ;
+     * celle qui en a reste telle quelle et est signalée, les autres suivent.
+     * Les séances tenues ne bougent pas : leur historique et leur paie
+     * sont figés.
+     *
+     * @param  array{jour?: string, heure_debut?: string, heure_fin?: string, enseignant_id?: int, salle_id?: int, matiere_id?: int}  $data  déjà validé
+     * @return array{modifiees: int, ignorees: list<array{seance_id: int, date: string, reason: string}>}
+     */
+    public function modifierCours(CourseTemplate $cours, array $data): array
+    {
+        return DB::transaction(function () use ($cours, $data) {
+            $cours->update(array_intersect_key($data, array_flip(['jour', 'heure_debut', 'heure_fin', 'enseignant_id', 'salle_id', 'matiere_id', 'groupe'])));
+            $cours->refresh();
+
+            $jour = $cours->jour instanceof Weekday ? $cours->jour : Weekday::from($cours->jour);
+            $modifiees = 0;
+            $ignorees = [];
+
+            foreach ($this->seancesAVenir($cours)->with('semaine')->orderBy('date_seance')->get() as $seance) {
+                // Le jour du cours a changé : la séance se replace ce jour-là, dans sa semaine.
+                $date = $seance->semaine
+                    ? $seance->semaine->date_debut->clone()->addDays($jour->iso() - 1)
+                    : $seance->date_seance;
+
+                $creneau = [
+                    'salle_id' => $cours->salle_id,
+                    'groupe' => $cours->groupe,
+                    'enseignant_id' => $cours->enseignant_id,
+                    'date_seance' => $date->toDateString(),
+                    'semaine_id' => $seance->semaine_id,
+                    'jour' => $jour->value,
+                    'heure_debut' => substr($cours->heure_debut, 0, 5),
+                    'heure_fin' => substr($cours->heure_fin, 0, 5),
+                ];
+
+                if ($conflit = $this->conflits->pour($creneau, $seance->id)) {
+                    $ignorees[] = ['seance_id' => $seance->id, 'date' => $seance->date_seance->toDateString(), 'reason' => $conflit];
+
+                    continue;
+                }
+
+                $seance->update($creneau);
+                $modifiees++;
+            }
+
+            return ['modifiees' => $modifiees, 'ignorees' => $ignorees];
+        });
+    }
+
+    /**
      * Supprimer un cours retire aussi ses séances à venir. Celles déjà
      * tenues (ou avec des présences) restent : historique et paie.
      * Renvoie le nombre de séances supprimées.
@@ -88,12 +140,7 @@ class RetouchesPlanning
     public function supprimerCours(CourseTemplate $cours): int
     {
         return DB::transaction(function () use ($cours) {
-            $aVenir = $cours->seances()
-                ->whereDate('date_seance', '>=', now()->toDateString())
-                ->whereNull('etat_delegue')
-                ->whereNull('etat_prof')
-                ->where('presences_locked', false)
-                ->whereDoesntHave('presences');
+            $aVenir = $this->seancesAVenir($cours);
 
             $nombre = (clone $aVenir)->count();
             $aVenir->delete();
@@ -101,6 +148,17 @@ class RetouchesPlanning
 
             return $nombre;
         });
+    }
+
+    /** Les séances d'un cours qui restent à tenir : à partir d'aujourd'hui, sans appel ni présence. */
+    private function seancesAVenir(CourseTemplate $cours)
+    {
+        return $cours->seances()
+            ->whereDate('date_seance', '>=', now()->toDateString())
+            ->whereNull('etat_delegue')
+            ->whereNull('etat_prof')
+            ->where('presences_locked', false)
+            ->whereDoesntHave('presences');
     }
 
     public function assertModifiable(Seance $seance): void
