@@ -154,15 +154,6 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.dayComplete {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--dash-accent);
-  font-size: var(--text-13);
-  padding: 16px 0;
-  border-top: 1px solid var(--dash-border);
-}
 .dashboard :global(.session-featured) {
   background: var(--card);
   border: 1px solid var(--dash-border);

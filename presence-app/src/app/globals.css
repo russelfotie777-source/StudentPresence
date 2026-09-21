@@ -592,6 +592,108 @@ a {
   border-color: rgb(0 0 0 / 0.12);
   box-shadow: none;
 }
+/* La journée finie, relue sur la carte verte du jour : un titre, la ligne
+   du temps avec chaque séance à sa place, et la liste. Les segments pleins
+   sont ceux où l'on était ; les vides, ceux qu'on a manqués ; les tracés,
+   ceux sans appel. */
+.fin-journee {
+  padding: 22px;
+  border-radius: 16px;
+  background: var(--hero);
+  color: var(--hero-ink);
+  border: 1px solid rgb(0 0 0 / 0.12);
+}
+.fin-journee h3 {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-24);
+  font-weight: var(--w-semibold);
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+.fin-journee-ligne {
+  margin-top: 22px;
+}
+.fin-journee-piste {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: rgb(0 0 0 / 0.16);
+}
+.fin-journee-seance {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 5px;
+  transform-origin: left center;
+  box-sizing: border-box;
+}
+.fin-journee-seance.fin-journee-oui {
+  background: var(--menthe);
+}
+.fin-journee-seance.fin-journee-non {
+  background: rgb(255 255 255 / 0.28);
+}
+.fin-journee-seance.fin-journee-sans {
+  border: 1.5px dashed var(--hero-muted);
+}
+.fin-journee-heures {
+  position: relative;
+  height: 18px;
+  margin-top: 7px;
+  font-size: var(--text-13);
+  color: var(--hero-muted);
+  font-variant-numeric: tabular-nums;
+}
+.fin-journee-heures > span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.fin-journee-heures > span[data-bord="gauche"] {
+  transform: none;
+}
+.fin-journee-heures > span[data-bord="droite"] {
+  transform: translateX(-100%);
+}
+.fin-journee-liste {
+  margin-top: 18px;
+  padding-top: 6px;
+  border-top: 1px solid var(--hero-line);
+  list-style: none;
+}
+.fin-journee-liste > li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--hero-line);
+  font-size: var(--text-13);
+}
+.fin-journee-liste > li:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+.fin-journee-liste time {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--text-15);
+  font-weight: var(--w-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.fin-journee-nom {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fin-journee-mot {
+  color: var(--hero-muted);
+}
+.fin-journee-mot.fin-journee-oui {
+  color: var(--menthe);
+  font-weight: var(--w-semibold);
+}
 .session-topline {
   display: flex;
   justify-content: space-between;

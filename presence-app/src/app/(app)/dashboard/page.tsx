@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SeanceCard } from "@/components/seance-card";
 import { CheckInDialog } from "@/components/checkin-dialog";
 import { AttentePosition } from "@/components/attente-position";
+import { FinDeJournee } from "@/components/fin-de-journee";
 import { BanniereRestriction } from "@/components/banniere-restriction";
 import { RappelEmail } from "@/components/compte/rappel-email";
 import { RosterDialog } from "@/components/roster-dialog";
@@ -261,13 +262,12 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
-          {!isLoading && !isError && !!seances?.length && !focus && (
-            <div className={styles.dayComplete}>
-              <CheckCheck size={20} />
-              <span>Votre journée de cours est terminée.</span>
-            </div>
+          {!isLoading && !isError && !!seances?.length && !focus && role && (
+            <FinDeJournee seances={seances} role={role} />
           )}
-          {!isError && !!seances?.length && (
+          {/* Le programme n'a de sens que tant qu'il reste une séance ; la
+              journée finie, la carte ci-dessus les relit toutes. */}
+          {!isError && !!seances?.length && focus && (
             <>
               <div className="agenda-heading">
                 <h3>Au programme</h3>
