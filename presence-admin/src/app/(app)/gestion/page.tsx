@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   Calculator,
   FileDown,
+  FileSpreadsheet,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   useMigrants,
   usePresenceAutomatique,
   usePrivilegies,
+  useTelechargerComptabilite,
   useTelechargerListeMigrants,
   type Comptabilite,
   type MigrantEtudiant,
@@ -156,18 +158,32 @@ function PanneauMigrants() {
               </p>
             </div>
             {groupe.salle && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                disabled={!semaineChoisie || telecharger.isPending}
-                onClick={() =>
-                  telecharger.mutate({ salleId: groupe.salle!.id, semaineId: Number(semaineChoisie) })
-                }
-              >
-                <FileDown className="size-3.5" />
-                Liste des migrants (PDF)
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={!semaineChoisie || telecharger.isPending}
+                  onClick={() =>
+                    telecharger.mutate({ salleId: groupe.salle!.id, semaineId: Number(semaineChoisie), format: "pdf" })
+                  }
+                >
+                  <FileDown className="size-3.5" />
+                  Liste des migrants
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={!semaineChoisie || telecharger.isPending}
+                  onClick={() =>
+                    telecharger.mutate({ salleId: groupe.salle!.id, semaineId: Number(semaineChoisie), format: "xlsx" })
+                  }
+                >
+                  <FileSpreadsheet className="size-3.5" />
+                  Excel
+                </Button>
+              </div>
             )}
           </div>
           <ul className="divide-y divide-border">
@@ -225,6 +241,7 @@ function PanneauComptabilite() {
   const [du, setDu] = useState("");
   const [au, setAu] = useState("");
   const { data, isLoading } = useComptabilite(du || undefined, au || undefined);
+  const exporter = useTelechargerComptabilite();
 
   return (
     <div className="flex flex-col gap-4">
@@ -245,6 +262,16 @@ function PanneauComptabilite() {
             Période du {dateCourte(data.periode.du)} au {dateCourte(data.periode.au)}
           </p>
         )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          disabled={!data || exporter.isPending}
+          onClick={() => exporter.mutate({ du: du || undefined, au: au || undefined })}
+        >
+          <FileSpreadsheet className="size-3.5" />
+          {exporter.isPending ? "Génération…" : "Exporter en Excel"}
+        </Button>
       </div>
 
       {isLoading || !data ? (

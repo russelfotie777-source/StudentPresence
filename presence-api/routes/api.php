@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountValidationController;
 use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\AttendanceStatsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClasseurController;
 use App\Http\Controllers\Api\ComptabiliteController;
 use App\Http\Controllers\Api\CompteController;
 use App\Http\Controllers\Api\CourseTemplateController;
@@ -168,6 +169,10 @@ Route::middleware(['auth:sanctum', 'validated', 'face-verified', 'role:Admin'])-
     // les salles d'un département, une page par salle.
     Route::get('/salles/{salle}/liste-presence.pdf', [PdfController::class, 'listeHebdomadaire']);
     Route::get('/departements/{departement}/liste-presence.pdf', [PdfController::class, 'listeDepartement']);
+    // Les mêmes listes en classeur Excel, et la comptabilité.
+    Route::get('/salles/{salle}/liste-presence.xlsx', [ClasseurController::class, 'listeHebdomadaire']);
+    Route::get('/departements/{departement}/liste-presence.xlsx', [ClasseurController::class, 'listeDepartement']);
+    Route::get('/comptabilite.xlsx', [ClasseurController::class, 'comptabilite']);
     Route::get('/salles/{salle}/feuille-presence', [FeuillePresenceController::class, 'semaine']);
     Route::get('/parametres/liste-presence', [ListePresenceSettingController::class, 'show']);
     Route::put('/parametres/liste-presence', [ListePresenceSettingController::class, 'update']);

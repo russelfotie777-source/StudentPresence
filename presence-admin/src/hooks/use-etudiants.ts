@@ -118,11 +118,15 @@ export function useForcerPresence() {
   });
 }
 
+/** Le PDF s'imprime ; le classeur Excel se retravaille et s'archive. */
+export type FormatExport = "pdf" | "xlsx";
+
 export interface OptionsListe {
   semaineId: number;
   semestre?: number;
   annee?: string;
   symboles?: string;
+  format?: FormatExport;
 }
 
 function parametresListe(v: OptionsListe): URLSearchParams {
@@ -136,19 +140,22 @@ function parametresListe(v: OptionsListe): URLSearchParams {
 export function useTelechargerListe() {
   return useMutation({
     mutationFn: (v: OptionsListe & { salleId: number }) =>
-      telechargerFichier(`/api/salles/${v.salleId}/liste-presence.pdf?${parametresListe(v)}`, "liste-presence.pdf"),
+      telechargerFichier(
+        `/api/salles/${v.salleId}/liste-presence.${v.format ?? "pdf"}?${parametresListe(v)}`,
+        `liste-presence.${v.format ?? "pdf"}`,
+      ),
     onSuccess: () => toast.success("Liste de présence téléchargée."),
     onError: (e) => toast.error(message(e, "La génération a échoué.")),
   });
 }
 
-/** Toutes les salles d'un département dans un seul PDF, une page par salle. */
+/** Toutes les salles d'un département dans un seul fichier : une page (ou une feuille) par salle. */
 export function useTelechargerListesDepartement() {
   return useMutation({
     mutationFn: (v: OptionsListe & { departementId: number }) =>
       telechargerFichier(
-        `/api/departements/${v.departementId}/liste-presence.pdf?${parametresListe(v)}`,
-        "listes-presence-departement.pdf",
+        `/api/departements/${v.departementId}/liste-presence.${v.format ?? "pdf"}?${parametresListe(v)}`,
+        `listes-presence-departement.${v.format ?? "pdf"}`,
       ),
     onSuccess: () => toast.success("Listes du département téléchargées."),
     onError: (e) => toast.error(message(e, "La génération a échoué.")),
