@@ -898,8 +898,9 @@ a {
   border-radius: 6px;
 }
 /* Sur la carte du jour, les boutons sont en verre clair : lisibles sur le
-   dégradé, sans rivaliser avec le bouton de pointage. */
-.session-featured .role-actions > button {
+   dégradé, sans rivaliser avec le bouton plein. */
+.session-featured .role-actions > button,
+.session-featured .actions-groupe > button {
   --card: rgb(255 255 255 / 0.14);
   --background: rgb(255 255 255 / 0.14);
   --muted: rgb(255 255 255 / 0.24);
@@ -915,6 +916,78 @@ a {
   --destructive: #ff8f8f;
   --destructive-foreground: #3d0e0e;
   backdrop-filter: blur(6px);
+}
+/* Le groupe d'appel : trois cellules jointes sur une ligne, comme un seul
+   objet — position, présent, absent. La cellule faite passe en blanc
+   plein, texte vert : on voit d'un coup d'œil où en est l'appel. */
+.actions-groupe {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--hero-line);
+}
+.actions-groupe-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.actions-groupe > button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  font-size: var(--text-13);
+  gap: 6px;
+}
+.actions-groupe > button + button {
+  border-left: 1px solid var(--hero-line);
+}
+.session-featured .actions-groupe > button:disabled {
+  opacity: 1;
+  color: var(--hero-muted);
+}
+.session-featured .actions-groupe > button[data-fait] {
+  --background: #ffffff;
+  --card: #ffffff;
+  --foreground: var(--menthe-ink);
+  background: #ffffff;
+  color: var(--menthe-ink);
+  font-weight: var(--w-semibold);
+  opacity: 1;
+}
+/* Ce qui se dit en une ligne sous le groupe : l'heure d'arrivée relevée,
+   et les gestes moins fréquents, en lien plutôt qu'en bouton. */
+.actions-notes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  width: 100%;
+  font-size: var(--text-13);
+  color: var(--hero-muted);
+}
+.actions-notes > span,
+.actions-notes > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+}
+.actions-notes > button {
+  color: var(--hero-ink);
+  font-weight: var(--w-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--hero-line);
+}
+.actions-notes > button:hover:not(:disabled) {
+  text-decoration-color: var(--hero-ink);
+}
+.actions-notes > button:disabled {
+  opacity: 0.6;
+}
+.role-actions > .checkin-primary {
+  width: 100%;
+  flex-basis: 100%;
 }
 .insights-column {
   display: flex;

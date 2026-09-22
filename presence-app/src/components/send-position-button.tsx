@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MapPin, RefreshCw, Users } from "lucide-react";
+import { Check, MapPin, RefreshCw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGeolocation, type Coords } from "@/hooks/use-geolocation";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionRefusee } from "@/components/demande-permission";
 import { useSendPosition } from "@/hooks/use-seances";
 
-export function SendPositionButton({
+/**
+ * La position de la salle, envoyée par le délégué. Le geste tient dans une
+ * cellule (`cellule`) du groupe d'actions de la carte : « Position » tant
+ * qu'elle n'est pas envoyée, « Envoyée » ensuite ; ce qui a besoin de plus
+ * de place — précision, erreur, appel sans GPS — s'écrit sous le groupe
+ * (`messages`). Les deux se prennent par le hook, pour rester ensemble.
+ */
+export function usePositionDelegue({
   seanceId,
   alreadySent = false,
   maxAccuracy = 50,
@@ -37,29 +44,24 @@ export function SendPositionButton({
     }
   }, [geo.status, geo.coords, alreadySent, mutate]);
 
-  if (alreadySent || isSuccess)
-    return (
-      <Button size="sm" variant="outline" disabled>
-        <MapPin size={16} /> Position envoyée
-      </Button>
-    );
+  const envoyee = alreadySent || isSuccess;
   const busy = geo.status === "loading" || isPending;
   const failed = geo.status === "error" || isError || refusee;
 
-  return (
-    <div className="gps-position-control flex w-full flex-col gap-2">
-      {refusee ? (
-        <PermissionRefusee type="position" />
-      ) : (
-        <Button variant="outline" onClick={() => geo.locate()} disabled={busy}>
-          {failed ? <RefreshCw size={16} /> : <MapPin size={16} />}
-          {busy
-            ? "Localisation en cours…"
-            : failed
-              ? "Réessayer la localisation"
-              : "Envoyer ma position"}
-        </Button>
-      )}
+  const cellule = envoyee ? (
+    <Button variant="outline" disabled data-fait>
+      <Check size={16} /> Envoyée
+    </Button>
+  ) : (
+    <Button variant="outline" onClick={() => geo.locate()} disabled={busy || refusee}>
+      {failed ? <RefreshCw size={16} /> : <MapPin size={16} />}
+      {busy ? "Recherche…" : failed ? "Réessayer" : "Position"}
+    </Button>
+  );
+
+  const messages = envoyee ? null : (
+    <>
+      {refusee && <PermissionRefusee type="position" />}
       {geo.precision !== null && (
         <p className="text-xs" aria-live="polite">
           Précision ±{geo.precision} m
@@ -76,14 +78,15 @@ export function SendPositionButton({
       {failed && !busy && onManualValidation && (
         <>
           <p className="text-xs">
-            Vous pouvez constater les présences dans la liste, même sans
-            position GPS.
+            Vous pouvez constater les présences dans la liste, même sans position GPS.
           </p>
           <Button variant="secondary" onClick={onManualValidation}>
             <Users size={16} /> Faire l’appel sans GPS
           </Button>
         </>
       )}
-    </div>
+    </>
   );
+
+  return { cellule, messages, envoyee };
 }

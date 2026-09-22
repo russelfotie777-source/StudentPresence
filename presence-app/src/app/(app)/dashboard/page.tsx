@@ -33,7 +33,7 @@ import { BanniereRestriction } from "@/components/banniere-restriction";
 import { RappelEmail } from "@/components/compte/rappel-email";
 import { RosterDialog } from "@/components/roster-dialog";
 import { PushDialog } from "@/components/push-dialog";
-import { SendPositionButton } from "@/components/send-position-button";
+import { usePositionDelegue } from "@/components/send-position-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useMe } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -507,6 +507,12 @@ function DelegateActions({
 }) {
   const mark = useMarkDelegue(seance.id);
   const confirmer = useConfirmerEnseignant(seance.id);
+  const position = usePositionDelegue({
+    seanceId: seance.id,
+    alreadySent: seance.position_envoyee,
+    maxAccuracy: seance.geolocation?.max_position_accuracy_meters,
+    onManualValidation: onConfirmRoster,
+  });
   const disabled =
     !seance.is_active || seance.presences_locked || mark.isPending;
   // Règle admin : quand l'enseignant n'utilise pas l'app, le délégué peut
@@ -537,70 +543,61 @@ function DelegateActions({
       </div>
     );
   }
+  // Les trois gestes de l'appel tiennent sur une ligne — position, présent,
+  // absent — et le dernier, confirmer la liste, a le bouton plein. Le reste
+  // se dit en une ligne de texte, seulement quand il a lieu d'être.
   return (
     <div className="role-actions">
-      {seance.is_active && !seance.presences_locked && (
-        <SendPositionButton
-          seanceId={seance.id}
-          alreadySent={seance.position_envoyee}
-          maxAccuracy={seance.geolocation?.max_position_accuracy_meters}
-          onManualValidation={onConfirmRoster}
-        />
+      {!seance.presences_locked && (
+        <div className="actions-groupe" role="group" aria-label="Appel">
+          {position.cellule}
+          <Button
+            variant="outline"
+            data-fait={seance.etat_delegue === "present" || undefined}
+            disabled={disabled || seance.etat_delegue === "present"}
+            onClick={() => mark.mutate({ etat: "present", set_debut_reel: true })}
+          >
+            <Check size={16} /> Présent
+          </Button>
+          <Button
+            variant="outline"
+            data-fait={seance.etat_delegue === "absent" || undefined}
+            disabled={disabled || seance.etat_delegue === "absent"}
+            onClick={() => mark.mutate({ etat: "absent" })}
+          >
+            <X size={16} /> Absent
+          </Button>
+        </div>
       )}
-      <Button
-        variant={seance.etat_delegue === "present" ? "success" : "outline"}
-        disabled={disabled || seance.etat_delegue === "present"}
-        onClick={() => mark.mutate({ etat: "present", set_debut_reel: true })}
-      >
-        <Check size={16} /> Présent
-      </Button>
-      <Button
-        variant={seance.etat_delegue === "absent" ? "destructive" : "outline"}
-        disabled={disabled || seance.etat_delegue === "absent"}
-        onClick={() => mark.mutate({ etat: "absent" })}
-      >
-        <X size={16} /> Absent
-      </Button>
-      {peutTerminer && (
-        <Button
-          variant="outline"
-          className="w-full"
-          disabled={mark.isPending}
-          onClick={() => mark.mutate({ etat: "present", set_fin_reelle: true })}
-        >
-          <Clock3 size={16} /> Fin du cours
-        </Button>
-      )}
-      {seance.debut_reel && (
-        <span className="attendance-status">
-          <Clock3 size={15} /> Arrivée {seance.debut_reel.slice(0, 5)}
-          {seance.fin_reelle
-            ? ` · fin ${seance.fin_reelle.slice(0, 5)}`
-            : " · fin non relevée"}
-        </span>
-      )}
-      {peutConfirmer && (
-        <Button
-          variant="outline"
-          className="w-full"
-          disabled={confirmer.isPending}
-          onClick={() => confirmer.mutate()}
-        >
-          <UserCheck size={16} /> Confirmer pour l’enseignant
-        </Button>
-      )}
-      {seance.etat_prof_par_delegue && (
-        <span className="attendance-status confirmed">
-          <UserCheck size={16} /> Présence de l’enseignant confirmée à sa place
-        </span>
+      {position.messages}
+      {(peutConfirmer || peutTerminer || seance.debut_reel || seance.etat_prof_par_delegue) && (
+        <div className="actions-notes">
+          {seance.debut_reel && (
+            <span>
+              Arrivée {seance.debut_reel.slice(0, 5)}
+              {seance.fin_reelle ? ` · fin ${seance.fin_reelle.slice(0, 5)}` : ""}
+            </span>
+          )}
+          {peutTerminer && (
+            <button type="button" disabled={mark.isPending} onClick={() => mark.mutate({ etat: "present", set_fin_reelle: true })}>
+              <Clock3 size={14} /> Noter la fin du cours
+            </button>
+          )}
+          {peutConfirmer && (
+            <button type="button" disabled={confirmer.isPending} onClick={() => confirmer.mutate()}>
+              <UserCheck size={14} /> Confirmer pour l’enseignant
+            </button>
+          )}
+          {seance.etat_prof_par_delegue && (
+            <span>
+              <UserCheck size={14} /> Enseignant confirmé à sa place
+            </span>
+          )}
+        </div>
       )}
       {!seance.presences_locked && (
-        <Button
-          variant="secondary"
-          className="w-full"
-          onClick={onConfirmRoster}
-        >
-          <Users size={16} /> Confirmer la liste
+        <Button className="checkin-primary" onClick={onConfirmRoster}>
+          <Users size={17} /> Confirmer la liste
         </Button>
       )}
     </div>
@@ -628,24 +625,30 @@ function TeacherActions({
       </div>
     );
   }
+  // Même dessin que chez le délégué : ses deux gestes sur une ligne, et
+  // l'effectif — ce qui ouvre la validation de la liste — en bouton plein.
   return (
     <div className="role-actions">
-      <Button
-        variant={seance.etat_prof === "present" ? "success" : "outline"}
-        disabled={disabled || seance.etat_prof === "present"}
-        onClick={() => mark.mutate("present")}
-      >
-        <Check size={16} /> Présent
-      </Button>
-      <Button
-        variant={seance.etat_prof === "absent" ? "destructive" : "outline"}
-        disabled={disabled || seance.etat_prof === "absent"}
-        onClick={() => mark.mutate("absent")}
-      >
-        <X size={16} /> Absent
-      </Button>
-      <Button variant="secondary" className="w-full" onClick={onPush}>
-        <Users size={16} />
+      <div className="actions-groupe actions-groupe-2" role="group" aria-label="Ma présence">
+        <Button
+          variant="outline"
+          data-fait={seance.etat_prof === "present" || undefined}
+          disabled={disabled || seance.etat_prof === "present"}
+          onClick={() => mark.mutate("present")}
+        >
+          <Check size={16} /> Présent
+        </Button>
+        <Button
+          variant="outline"
+          data-fait={seance.etat_prof === "absent" || undefined}
+          disabled={disabled || seance.etat_prof === "absent"}
+          onClick={() => mark.mutate("absent")}
+        >
+          <X size={16} /> Absent
+        </Button>
+      </div>
+      <Button className="checkin-primary" onClick={onPush}>
+        <Users size={17} />
         {seance.push
           ? `Effectif déclaré : ${seance.push.etudiants_presents}`
           : "Déclarer l’effectif"}
