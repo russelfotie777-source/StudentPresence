@@ -48,11 +48,6 @@ function Ligne({
   );
 }
 
-/** « à 18 m près » — la précision telle qu'on la dirait. */
-function pres(metres: number | null | undefined): string {
-  return metres ? `, à ${metres} m près` : "";
-}
-
 function LignePosition({ seance }: { seance: Seance }) {
   const plafond = seance.geolocation?.max_position_accuracy_meters;
   const geo = useGeolocation(plafond);
@@ -80,7 +75,7 @@ function LignePosition({ seance }: { seance: Seance }) {
         fait
         etat={
           seance.position_envoyee_a
-            ? `Position envoyée à ${seance.position_envoyee_a}${pres(seance.position_precision_metres)}. Les étudiants peuvent pointer.`
+            ? `Position envoyée à ${seance.position_envoyee_a}. Les étudiants peuvent pointer.`
             : "Position envoyée. Les étudiants peuvent pointer."
         }
       />
@@ -95,8 +90,8 @@ function LignePosition({ seance }: { seance: Seance }) {
     : cherche
       ? envoi.isPending
         ? "Envoi aux étudiants…"
-        : geo.precision !== null
-          ? `On affine… ±${geo.precision} m pour l’instant.`
+        : geo.coords
+          ? "Position trouvée, on affine…"
           : "Le téléphone cherche sa position…"
       : geo.status === "error"
         ? geo.errorMessage
