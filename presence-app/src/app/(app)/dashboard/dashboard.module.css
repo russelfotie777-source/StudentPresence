@@ -200,9 +200,9 @@
   line-height: 1.5;
 }
 .dashboard :global(.session-hours) {
-  margin-top: 21px;
-  padding-top: 16px;
-  border-color: var(--dash-border);
+  margin-top: 18px;
+  padding-top: 0;
+  border-top: 0;
 }
 .dashboard :global(.session-hours > span:first-of-type) {
   font-family: var(--font-display), sans-serif;
@@ -248,7 +248,7 @@
 }
 .dashboard :global(.session-row) {
   gap: 22px;
-  padding: 20px 0;
+  padding: 16px 18px;
 }
 .dashboard :global(.session-time strong) {
   font-family: var(--font-display), sans-serif;
@@ -296,7 +296,6 @@
   gap: 15px;
 }
 .attendanceFigures > div + div {
-  border-top: 1px solid var(--dash-border);
   padding-top: 13px;
 }
 .attendanceFigures dt {
