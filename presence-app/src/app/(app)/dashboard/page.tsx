@@ -11,7 +11,6 @@ import {
   CalendarDays,
   Check,
   CheckCheck,
-  Clock3,
   MapPin,
   RefreshCw,
   Users,
@@ -19,7 +18,6 @@ import {
   ArrowRight,
   CalendarCheck2,
   GraduationCap,
-  UserCheck,
 } from "lucide-react";
 import { ZirisMark, ZirisWordmark } from "@/components/ziris-brand";
 import styles from "./dashboard.module.css";
@@ -33,18 +31,13 @@ import { BanniereRestriction } from "@/components/banniere-restriction";
 import { RappelEmail } from "@/components/compte/rappel-email";
 import { RosterDialog } from "@/components/roster-dialog";
 import { PushDialog } from "@/components/push-dialog";
-import { usePositionDelegue } from "@/components/send-position-button";
+import { AppelDelegue } from "@/components/appel-delegue";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useMe } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useAttendanceStats } from "@/hooks/use-attendance-stats";
 import { FUSEAU, useHeureDouala } from "@/hooks/use-heure";
-import {
-  useConfirmerEnseignant,
-  useMarkDelegue,
-  useMarkProf,
-  useTodaySeances,
-} from "@/hooks/use-seances";
+import { useMarkProf, useTodaySeances } from "@/hooks/use-seances";
 import type { Seance } from "@/types/api";
 
 const AttendanceSculpture = dynamic(
@@ -505,34 +498,6 @@ function DelegateActions({
   seance: Seance;
   onConfirmRoster: () => void;
 }) {
-  const mark = useMarkDelegue(seance.id);
-  const confirmer = useConfirmerEnseignant(seance.id);
-  const position = usePositionDelegue({
-    seanceId: seance.id,
-    alreadySent: seance.position_envoyee,
-    maxAccuracy: seance.geolocation?.max_position_accuracy_meters,
-    onManualValidation: onConfirmRoster,
-  });
-  const disabled =
-    !seance.is_active || seance.presences_locked || mark.isPending;
-  // Règle admin : quand l'enseignant n'utilise pas l'app, le délégué peut
-  // confirmer sa présence à sa place — tant que l'enseignant n'a pas
-  // répondu lui-même et que le délégué ne l'a pas marqué absent.
-  const peutConfirmer =
-    seance.confirmation_enseignant_par_delegue === true &&
-    seance.etat_prof === null &&
-    seance.etat_delegue !== "absent" &&
-    seance.is_active &&
-    !seance.presences_locked;
-  // La fin réelle du cours conditionne la paie de l'enseignant : elle se
-  // relève une fois le cours commencé, tant qu'elle n'est pas posée. Si le
-  // délégué oublie, la séance est clôturée à l'heure prévue par le serveur.
-  const peutTerminer =
-    seance.etat_delegue === "present" &&
-    seance.debut_reel !== null &&
-    seance.fin_reelle === null &&
-    seance.is_active &&
-    !seance.presences_locked;
   if (!seance.is_active) {
     // Séance passée sans appel validé : il reste à confirmer la liste. Rien d'autre.
     return seance.presences_locked ? null : (
@@ -543,65 +508,7 @@ function DelegateActions({
       </div>
     );
   }
-  // Les trois gestes de l'appel tiennent sur une ligne — position, présent,
-  // absent — et le dernier, confirmer la liste, a le bouton plein. Le reste
-  // se dit en une ligne de texte, seulement quand il a lieu d'être.
-  return (
-    <div className="role-actions">
-      {!seance.presences_locked && (
-        <div className="actions-groupe" role="group" aria-label="Appel">
-          {position.cellule}
-          <Button
-            variant="outline"
-            data-fait={seance.etat_delegue === "present" || undefined}
-            disabled={disabled || seance.etat_delegue === "present"}
-            onClick={() => mark.mutate({ etat: "present", set_debut_reel: true })}
-          >
-            <Check size={16} /> Présent
-          </Button>
-          <Button
-            variant="outline"
-            data-fait={seance.etat_delegue === "absent" || undefined}
-            disabled={disabled || seance.etat_delegue === "absent"}
-            onClick={() => mark.mutate({ etat: "absent" })}
-          >
-            <X size={16} /> Absent
-          </Button>
-        </div>
-      )}
-      {position.messages}
-      {(peutConfirmer || peutTerminer || seance.debut_reel || seance.etat_prof_par_delegue) && (
-        <div className="actions-notes">
-          {seance.debut_reel && (
-            <span>
-              Arrivée {seance.debut_reel.slice(0, 5)}
-              {seance.fin_reelle ? ` · fin ${seance.fin_reelle.slice(0, 5)}` : ""}
-            </span>
-          )}
-          {peutTerminer && (
-            <button type="button" disabled={mark.isPending} onClick={() => mark.mutate({ etat: "present", set_fin_reelle: true })}>
-              <Clock3 size={14} /> Noter la fin du cours
-            </button>
-          )}
-          {peutConfirmer && (
-            <button type="button" disabled={confirmer.isPending} onClick={() => confirmer.mutate()}>
-              <UserCheck size={14} /> Confirmer pour l’enseignant
-            </button>
-          )}
-          {seance.etat_prof_par_delegue && (
-            <span>
-              <UserCheck size={14} /> Enseignant confirmé à sa place
-            </span>
-          )}
-        </div>
-      )}
-      {!seance.presences_locked && (
-        <Button className="checkin-primary" onClick={onConfirmRoster}>
-          <Users size={17} /> Confirmer la liste
-        </Button>
-      )}
-    </div>
-  );
+  return <AppelDelegue seance={seance} onConfirmerListe={onConfirmRoster} />;
 }
 function TeacherActions({
   seance,

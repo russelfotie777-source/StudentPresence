@@ -77,6 +77,11 @@ export interface Seance {
   push?: { etudiants_presents: number; status: PushStatus } | null;
   ma_presence?: PresenceState | null;
   position_envoyee?: boolean;
+  /** Heure (HH:MM, Douala) et précision de la position envoyée par le délégué. */
+  position_envoyee_a?: string | null;
+  position_precision_metres?: number | null;
+  /** Étudiants déjà pointés présents — vue Délégué seulement. */
+  pointes_count?: number;
   geolocation?: {
     max_position_accuracy_meters: number;
     max_check_in_accuracy_meters: number;

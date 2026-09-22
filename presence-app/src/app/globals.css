@@ -957,36 +957,106 @@ a {
   font-weight: var(--w-semibold);
   opacity: 1;
 }
-/* Ce qui se dit en une ligne sous le groupe : l'heure d'arrivée relevée,
-   et les gestes moins fréquents, en lien plutôt qu'en bouton. */
-.actions-notes {
+/* L'appel du délégué : trois lignes, une par chose à faire — la salle,
+   l'enseignant, la classe. Chaque ligne dit où elle en est en toutes
+   lettres ; l'icône se change en coche quand c'est fait, et le bouton
+   disparaît. Les lignes se séparent par l'espace, pas par un trait. */
+.appel {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 16px;
+  flex-direction: column;
+  gap: 14px;
   width: 100%;
-  font-size: var(--text-13);
-  color: var(--hero-muted);
 }
-.actions-notes > span,
-.actions-notes > button {
+.appel-ligne {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.appel-icone {
+  flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 32px;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.16);
+  color: var(--hero-ink);
 }
-.actions-notes > button {
+.appel-ligne[data-fait] .appel-icone {
+  background: #ffffff;
+  color: var(--menthe-ink);
+}
+.appel-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: var(--text-13);
+  line-height: 1.4;
+}
+.appel-texte strong {
+  font-weight: var(--w-semibold);
+  color: var(--hero-ink);
+  overflow-wrap: anywhere;
+}
+.appel-texte span {
+  color: var(--hero-muted);
+  overflow-wrap: anywhere;
+}
+.appel-texte span button {
   color: var(--hero-ink);
   font-weight: var(--w-semibold);
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-color: var(--hero-line);
 }
-.actions-notes > button:hover:not(:disabled) {
+.appel-texte span button:hover:not(:disabled) {
   text-decoration-color: var(--hero-ink);
 }
-.actions-notes > button:disabled {
-  opacity: 0.6;
+.appel-action {
+  flex: none;
+  display: flex;
+  gap: 6px;
+}
+/* Le bouton d'une ligne est blanc, texte vert : ce qu'il reste à faire se
+   voit du premier coup d'œil. « Absent », geste rare, reste en verre. */
+.appel-action > button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
+  background: #ffffff;
+  color: var(--menthe-ink);
+  box-shadow: none;
+}
+.appel-action > button:hover:not(:disabled) {
+  background: var(--menthe-hover);
+}
+.appel-action > button:disabled {
+  opacity: 0.7;
+}
+.appel-action > .appel-discret {
+  background: rgb(255 255 255 / 0.16);
+  color: var(--hero-ink);
+}
+.appel-action > .appel-discret:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.26);
+}
+/* Les consignes pour rétablir la localisation, écrites pour un fond
+   blanc : on leur en donne un. */
+.appel-encart {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface-0);
+  color: var(--ink-900);
+}
+/* L'enseignant a sa ligne dans l'appel : inutile de le redire sous l'heure. */
+.session-featured:has(.appel) .session-presence {
+  display: none;
 }
 .role-actions > .checkin-primary {
   width: 100%;
