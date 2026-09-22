@@ -115,6 +115,7 @@
   --text-30: 30px;
   --text-38: 38px;
   --text-56: 56px;
+  --w-light: 300;
   --w-regular: 400;
   --w-semibold: 600;
   --w-bold: 700;
@@ -396,10 +397,11 @@ html:not(.dark) .bg-card {
   --menthe: #ffffff;
   --menthe-ink: #00a844;
   --menthe-hover: #effdf4;
-  /* La séance en cours : le vert, profond en haut où se lit le titre, clair en bas. */
-  --hero: linear-gradient(160deg, #00d43b 0%, #01e55c 48%, #85f389 100%);
+  /* La séance en cours : le vert de la maquette, relevé le long de sa carte —
+     clair en haut, plein en bas, à la verticale. */
+  --hero: linear-gradient(180deg, #79f384 0%, #15e961 50%, #00d82d 100%);
   /* La prochaine : le bleu, même geste. */
-  --prochaine: linear-gradient(160deg, #0175e2 0%, #0196e7 48%, #00b9f1 100%);
+  --prochaine: linear-gradient(180deg, #00b7f1 0%, #009ee8 50%, #007be2 100%);
   --hero-ink: #ffffff;
   --hero-muted: rgb(255 255 255 / 0.86);
   --hero-line: rgb(255 255 255 / 0.32);
@@ -439,8 +441,8 @@ html:not(.dark) .bg-card {
   --menthe: #ffffff;
   --menthe-ink: #00a844;
   --menthe-hover: #effdf4;
-  --hero: linear-gradient(160deg, #00c23a 0%, #01dc58 48%, #7deb80 100%);
-  --prochaine: linear-gradient(160deg, #0a63c8 0%, #0a8ce2 48%, #14b3ee 100%);
+  --hero: linear-gradient(180deg, #6fe57a 0%, #10dc58 50%, #00c92a 100%);
+  --prochaine: linear-gradient(180deg, #12aee6 0%, #0f93dc 50%, #0a6fd0 100%);
   --hero-ink: #ffffff;
   --hero-muted: rgb(255 255 255 / 0.86);
   --hero-line: rgb(255 255 255 / 0.32);
@@ -552,10 +554,14 @@ a {
 .welcome-copy h1 {
   font-family: var(--font-display), sans-serif;
   font-size: var(--text-30);
-  font-weight: var(--w-semibold);
+  font-weight: var(--w-light);
   line-height: 1.2;
   margin-top: 8px;
   overflow-wrap: anywhere;
+}
+/* « Bonjour, » en léger, le prénom en gras : la graisse fait le relief. */
+.welcome-copy h1 strong {
+  font-weight: var(--w-bold);
 }
 .welcome-subtitle {
   font-size: var(--text-13);
