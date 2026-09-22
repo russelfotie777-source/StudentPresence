@@ -19,13 +19,13 @@ interface IdentityLensProps {
 }
 
 const SIGNALS: Record<IdentityLensStatus, { color: number; speed: number }> = {
-  loading: { color: 0x336bce, speed: 0.15 },
-  idle: { color: 0x698e8a, speed: 0.045 },
-  adjust: { color: 0xaa762e, speed: 0.06 },
-  ready: { color: 0x079779, speed: 0.09 },
-  verifying: { color: 0x286edd, speed: 0.5 },
-  success: { color: 0x08a778, speed: 0.025 },
-  error: { color: 0xb45648, speed: 0 },
+  loading: { color: 0x0196e7, speed: 0.15 },
+  idle: { color: 0x7b8aa3, speed: 0.045 },
+  adjust: { color: 0xf2994a, speed: 0.06 },
+  ready: { color: 0x00c257, speed: 0.09 },
+  verifying: { color: 0x0196e7, speed: 0.5 },
+  success: { color: 0x01e55c, speed: 0.025 },
+  error: { color: 0xe14a63, speed: 0 },
 };
 
 export function IdentityLens({ status, paused = false }: IdentityLensProps) {
