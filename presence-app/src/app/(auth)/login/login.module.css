@@ -1,8 +1,8 @@
 .page {
-  --login-ink: #182624;
-  --login-muted: #586967;
+  --login-ink: var(--ink-900);
+  --login-muted: var(--ink-500);
   color: var(--login-ink);
-  background: #ffffff;
+  background: var(--surface-0);
   min-height: 100svh;
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -32,8 +32,8 @@
   place-items: center;
   height: 32px;
   width: 32px;
-  background: #20382e;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   border-radius: 7px;
 }
 .headerRight {
@@ -51,13 +51,13 @@
   gap: 7px;
   font-weight: var(--w-semibold);
   padding: 12px 0;
-  border-bottom: 1px solid #abbcb0;
+  border-bottom: 1px solid var(--line);
 }
 .header a:hover {
-  color: #0f9d68;
+  color: var(--primary);
 }
 .visual {
-  background: #f4f7f5;
+  background: var(--surface-2);
   min-height: 780px;
   height: 100svh;
   max-height: 1200px;
@@ -78,7 +78,7 @@
 .visualEyebrow > span {
   width: 5px;
   height: 5px;
-  background: #0f9d68;
+  background: var(--primary);
 }
 .scene {
   position: absolute;
@@ -99,7 +99,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  color: #0f9d68;
+  color: var(--primary);
 }
 .fallback svg {
   width: 150px;
@@ -132,7 +132,7 @@
   font-size: var(--text-13);
   line-height: 1.8;
   padding-left: 20px;
-  border-left: 1px solid #bdcbbf;
+  border-left: 1px solid var(--line);
 }
 .visualCopy > p {
   font-size: var(--text-13);
@@ -155,24 +155,24 @@
   color: var(--login-muted);
 }
 .visualIndex > span {
-  color: #adbab0;
+  color: var(--ink-300);
 }
 .visualBottom button {
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid #c8d3cb;
+  border: 1px solid var(--line);
   border-radius: 50%;
   cursor: pointer;
   background: transparent;
   transition: background 0.2s;
 }
 .visualBottom button:hover {
-  background: #dfe8df;
+  background: var(--surface-2);
 }
 .formSection {
-  background: #fff;
+  background: var(--surface-0);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -189,10 +189,10 @@
   place-items: center;
   width: 47px;
   height: 47px;
-  border: 1px solid #d6f4e6;
+  border: 1px solid var(--indigo-100);
   border-radius: 8px;
-  background: #ebf9f2;
-  color: #0f9d68;
+  background: var(--indigo-50);
+  color: var(--primary);
   margin-bottom: 28px;
 }
 .formEyebrow {
@@ -228,9 +228,9 @@
 .inputWrap {
   display: flex;
   align-items: center;
-  border: 1px solid #d9e1e5;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f4f7f5;
+  background: var(--surface-2);
   height: 56px;
   padding: 0 15px;
   gap: 12px;
@@ -240,13 +240,13 @@
     background 0.2s;
 }
 .inputWrap:focus-within {
-  background: #fff;
-  border-color: #0f9d68;
-  box-shadow: 0 0 0 4px #0f9d6812, 0 2px 5px #18262408;
+  background: var(--surface-1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgb(0 194 87 / 0.12), 0 2px 5px rgb(24 38 36 / 0.03);
 }
 .inputWrap > svg {
   flex: none;
-  color: #829186;
+  color: var(--ink-500);
 }
 .inputWrap input {
   width: 100%;
@@ -258,23 +258,23 @@
   color: var(--login-ink);
 }
 .inputWrap input::placeholder {
-  color: #859387;
+  color: var(--ink-500);
   font-size: var(--text-13);
 }
 .inputWrap input:focus-visible {
   outline: none;
 }
 .inputWrap:has(input:autofill) {
-  background: #f0f6f3;
+  background: var(--surface-2);
 }
 .inputWrap input:autofill {
   -webkit-text-fill-color: var(--login-ink);
   caret-color: var(--login-ink);
-  box-shadow: 0 0 0 1000px #f0f6f3 inset;
+  box-shadow: 0 0 0 1000px var(--surface-2) inset;
 }
 .page a:focus-visible,
 .page button:focus-visible {
-  outline: 2px solid #0f9d68;
+  outline: 2px solid var(--primary);
   outline-offset: 4px;
 }
 .inputWrap button {
@@ -283,7 +283,7 @@
   height: 44px;
   display: grid;
   place-items: center;
-  color: #718577;
+  color: var(--ink-500);
   cursor: pointer;
   margin-right: -8px;
 }
@@ -293,10 +293,10 @@
   align-items: center;
   width: 100%;
   height: 54px;
-  background: #0f9d68;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   border-radius: 8px;
-  box-shadow: 0 4px 10px #0f9d6820;
+  box-shadow: 0 4px 10px rgb(0 194 87 / 0.16);
   padding: 0 19px;
   cursor: pointer;
   font-size: var(--text-13);
@@ -308,8 +308,8 @@
   margin-top: 7px;
 }
 .submit:hover:not(:disabled) {
-  background: #0b7a4f;
-  box-shadow: 0 8px 20px #0f9d6828;
+  background: var(--indigo-500);
+  box-shadow: 0 8px 20px rgb(0 194 87 / 0.2);
 }
 .submit:active:not(:disabled) {
   transform: scale(0.985);
@@ -340,7 +340,7 @@
   gap: 7px 14px;
   margin-top: 32px;
   padding-top: 23px;
-  border-top: 1px solid #e5eae5;
+  border-top: 1px solid var(--line);
   font-size: var(--text-13);
 }
 .signup > span {
@@ -353,7 +353,7 @@
   font-weight: var(--w-semibold);
 }
 .signup > a:hover {
-  color: #0f9d68;
+  color: var(--primary);
 }
 .signup > .forgot {
   font-weight: var(--w-regular);
@@ -388,7 +388,7 @@
 }
 .institutionMark {
   margin-left: auto;
-  color: #91a496;
+  color: var(--ink-300);
   font-size: var(--text-20);
   font-weight: var(--w-semibold);
   font-family: var(--font-display), sans-serif;
@@ -399,9 +399,9 @@
   gap: 9px;
   font-size: var(--text-13);
   line-height: 1.7;
-  color: #a54138;
-  background: #fff2ef;
-  border-left: 2px solid #ce6a54;
+  color: var(--destructive);
+  background: var(--rose-100);
+  border-radius: 8px;
   padding: 12px;
   margin-bottom: 20px;
   overflow-wrap: anywhere;
@@ -412,7 +412,7 @@
 }
 .capsLock {
   font-size: var(--text-13);
-  color: #9b593b;
+  color: var(--warning);
   margin-top: 7px;
 }
 .spinner {
@@ -491,7 +491,7 @@
   .visual {
     height: 246px;
     min-height: 0;
-    background: #fff;
+    background: var(--surface-0);
   }
   .visualEyebrow {
     display: none;
@@ -533,7 +533,7 @@
   .formEyebrow {
     font-size: var(--text-13);
     margin-bottom: 12px;
-    color: #0f9d68;
+    color: var(--primary);
   }
   .formInner h2 {
     font-size: var(--text-38);
@@ -574,7 +574,7 @@
     max-width: 440px;
     margin: 24px auto 0;
     padding-top: 20px;
-    border-top: 1px solid #e5eae5;
+    border-top: 1px solid var(--line);
   }
 }
 @media (max-width: 360px) {

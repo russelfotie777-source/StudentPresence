@@ -121,7 +121,7 @@ export default function FacePage() {
               ? "Cadrage prêt"
               : position.quality === "poor"
                 ? "Ajustez votre position"
-                : "À vous de jouer";
+                : "Placez-vous dans le cadre";
 
   useEffect(() => {
     if (!getToken() || isError) {
