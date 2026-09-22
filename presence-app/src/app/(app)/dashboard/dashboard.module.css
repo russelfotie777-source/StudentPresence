@@ -46,7 +46,7 @@
 .dashboard :global(.welcome-copy h1) {
   font-size: var(--text-30);
   line-height: 1.16;
-  font-weight: var(--w-semibold);
+  font-weight: var(--w-light);
   margin-top: 10px;
 }
 .dashboard :global(.welcome-subtitle) {

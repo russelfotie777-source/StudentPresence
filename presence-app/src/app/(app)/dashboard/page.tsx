@@ -166,7 +166,7 @@ export default function DashboardPage() {
             )}
           </p>
           <h1>
-            Bonjour, {me?.user.name && prenom(me.user.name)}
+            Bonjour, <strong>{me?.user.name && prenom(me.user.name)}</strong>
             <span>.</span>
           </h1>
         </div>

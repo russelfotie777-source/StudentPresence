@@ -1,23 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, Lora } from "next/font/google";
+import { Fira_Sans } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppToaster } from "@/components/app-toaster";
 import "./globals.css";
 
-// Deux voix humaines plutôt que les grotesques géométriques que tout le
-// monde reconnaît : Lora, une serif aux racines calligraphiques, pour ce
-// qui s'adresse à la personne (bonjour, titres) ; Atkinson Hyperlegible
-// Next, dessinée pour rester lisible aux plus petites tailles, pour tout
-// le reste. Chargées en police variable : un seul fichier par famille.
-const display = Lora({
+// Une seule voix, celle de la maquette de référence : Fira Sans, dessinée
+// par Mozilla pour l'écran. Le titre en gras, le sous-titre en léger, le
+// texte en régulier — c'est la graisse qui fait la hiérarchie, pas un
+// changement de famille. Deux chargements pour ne prendre que les graisses
+// utiles à chaque rôle.
+const display = Fira_Sans({
   variable: "--font-display",
+  weight: ["300", "600", "700"],
   subsets: ["latin"],
   display: "swap",
 });
 
-const body = Atkinson_Hyperlegible_Next({
+const body = Fira_Sans({
   variable: "--font-body",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
   display: "swap",
 });
