@@ -14,10 +14,11 @@ use Tests\TestCase;
 
 /**
  * Le navigateur livre chaque position avec un rayon d'incertitude
- * (coords.accuracy). Une mesure à ±800 m — cas courant d'un premier point
- * Wi-Fi/antenne avant que le GPS ne converge — ne permet de conclure ni dans
- * un sens ni dans l'autre face à un périmètre de 120 m : elle est refusée
- * plutôt qu'utilisée.
+ * (coords.accuracy). Le pointage doit marcher depuis la salle avec le
+ * téléphone qu'on a : une mesure imprécise n'est pas refusée, elle élargit
+ * le périmètre d'autant — le doute profite à l'étudiant. Seule une mesure
+ * qui ne vient plus du téléphone (localisation coupée, point d'après
+ * l'adresse IP, à plusieurs kilomètres près) est écartée.
  */
 class GeolocationAccuracyTest extends TestCase
 {
@@ -64,7 +65,7 @@ class GeolocationAccuracyTest extends TestCase
         return User::factory()->etudiant($this->salle)->create(['niveau_id' => $this->niveau->id]);
     }
 
-    public function test_delegue_position_is_refused_when_too_imprecise(): void
+    public function test_delegue_position_is_refused_only_beyond_the_ceiling(): void
     {
         $seance = $this->seance();
 
@@ -72,12 +73,21 @@ class GeolocationAccuracyTest extends TestCase
             ->postJson("/api/seances/{$seance->id}/position", [
                 'latitude' => 4.05,
                 'longitude' => 9.7,
-                'accuracy' => 800,
+                'accuracy' => config('presence.max_position_accuracy_meters') + 1,
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('accuracy');
 
         $this->assertDatabaseMissing('positions_seances', ['seance_id' => $seance->id]);
+
+        // Un premier point Wi-Fi à ±800 m, courant dans un bâtiment, passe.
+        $this->actingAs($this->delegue(), 'sanctum')
+            ->postJson("/api/seances/{$seance->id}/position", [
+                'latitude' => 4.05,
+                'longitude' => 9.7,
+                'accuracy' => 800,
+            ])
+            ->assertCreated();
     }
 
     public function test_delegue_position_stores_its_accuracy(): void
@@ -98,7 +108,7 @@ class GeolocationAccuracyTest extends TestCase
         ]);
     }
 
-    public function test_check_in_is_refused_when_too_imprecise(): void
+    public function test_check_in_is_refused_only_beyond_the_ceiling(): void
     {
         $seance = $this->seance();
         $etudiant = $this->etudiant();
@@ -108,11 +118,10 @@ class GeolocationAccuracyTest extends TestCase
                 'latitude' => 4.05, 'longitude' => 9.7, 'accuracy' => 10,
             ])->assertCreated();
 
-        // Au même endroit que le délégué, mais avec une mesure inexploitable :
-        // être réellement à côté ne suffit pas si on ne peut pas le prouver.
         $this->actingAs($etudiant, 'sanctum')
             ->postJson("/api/seances/{$seance->id}/check-in", [
-                'latitude' => 4.05, 'longitude' => 9.7, 'accuracy' => 500,
+                'latitude' => 4.05, 'longitude' => 9.7,
+                'accuracy' => config('presence.max_check_in_accuracy_meters') + 1,
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('accuracy');
@@ -157,35 +166,56 @@ class GeolocationAccuracyTest extends TestCase
     }
 
     /**
-     * Le délégué est tenu plus strictement que les étudiants : son point sert
-     * de référence à toute la classe.
+     * Le rayon s'entend entre les vraies positions : la distance mesurée
+     * est comparée au rayon élargi des deux incertitudes. Même mesure à
+     * 250 m du délégué — refusée avec un bon GPS, acceptée avec un point
+     * Wi-Fi à ±200 m, puisque l'étudiant peut alors être dans la salle.
      */
-    public function test_delegue_threshold_is_stricter_than_the_student_one(): void
+    public function test_uncertainty_widens_the_perimeter_in_the_student_favour(): void
     {
-        $this->assertLessThan(
-            config('presence.max_check_in_accuracy_meters'),
-            config('presence.max_position_accuracy_meters'),
-        );
-
         $seance = $this->seance();
         $etudiant = $this->etudiant();
-        $entreLesDeux = config('presence.max_position_accuracy_meters') + 1;
 
         $this->actingAs($this->delegue(), 'sanctum')
             ->postJson("/api/seances/{$seance->id}/position", [
-                'latitude' => 4.05, 'longitude' => 9.7, 'accuracy' => $entreLesDeux,
-            ])
-            ->assertUnprocessable();
-
-        $this->actingAs($this->delegue(), 'sanctum')
-            ->postJson("/api/seances/{$seance->id}/position", [
-                'latitude' => 4.05, 'longitude' => 9.7, 'accuracy' => 10,
+                'latitude' => 4.0500, 'longitude' => 9.7000, 'accuracy' => 10,
             ])->assertCreated();
 
-        // La même incertitude reste acceptable pour un étudiant.
+        // 0.00225° de latitude ≈ 250 m.
         $this->actingAs($etudiant, 'sanctum')
             ->postJson("/api/seances/{$seance->id}/check-in", [
-                'latitude' => 4.05, 'longitude' => 9.7, 'accuracy' => $entreLesDeux,
+                'latitude' => 4.05225, 'longitude' => 9.7000, 'accuracy' => 10,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('position');
+
+        $this->actingAs($etudiant, 'sanctum')
+            ->postJson("/api/seances/{$seance->id}/check-in", [
+                'latitude' => 4.05225, 'longitude' => 9.7000, 'accuracy' => 200,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('presences_etudiants', [
+            'etudiant_id' => $etudiant->id,
+            'distance_metres' => 250,
+            'precision_metres' => 200,
+        ]);
+    }
+
+    /** L'incertitude du délégué compte aussi : elle s'ajoute au rayon. */
+    public function test_delegue_uncertainty_counts_too(): void
+    {
+        $seance = $this->seance();
+        $etudiant = $this->etudiant();
+
+        $this->actingAs($this->delegue(), 'sanctum')
+            ->postJson("/api/seances/{$seance->id}/position", [
+                'latitude' => 4.0500, 'longitude' => 9.7000, 'accuracy' => 150,
+            ])->assertCreated();
+
+        $this->actingAs($etudiant, 'sanctum')
+            ->postJson("/api/seances/{$seance->id}/check-in", [
+                'latitude' => 4.05225, 'longitude' => 9.7000, 'accuracy' => 10,
             ])
             ->assertOk();
     }

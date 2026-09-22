@@ -75,16 +75,15 @@ class PresenceController extends Controller
             'accuracy' => ['required', 'numeric', 'min:0'],
         ]);
 
-        // Une mesure dont l'incertitude dépasse largement le périmètre
-        // autorisé ne permet de conclure ni dans un sens ni dans l'autre : on
-        // la refuse plutôt que de la traiter comme une position fiable.
+        // Au-delà du plafond, la mesure ne vient plus du téléphone (GPS,
+        // Wi-Fi) mais de l'adresse IP : elle ne dit rien de la salle.
         $maxAccuracy = config('presence.max_check_in_accuracy_meters');
 
         if ($data['accuracy'] > $maxAccuracy) {
             throw ValidationException::withMessages([
                 'accuracy' => [
-                    'Position trop imprécise pour être vérifiée ('.round($data['accuracy'])."m, max {$maxAccuracy}m). ".
-                    'Rapprochez-vous d\'une fenêtre et réessayez dans quelques secondes.',
+                    'Votre téléphone ne trouve pas sa position (à '.round($data['accuracy']).' m près). '.
+                    'Activez la localisation dans ses réglages, puis réessayez.',
                 ],
             ]);
         }
@@ -96,11 +95,15 @@ class PresenceController extends Controller
             (float) $position->longitude,
         );
 
+        // Le doute profite à l'étudiant : refusé seulement si, même en
+        // prenant les deux mesures au plus favorable, il reste hors du
+        // rayon (voir config/presence.php, max_check_in_distance_meters).
         $maxDistance = config('presence.max_check_in_distance_meters');
+        $marge = $maxDistance + $data['accuracy'] + ($position->precision_metres ?? 0);
 
-        if ($distance > $maxDistance) {
+        if ($distance > $marge) {
             throw ValidationException::withMessages([
-                'position' => ["Vous êtes trop éloigné du délégué pour marquer votre présence ({$distance}m, max {$maxDistance}m)."],
+                'position' => ["Vous êtes trop loin de la salle pour marquer votre présence ({$distance} m, au-delà de ".round($marge).' m).'],
             ]);
         }
 

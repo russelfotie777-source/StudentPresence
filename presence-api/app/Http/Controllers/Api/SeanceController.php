@@ -49,7 +49,9 @@ class SeanceController extends Controller
         $role = $user->effectiveRole();
 
         match ($role) {
-            UserRole::Delegue => $query->where('salle_id', $user->salle_id),
+            // Le délégué voit l'appel avancer : combien ont déjà pointé.
+            UserRole::Delegue => $query->where('salle_id', $user->salle_id)
+                ->withCount(['presences as pointes_count' => fn ($q) => $q->where('etat', PresenceState::Present->value)]),
             UserRole::Enseignant => $query->where('enseignant_id', $user->id),
             UserRole::Etudiant => $query->where('salle_id', $user->salle_id)
                 ->with(['presences' => fn ($q) => $q->where('etudiant_id', $user->id)]),
