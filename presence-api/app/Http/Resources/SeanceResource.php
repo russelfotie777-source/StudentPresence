@@ -36,6 +36,12 @@ class SeanceResource extends JsonResource
             // propre id (vue Étudiant uniquement).
             'ma_presence' => $this->whenLoaded('presences', fn () => $this->presences->first()?->etat?->value),
             'position_envoyee' => $this->whenLoaded('position', fn () => $this->position !== null),
+            // Ce que le délégué lit sur sa carte : à quelle heure la salle a
+            // été située. Jamais la précision — un « ±80 m » inquiète sans
+            // rien changer à ce qu'il peut faire.
+            'position_envoyee_a' => $this->whenLoaded('position', fn () => $this->position?->date_creation?->timezone(config('app.timezone'))->format('H:i')),
+            // Étudiants déjà pointés présents (vue Délégué : voir SeanceController::today).
+            'pointes_count' => $this->whenCounted('pointes'),
             'groupe' => $this->groupe,
             'date_seance' => $this->date_seance?->toDateString(),
             'jour' => $this->jour->value,

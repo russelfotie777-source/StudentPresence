@@ -97,12 +97,10 @@ export function CheckInDialog({
                 Nous vérifions votre position par rapport à celle du délégué
                 pour la salle {seance.salle}.
               </p>
-              {/* Le GPS affine sa mesure pendant quelques secondes : afficher
-                  la précision montre que l'attente sert à quelque chose. */}
-              {geo.precision !== null && (
-                <p className="text-xs text-ink-300">
-                  Précision ±{geo.precision} m, affinage…
-                </p>
+              {/* Le GPS affine sa mesure pendant quelques secondes : on le
+                  dit, sans chiffre — un « ±80 m » inquiète pour rien. */}
+              {geo.coords && (
+                <p className="text-xs text-ink-300">Position trouvée, on affine…</p>
               )}
             </>
           )}
@@ -113,8 +111,7 @@ export function CheckInDialog({
                 <MapPin className="h-6 w-6 text-indigo-600" />
               </div>
               <p className="text-sm text-ink-500">
-                Position obtenue à ±{geo.precision} m. Vous pouvez maintenant
-                confirmer votre présence.
+                Position trouvée. Vous pouvez confirmer votre présence.
               </p>
             </>
           )}
@@ -139,7 +136,7 @@ export function CheckInDialog({
                 Présence confirmée
               </h2>
               <p className="text-xs text-ink-500">
-                À {checkIn.data?.distance}m du délégué &middot; {seance.matiere}
+                {seance.matiere} &middot; {seance.salle}
               </p>
             </>
           )}

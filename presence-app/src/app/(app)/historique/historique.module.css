@@ -10,8 +10,7 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
 }
 .brand {
   display: inline-flex;
@@ -187,8 +186,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-bottom: 13px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
 }
 .dayNumber {
   font-family: var(--font-display), sans-serif;
@@ -212,18 +210,22 @@
   color: var(--ink-500);
   font-size: var(--text-13);
 }
+/* Chaque séance est une carte posée par son ombre : pas de trait entre deux. */
 .sessions {
   list-style: none;
-}
-.sessions > li + li {
-  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .row {
   position: relative;
   display: grid;
   grid-template-columns: 47px minmax(0, 1fr);
   gap: 19px;
-  padding: 22px 0;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--relief);
 }
 .time {
   display: flex;
@@ -310,8 +312,7 @@
   align-items: center;
   gap: 10px;
   padding: 24px 0;
-  border-top: 1px solid var(--line);
-  margin-top: 20px;
+  margin-top: 10px;
 }
 .more > span {
   font-size: var(--text-13);
@@ -351,9 +352,7 @@
   padding: 25px 0 5px;
 }
 .end > span {
-  height: 1px;
-  background: var(--line);
-  width: 30px;
+  display: none;
 }
 .empty {
   padding: 50px 16px;
@@ -461,7 +460,6 @@
     gap: 30px;
   }
   .day + .day {
-    border-top: 1px solid var(--line);
     padding-top: 25px;
     margin-top: 10px;
   }

@@ -115,7 +115,7 @@ function Ligne({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-b border-border px-4 py-3.5 text-left last:border-b-0 hover:bg-muted/50"
+      className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/50"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
         <Icon className="h-4 w-4 text-muted-foreground" />

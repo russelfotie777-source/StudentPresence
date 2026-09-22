@@ -486,8 +486,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 22px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
 }
 .presence-brand {
   display: inline-flex;
@@ -683,9 +682,7 @@ a {
   transform: translateX(-100%);
 }
 .fin-journee-liste {
-  margin-top: 18px;
-  padding-top: 6px;
-  border-top: 1px solid var(--hero-line);
+  margin-top: 16px;
   list-style: none;
 }
 .fin-journee-liste > li {
@@ -693,13 +690,11 @@ a {
   grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: baseline;
   gap: 12px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--hero-line);
+  padding: 9px 0;
   font-size: var(--text-13);
 }
 .fin-journee-liste > li:last-child {
-  border-bottom: 0;
-  padding-bottom: 2px;
+  padding-bottom: 0;
 }
 .fin-journee-liste time {
   font-family: var(--font-display), sans-serif;
@@ -776,9 +771,8 @@ a {
   color: var(--hero-muted);
 }
 .session-hours {
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 0;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -850,12 +844,21 @@ a {
   font-size: var(--text-13);
   font-weight: var(--w-bold);
 }
+/* Chaque séance à venir est une carte, posée par son ombre — pas une ligne
+   entre deux traits. */
 .session-row {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 20px;
-  padding: 22px 0;
-  border-bottom: 1px solid var(--line);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--relief);
+}
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .session-time {
   position: relative;
@@ -898,8 +901,9 @@ a {
   border-radius: 6px;
 }
 /* Sur la carte du jour, les boutons sont en verre clair : lisibles sur le
-   dégradé, sans rivaliser avec le bouton de pointage. */
-.session-featured .role-actions > button {
+   dégradé, sans rivaliser avec le bouton plein. */
+.session-featured .role-actions > button,
+.session-featured .actions-groupe > button {
   --card: rgb(255 255 255 / 0.14);
   --background: rgb(255 255 255 / 0.14);
   --muted: rgb(255 255 255 / 0.24);
@@ -916,14 +920,155 @@ a {
   --destructive-foreground: #3d0e0e;
   backdrop-filter: blur(6px);
 }
+/* Le groupe d'appel : trois cellules jointes sur une ligne, comme un seul
+   objet — position, présent, absent. La cellule faite passe en blanc
+   plein, texte vert : on voit d'un coup d'œil où en est l'appel. */
+.actions-groupe {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--hero-line);
+}
+.actions-groupe-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.actions-groupe > button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  font-size: var(--text-13);
+  gap: 6px;
+}
+.actions-groupe > button + button {
+  border-left: 1px solid var(--hero-line);
+}
+.session-featured .actions-groupe > button:disabled {
+  opacity: 1;
+  color: var(--hero-muted);
+}
+.session-featured .actions-groupe > button[data-fait] {
+  --background: #ffffff;
+  --card: #ffffff;
+  --foreground: var(--menthe-ink);
+  background: #ffffff;
+  color: var(--menthe-ink);
+  font-weight: var(--w-semibold);
+  opacity: 1;
+}
+/* L'appel du délégué : trois lignes, une par chose à faire — la salle,
+   l'enseignant, la classe. Chaque ligne dit où elle en est en toutes
+   lettres ; l'icône se change en coche quand c'est fait, et le bouton
+   disparaît. Les lignes se séparent par l'espace, pas par un trait. */
+.appel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+.appel-ligne {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.appel-icone {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.16);
+  color: var(--hero-ink);
+}
+.appel-ligne[data-fait] .appel-icone {
+  background: #ffffff;
+  color: var(--menthe-ink);
+}
+.appel-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: var(--text-13);
+  line-height: 1.4;
+}
+.appel-texte strong {
+  font-weight: var(--w-semibold);
+  color: var(--hero-ink);
+  overflow-wrap: anywhere;
+}
+.appel-texte span {
+  color: var(--hero-muted);
+  overflow-wrap: anywhere;
+}
+.appel-texte span button {
+  color: var(--hero-ink);
+  font-weight: var(--w-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--hero-line);
+}
+.appel-texte span button:hover:not(:disabled) {
+  text-decoration-color: var(--hero-ink);
+}
+.appel-action {
+  flex: none;
+  display: flex;
+  gap: 6px;
+}
+/* Le bouton d'une ligne est blanc, texte vert : ce qu'il reste à faire se
+   voit du premier coup d'œil. « Absent », geste rare, reste en verre. */
+.appel-action > button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: var(--text-13);
+  font-weight: var(--w-semibold);
+  background: #ffffff;
+  color: var(--menthe-ink);
+  box-shadow: none;
+}
+.appel-action > button:hover:not(:disabled) {
+  background: var(--menthe-hover);
+}
+.appel-action > button:disabled {
+  opacity: 0.7;
+}
+.appel-action > .appel-discret {
+  background: rgb(255 255 255 / 0.16);
+  color: var(--hero-ink);
+}
+.appel-action > .appel-discret:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.26);
+}
+/* Les consignes pour rétablir la localisation, écrites pour un fond
+   blanc : on leur en donne un. */
+.appel-encart {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface-0);
+  color: var(--ink-900);
+}
+/* L'enseignant a sa ligne dans l'appel : inutile de le redire sous l'heure. */
+.session-featured:has(.appel) .session-presence {
+  display: none;
+}
+.role-actions > .checkin-primary {
+  width: 100%;
+  flex-basis: 100%;
+}
 .insights-column {
   display: flex;
   flex-direction: column;
   gap: 30px;
 }
 .attendance-section {
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 23px;
+  padding-bottom: 8px;
 }
 .attendance-visual {
   height: 230px;
@@ -1070,9 +1215,8 @@ a {
   gap: 7px;
   color: var(--muted-foreground);
   font-size: var(--text-13);
-  border-top: 1px solid var(--line);
   margin-top: 34px;
-  padding-top: 23px;
+  padding-top: 8px;
 }
 .dashboard-empty {
   min-height: 240px;
@@ -1111,7 +1255,6 @@ a {
   right: 0;
   z-index: 40;
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line);
   background: var(--verre);
 }
 .nav-items {
@@ -1263,7 +1406,6 @@ a {
   .attendance-section {
     padding-right: 0;
     border-right: 0;
-    border-bottom: 1px solid var(--line);
   }
   .welcome-section {
     padding: 38px 0 42px;

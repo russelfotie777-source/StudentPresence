@@ -25,19 +25,22 @@ interface GeolocationState {
 
 const ERROR_MESSAGES: Record<GeolocationErrorReason, string> = {
   permission_denied:
-    "L'accès à la position a été refusé. Autorisez la géolocalisation dans les réglages de votre navigateur puis réessayez.",
+    "L'accès à la position a été refusé. Autorisez la localisation dans les réglages de votre navigateur, puis réessayez.",
   position_unavailable:
-    "Impossible de déterminer votre position. Vérifiez que le GPS est activé.",
+    "Votre téléphone ne trouve pas sa position. Activez la localisation dans ses réglages, puis réessayez.",
   timeout:
-    "La localisation prend trop de temps. Vérifiez votre signal GPS et réessayez.",
-  unsupported: "Votre navigateur ne supporte pas la géolocalisation.",
+    "Votre téléphone n'a rendu aucune position. Activez la localisation dans ses réglages, puis réessayez.",
+  unsupported: "Votre navigateur ne sait pas donner votre position.",
   imprecise:
-    "La position reste trop imprécise. Réessayez dans un endroit mieux couvert ou faites constater votre présence par le délégué.",
-  unknown: "Une erreur inattendue est survenue lors de la localisation.",
+    "Votre téléphone ne trouve pas sa position, seulement la ville. Activez la localisation dans ses réglages, puis réessayez.",
+  unknown: "La localisation n'a pas abouti. Réessayez.",
 };
 
-/** Temps laissé au GPS pour atteindre la précision acceptée par le serveur. */
-const DUREE_MAX_MS = 20_000;
+/** En dessous de cette incertitude, inutile d'attendre davantage : on prend. */
+const PRECISION_SUFFISANTE_M = 30;
+
+/** Temps laissé au GPS pour se resserrer avant de prendre ce qu'on a. */
+const DUREE_MAX_MS = 15_000;
 
 /**
  * Localisation par convergence plutôt que par lecture unique.
@@ -46,14 +49,17 @@ const DUREE_MAX_MS = 20_000;
  * ne fait que demander la puce GPS — il n'attend pas qu'elle soit prête. Sur
  * mobile ce premier point est presque toujours une triangulation Wi-Fi/antenne
  * portant ±50 à 2000 m d'incertitude, avant que le GPS ne converge vers ±5 à
- * 15 m en quelques secondes. Comparer une telle mesure à un périmètre de 120 m
- * n'a aucun sens.
+ * 15 m en quelques secondes.
  *
  * On écoute donc les positions successives (`watchPosition`) en gardant la plus
- * précise. Une mesure exploitable termine la recherche immédiatement ; une
- * mesure encore imprécise à l'échéance ne doit pas déclencher un envoi.
+ * précise. Une mesure serrée termine la recherche tout de suite ; sinon, à
+ * l'échéance, on garde la meilleure telle quelle : le pointage doit marcher
+ * depuis la salle avec le téléphone qu'on a, et le serveur tient compte de
+ * l'incertitude. Seule une mesure au-delà du plafond (`maxAccuracy`, celui
+ * du serveur) est rendue en erreur — elle ne vient plus du téléphone mais de
+ * l'adresse IP, et la localisation est sans doute coupée.
  */
-export function useGeolocation(maxAccuracy = 75) {
+export function useGeolocation(maxAccuracy = 2000) {
   const [state, setState] = useState<GeolocationState>({
     status: "idle",
     coords: null,
@@ -127,13 +133,14 @@ export function useGeolocation(maxAccuracy = 75) {
             setState({ status: "loading", coords: candidat, error: null });
           }
 
-          if (meilleurRef.current!.accuracy <= maxAccuracy) {
+          if (meilleurRef.current!.accuracy <= PRECISION_SUFFISANTE_M) {
             terminer();
           }
         },
         (error) => {
           if (generation !== generationRef.current) return;
-          // Une indisponibilité temporaire peut être suivie d'une mesure valide.
+          // Une indisponibilité temporaire peut être suivie d'une mesure
+          // valide ; l'échéance tranchera avec ce qui sera arrivé.
           if (
             error.code === error.POSITION_UNAVAILABLE ||
             error.code === error.TIMEOUT
@@ -141,22 +148,19 @@ export function useGeolocation(maxAccuracy = 75) {
             return;
 
           arreter();
-
-          const reason: GeolocationErrorReason =
-            error.code === error.PERMISSION_DENIED
-              ? "permission_denied"
-              : error.code === error.POSITION_UNAVAILABLE
-                ? "position_unavailable"
-                : error.code === error.TIMEOUT
-                  ? "timeout"
-                  : "unknown";
-
-          setState({ status: "error", coords: null, error: reason });
+          setState({
+            status: "error",
+            coords: null,
+            error: error.code === error.PERMISSION_DENIED ? "permission_denied" : "unknown",
+          });
         },
         {
           enableHighAccuracy: true,
           timeout: DUREE_MAX_MS,
-          maximumAge: 0,
+          // Un point vieux de quelques secondes vaut encore : on n'a pas
+          // changé de salle entre-temps, et il évite d'attendre un premier
+          // fix à froid.
+          maximumAge: 10_000,
           ...options,
         },
       );

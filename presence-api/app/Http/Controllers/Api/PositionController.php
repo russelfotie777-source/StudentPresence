@@ -30,16 +30,17 @@ class PositionController extends Controller
             'accuracy' => ['required', 'numeric', 'min:0'],
         ]);
 
-        // Ce point sert de référence à toute la classe : une mesure trop
-        // incertaine décalerait le périmètre pour tout le monde, sans que
-        // personne ne puisse s'en rendre compte.
+        // Ce point sert de référence à toute la classe. Son incertitude
+        // n'est pas un motif de refus — elle élargit le périmètre des
+        // étudiants d'autant (PresenceController::checkIn) — sauf au-delà
+        // du plafond, où la mesure vient de l'adresse IP et non du téléphone.
         $maxAccuracy = config('presence.max_position_accuracy_meters');
 
         if ($data['accuracy'] > $maxAccuracy) {
             throw ValidationException::withMessages([
                 'accuracy' => [
-                    'Position trop imprécise pour servir de référence ('.round($data['accuracy'])."m, max {$maxAccuracy}m). ".
-                    'Rapprochez-vous d\'une fenêtre et patientez quelques secondes, le temps que le GPS se stabilise.',
+                    'Votre téléphone ne trouve pas sa position (à '.round($data['accuracy']).' m près). '.
+                    'Activez la localisation dans ses réglages, puis réessayez.',
                 ],
             ]);
         }

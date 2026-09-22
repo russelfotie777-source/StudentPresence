@@ -7,6 +7,15 @@ return [
      * L'ancienne app affichait "100m" à l'étudiant, son commentaire de code
      * disait "650m", et la valeur réellement appliquée était 2550m — aucun
      * des trois n'était le bon. Valeur retenue pour la v2 : 120m.
+     *
+     * Ce rayon s'entend entre les deux vraies positions, que personne ne
+     * connaît exactement : chaque mesure vient avec son incertitude. Le
+     * doute profite à l'étudiant — il est refusé seulement si, même en
+     * prenant les deux mesures au plus favorable, il reste en dehors du
+     * rayon (distance mesurée > rayon + incertitude de l'étudiant +
+     * incertitude du délégué). Deux bons GPS à ±15 m gardent un périmètre
+     * serré ; deux mesures Wi-Fi à ±300 m l'élargissent d'autant, mais
+     * laissent pointer depuis la salle.
      */
     'max_check_in_distance_meters' => env('PRESENCE_MAX_DISTANCE_METERS', 120),
 
@@ -14,19 +23,18 @@ return [
      * Incertitude maximale (coords.accuracy du navigateur, en mètres) au-delà
      * de laquelle une position est refusée plutôt qu'utilisée.
      *
-     * Une mesure à ±800 m ne dit rien d'utile face à un seuil de 120 m : la
-     * refuser vaut mieux que l'accepter, l'étudiant peut réessayer près d'une
-     * fenêtre pendant que le GPS converge.
-     *
-     * Le délégué est tenu plus strictement que les étudiants : son point sert
-     * de référence à toute la classe, son erreur se propage à tout le monde.
-     * Ces seuils restent larges parce que les cours ont lieu à l'intérieur,
-     * où le GPS plafonne souvent autour de 20 à 50 m ; à resserrer si le
-     * campus s'avère mieux couvert que prévu.
+     * Le pointage doit marcher depuis la salle, avec le téléphone qu'on a :
+     * dans un bâtiment en béton, sans fenêtre, le GPS plafonne souvent
+     * entre 100 et 500 m, et l'app ne propose pas d'appel manuel en
+     * secours. On n'écarte donc que les mesures qui ne viennent pas du
+     * téléphone lui-même — la localisation coupée, le navigateur rend un
+     * point d'après l'adresse IP, à plusieurs kilomètres près. En dessous
+     * de ce plafond, c'est le contrôle de distance qui tient compte de
+     * l'incertitude (voir max_check_in_distance_meters).
      */
-    'max_position_accuracy_meters' => env('PRESENCE_MAX_POSITION_ACCURACY_METERS', 50),
+    'max_position_accuracy_meters' => env('PRESENCE_MAX_POSITION_ACCURACY_METERS', 2000),
 
-    'max_check_in_accuracy_meters' => env('PRESENCE_MAX_CHECK_IN_ACCURACY_METERS', 75),
+    'max_check_in_accuracy_meters' => env('PRESENCE_MAX_CHECK_IN_ACCURACY_METERS', 2000),
 
     /*
      * Durée de validité d'une session d'administration, en heures.
