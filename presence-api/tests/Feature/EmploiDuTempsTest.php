@@ -197,6 +197,22 @@ class EmploiDuTempsTest extends TestCase
         $this->assertDatabaseCount('seances', 0);
     }
 
+    public function test_a_generated_course_cannot_be_updated_without_a_scope(): void
+    {
+        $cours = CourseTemplate::factory()->create(['salle_id' => $this->salle->id]);
+        $this->seance(['course_template_id' => $cours->id]);
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->putJson("/api/course-templates/{$cours->id}", $this->payload([
+                'generer' => false,
+                'heure_debut' => '09:00',
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['cours']);
+
+        $this->assertSame('08:00:00', $cours->fresh()->heure_debut);
+    }
+
     // --- retoucher une séance -----------------------------------------------
 
     public function test_admin_can_move_a_session_within_or_across_weeks(): void
@@ -236,6 +252,186 @@ class EmploiDuTempsTest extends TestCase
         $this->actingAs($this->admin, 'sanctum')
             ->putJson("/api/seances/{$seance->id}", ['heure_debut' => '08:30', 'heure_fin' => '10:00'])
             ->assertOk();
+    }
+
+    public function test_admin_can_update_a_course_from_one_occurrence_onward(): void
+    {
+        $s3 = Semaine::factory()->create([
+            'numero' => 3,
+            'date_debut' => '2026-09-28',
+            'date_fin' => '2026-10-04',
+        ]);
+        $ancienProf = User::factory()->enseignant()->create();
+        $nouveauProf = User::factory()->enseignant()->create();
+        $cours = CourseTemplate::factory()->create([
+            'salle_id' => $this->salle->id,
+            'enseignant_id' => $ancienProf->id,
+            'jour' => 'JEUDI',
+            'heure_debut' => '14:00',
+            'heure_fin' => '16:00',
+            'date_debut' => '2026-09-14',
+            'date_fin' => '2026-10-04',
+        ]);
+        $avant = $this->seance([
+            'course_template_id' => $cours->id,
+            'enseignant_id' => $ancienProf->id,
+            'heure_debut' => '14:00',
+            'heure_fin' => '16:00',
+        ]);
+        $selection = $this->seance([
+            'course_template_id' => $cours->id,
+            'semaine_id' => $this->s2->id,
+            'enseignant_id' => $ancienProf->id,
+            'date_seance' => '2026-09-24',
+            'heure_debut' => '14:00',
+            'heure_fin' => '16:00',
+        ]);
+        $apres = $this->seance([
+            'course_template_id' => $cours->id,
+            'semaine_id' => $s3->id,
+            'enseignant_id' => $ancienProf->id,
+            'date_seance' => '2026-10-01',
+            'heure_debut' => '14:00',
+            'heure_fin' => '16:00',
+        ]);
+
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->putJson("/api/seances/{$selection->id}", [
+                'portee' => 'suivantes',
+                'jour' => 'VENDREDI',
+                'heure_debut' => '09:00',
+                'heure_fin' => '11:00',
+                'enseignant_id' => $nouveauProf->id,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('seances_modifiees', 2)
+            ->assertJsonPath('seances_preservees', 0);
+        $this->assertSame('2026-09-17', $avant->fresh()->date_seance->toDateString());
+        $this->assertSame($ancienProf->id, $avant->fresh()->enseignant_id);
+        $this->assertSame('2026-09-25', $selection->fresh()->date_seance->toDateString());
+        $this->assertSame('2026-10-02', $apres->fresh()->date_seance->toDateString());
+        $this->assertSame($nouveauProf->id, $apres->fresh()->enseignant_id);
+        $this->assertSame('09:00:00', $apres->fresh()->heure_debut);
+        $this->assertDatabaseHas('course_templates', [
+            'id' => $cours->id,
+            'jour' => 'VENDREDI',
+            'date_debut' => '2026-09-25',
+            'enseignant_id' => $nouveauProf->id,
+        ]);
+    }
+
+    public function test_updating_the_series_preserves_past_sessions(): void
+    {
+        $s0 = Semaine::factory()->create([
+            'numero' => 0,
+            'date_debut' => '2026-09-07',
+            'date_fin' => '2026-09-13',
+        ]);
+        $s3 = Semaine::factory()->create([
+            'numero' => 3,
+            'date_debut' => '2026-09-28',
+            'date_fin' => '2026-10-04',
+        ]);
+        $ancienProf = User::factory()->enseignant()->create();
+        $nouveauProf = User::factory()->enseignant()->create();
+        $cours = CourseTemplate::factory()->create([
+            'salle_id' => $this->salle->id,
+            'enseignant_id' => $ancienProf->id,
+            'jour' => 'JEUDI',
+            'date_debut' => '2026-09-07',
+            'date_fin' => '2026-10-04',
+        ]);
+        $historique = $this->seance([
+            'course_template_id' => $cours->id,
+            'semaine_id' => $s0->id,
+            'enseignant_id' => $ancienProf->id,
+            'date_seance' => '2026-09-10',
+        ]);
+        $selection = $this->seance([
+            'course_template_id' => $cours->id,
+            'enseignant_id' => $ancienProf->id,
+        ]);
+        $protegee = $this->seance([
+            'course_template_id' => $cours->id,
+            'semaine_id' => $this->s2->id,
+            'enseignant_id' => $ancienProf->id,
+            'date_seance' => '2026-09-24',
+            'etat_prof' => 'present',
+        ]);
+        $future = $this->seance([
+            'course_template_id' => $cours->id,
+            'semaine_id' => $s3->id,
+            'enseignant_id' => $ancienProf->id,
+            'date_seance' => '2026-10-01',
+        ]);
+
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->putJson("/api/seances/{$selection->id}", [
+                'portee' => 'serie',
+                'jour' => 'VENDREDI',
+                'enseignant_id' => $nouveauProf->id,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('seances_modifiees', 2)
+            ->assertJsonPath('seances_preservees', 2);
+        $this->assertSame('2026-09-10', $historique->fresh()->date_seance->toDateString());
+        $this->assertSame($ancienProf->id, $historique->fresh()->enseignant_id);
+        $this->assertSame('2026-09-18', $selection->fresh()->date_seance->toDateString());
+        $this->assertSame('2026-09-24', $protegee->fresh()->date_seance->toDateString());
+        $this->assertSame($ancienProf->id, $protegee->fresh()->enseignant_id);
+        $this->assertSame('2026-10-02', $future->fresh()->date_seance->toDateString());
+        $this->assertSame($nouveauProf->id, $future->fresh()->enseignant_id);
+    }
+
+    public function test_series_update_is_rolled_back_when_one_week_has_a_conflict(): void
+    {
+        $cours = CourseTemplate::factory()->create([
+            'salle_id' => $this->salle->id,
+            'jour' => 'JEUDI',
+            'heure_debut' => '14:00',
+            'heure_fin' => '16:00',
+            'date_debut' => '2026-09-14',
+            'date_fin' => '2026-09-27',
+        ]);
+        $selection = $this->seance([
+            'course_template_id' => $cours->id,
+            'enseignant_id' => $cours->enseignant_id,
+            'heure_debut' => '14:00',
+            'heure_fin' => '16:00',
+        ]);
+        $future = $this->seance([
+            'course_template_id' => $cours->id,
+            'semaine_id' => $this->s2->id,
+            'enseignant_id' => $cours->enseignant_id,
+            'date_seance' => '2026-09-24',
+            'heure_debut' => '14:00',
+            'heure_fin' => '16:00',
+        ]);
+        $this->seance([
+            'course_template_id' => null,
+            'semaine_id' => $this->s2->id,
+            'date_seance' => '2026-09-25',
+            'jour' => 'VENDREDI',
+            'heure_debut' => '09:00',
+            'heure_fin' => '11:00',
+        ]);
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->putJson("/api/seances/{$selection->id}", [
+                'portee' => 'serie',
+                'jour' => 'VENDREDI',
+                'heure_debut' => '09:00',
+                'heure_fin' => '11:00',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['creneau']);
+
+        $this->assertSame('2026-09-17', $selection->fresh()->date_seance->toDateString());
+        $this->assertSame('2026-09-24', $future->fresh()->date_seance->toDateString());
+        $this->assertSame('JEUDI', $cours->fresh()->jour->value);
+        $this->assertSame('14:00:00', $cours->fresh()->heure_debut);
     }
 
     public function test_moving_outside_any_week_is_refused(): void

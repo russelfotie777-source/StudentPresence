@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\PlanningUpdateScope;
+use App\Enums\Weekday;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SeanceResource;
 use App\Models\Seance;
@@ -9,6 +11,7 @@ use App\Models\Semaine;
 use App\Services\RetouchesPlanning;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Grille hebdomadaire du back-office : les séances d'une salle (ou d'un
@@ -52,22 +55,39 @@ class EmploiDuTempsController extends Controller
     }
 
     /**
-     * Retouche d'une occurrence — la règle vit dans RetouchesPlanning,
-     * partagée avec l'assistant IA.
+     * Retouche d'une occurrence ou propage les changements aux séances à
+     * venir du même cours. La règle vit dans RetouchesPlanning, partagé avec
+     * l'assistant IA.
      */
     public function update(Request $request, Seance $seance, RetouchesPlanning $retouches)
     {
-        $retouches->assertModifiable($seance);
-
         $data = $request->validate([
+            'portee' => ['sometimes', Rule::enum(PlanningUpdateScope::class)],
             'date_seance' => ['sometimes', 'date'],
+            'jour' => ['sometimes', Rule::enum(Weekday::class)],
             'heure_debut' => ['sometimes', 'date_format:H:i'],
             'heure_fin' => ['sometimes', 'date_format:H:i'],
             'enseignant_id' => ['sometimes', Rule::exists('users', 'id')->where('role', 'Enseignant')],
             'salle_id' => ['sometimes', 'exists:salles,id'],
         ]);
 
-        return new SeanceResource($retouches->modifier($seance, $data));
+        $portee = PlanningUpdateScope::from($data['portee'] ?? PlanningUpdateScope::Occurrence->value);
+        unset($data['portee']);
+
+        if ($portee === PlanningUpdateScope::Occurrence && isset($data['jour'])) {
+            throw ValidationException::withMessages(['jour' => ["Le jour ne s'utilise que pour modifier une série."]]);
+        }
+
+        if ($portee !== PlanningUpdateScope::Occurrence && isset($data['date_seance'])) {
+            throw ValidationException::withMessages(['date_seance' => ["Pour une série, choisissez un jour de la semaine plutôt qu'une date isolée."]]);
+        }
+
+        $resultat = $retouches->modifierSelonPortee($seance, $data, $portee);
+
+        return (new SeanceResource($resultat->seance))->additional([
+            'seances_modifiees' => $resultat->updatedCount,
+            'seances_preservees' => $resultat->preservedCount,
+        ]);
     }
 
     public function destroy(Seance $seance, RetouchesPlanning $retouches)
