@@ -369,15 +369,15 @@ html:not(.dark) .bg-card {
    séance en cours). C'est la parcimonie qui la fait ressortir : tout le
    reste est encre, papier ou nuit. */
 /* Clair : un blanc franc, des cartes blanches qui se détachent par leur
-   ombre, une encre bleu nuit — et deux couleurs qui vivent : le vert
+   ombre, une encre graphite profonde — et deux couleurs qui vivent : le vert
    printemps de la séance en cours, le bleu de la suivante, chacun en
-   dégradé du profond au clair. Relevées sur la maquette de référence
-   (#01e55c au cœur du vert, #0196e7 au cœur du bleu, titres #33507a). */
+   dégradé du profond au clair. Les niveaux secondaires restent assez
+   contrastés pour conserver leur relief sur les petits textes. */
 :root {
-  --ink-900: #33507a;
-  --ink-700: #48607a;
-  --ink-500: #7b8aa3;
-  --ink-300: #a9b4c6;
+  --ink-900: #1d2939;
+  --ink-700: #34445a;
+  --ink-500: #52647a;
+  --ink-300: #64758c;
   --surface-0: #ffffff;
   --surface-1: #ffffff;
   --surface-2: #eef3f8;
@@ -416,10 +416,10 @@ html:not(.dark) .bg-card {
    page ; les cartes s'en détachent d'un ton ; le vert printemps et le bleu
    gardent leurs dégradés, qui n'en ressortent que mieux. */
 .dark {
-  --ink-900: #f2f6fb;
-  --ink-700: #c9d4e4;
-  --ink-500: #93a3bd;
-  --ink-300: #5f7090;
+  --ink-900: #f7f9fc;
+  --ink-700: #d9e2ee;
+  --ink-500: #aab8c9;
+  --ink-300: #8797ac;
   --surface-0: #0f1828;
   --surface-1: #172236;
   --surface-2: #1f2d45;
