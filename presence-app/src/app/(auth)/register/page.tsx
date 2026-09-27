@@ -3,8 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,12 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRegister } from "@/hooks/use-auth";
 import { useFilieres, useNiveaux, useSalles } from "@/hooks/use-catalog";
-import { ApiError } from "@/lib/api-client";
-import type { RegisterInput } from "@/hooks/use-auth";
 
-type Role = RegisterInput["role"];
+type Role = "Etudiant" | "Delegue" | "Enseignant";
 
 const ROLES: { value: Role; label: string }[] = [
   { value: "Etudiant", label: "Étudiant" },
@@ -32,7 +36,6 @@ const triggerClass = "h-12 w-full rounded-xl text-base";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const register = useRegister();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -42,6 +45,7 @@ export default function RegisterPage() {
   const [filiereId, setFiliereId] = useState<number | undefined>();
   const [salleId, setSalleId] = useState<number | undefined>();
   const [formation, setFormation] = useState<string>("FI");
+  const [registrationBlockedOpen, setRegistrationBlockedOpen] = useState(false);
 
   const needsAcademicFields = role === "Etudiant" || role === "Delegue";
 
@@ -51,213 +55,194 @@ export default function RegisterPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    const input: RegisterInput = { name, phone, password, role };
-    if (needsAcademicFields) {
-      input.formation = formation;
-      input.niveau_id = niveauId;
-      input.filiere_id = filiereId;
-      input.salle_id = salleId;
-    }
-
-    register.mutate(input, {
-      onSuccess: (data) => {
-        if (data.requires_face) {
-          router.replace("/face");
-        } else if (data.token) {
-          router.replace("/dashboard");
-        } else {
-          router.replace("/login?inscrit=1");
-        }
-      },
-    });
+    setPassword("");
+    setRegistrationBlockedOpen(true);
   }
 
-  const errorMessage = register.error instanceof ApiError ? register.error.message : null;
-  const fieldErrors = register.error instanceof ApiError ? register.error.errors : undefined;
-
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div>
-        <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">
-          Créer un compte
-        </h2>
-      </div>
-
-      {errorMessage && (
-        <div className="flex items-start gap-2 rounded-xl bg-destructive/10 px-3.5 py-3 text-sm text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{errorMessage}</span>
+    <>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div>
+          <h2 className="font-display text-2xl font-bold tracking-tight text-ink-900">
+            Créer un compte
+          </h2>
         </div>
-      )}
 
-      <Field label="Nom complet" htmlFor="name">
-        <Input
-          id="name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={inputClass}
-        />
-      </Field>
+        <Field label="Nom complet" htmlFor="name">
+          <Input
+            id="name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
 
-      <Field
-        label={role === "Etudiant" ? "Matricule" : "Téléphone"}
-        htmlFor="phone"
-        error={fieldErrors?.phone?.[0]}
-      >
-        <Input
-          id="phone"
-          type={role === "Etudiant" ? "text" : "tel"}
-          autoComplete={role === "Etudiant" ? "off" : "tel"}
-          required
-          placeholder={role === "Etudiant" ? "24I01234" : "6XX XXX XXX"}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className={inputClass}
-        />
-      </Field>
+        <Field label={role === "Etudiant" ? "Matricule" : "Téléphone"} htmlFor="phone">
+          <Input
+            id="phone"
+            type={role === "Etudiant" ? "text" : "tel"}
+            autoComplete={role === "Etudiant" ? "off" : "tel"}
+            required
+            placeholder={role === "Etudiant" ? "24I01234" : "6XX XXX XXX"}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
 
-      <Field label="Mot de passe" htmlFor="password">
-        <Input
-          id="password"
-          type="password"
-          required
-          minLength={8}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={inputClass}
-        />
-      </Field>
+        <Field label="Mot de passe" htmlFor="password">
+          <Input
+            id="password"
+            type="password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
 
-      <Field label="Rôle" htmlFor="role">
-        <Select value={role} onValueChange={(v) => v && setRole(v as Role)}>
-          <SelectTrigger className={triggerClass}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>
-                {r.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
+        <Field label="Rôle" htmlFor="role">
+          <Select value={role} onValueChange={(v) => v && setRole(v as Role)}>
+            <SelectTrigger className={triggerClass}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-      {needsAcademicFields && (
-        <>
-          <Field label="Niveau" htmlFor="niveau">
-            <Select
-              value={niveauId ? String(niveauId) : ""}
-              onValueChange={(v) => {
-                setNiveauId(v ? Number(v) : undefined);
-                setFiliereId(undefined);
-                setSalleId(undefined);
-              }}
-            >
-              <SelectTrigger className={triggerClass}>
-                <SelectValue placeholder="Choisir…" />
-              </SelectTrigger>
-              <SelectContent>
-                {niveaux?.map((n) => (
-                  <SelectItem key={n.id} value={String(n.id)}>
-                    {n.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+        {needsAcademicFields && (
+          <>
+            <Field label="Niveau" htmlFor="niveau">
+              <Select
+                value={niveauId ? String(niveauId) : ""}
+                onValueChange={(v) => {
+                  setNiveauId(v ? Number(v) : undefined);
+                  setFiliereId(undefined);
+                  setSalleId(undefined);
+                }}
+              >
+                <SelectTrigger className={triggerClass}>
+                  <SelectValue placeholder="Choisir…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {niveaux?.map((n) => (
+                    <SelectItem key={n.id} value={String(n.id)}>
+                      {n.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
 
-          <Field label="Filière" htmlFor="filiere">
-            <Select
-              value={filiereId ? String(filiereId) : ""}
-              onValueChange={(v) => {
-                setFiliereId(v ? Number(v) : undefined);
-                setSalleId(undefined);
-              }}
-              disabled={!niveauId}
-            >
-              <SelectTrigger className={triggerClass}>
-                <SelectValue placeholder="Choisir…" />
-              </SelectTrigger>
-              <SelectContent>
-                {filieres?.map((f) => (
-                  <SelectItem key={f.id} value={String(f.id)}>
-                    {f.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+            <Field label="Filière" htmlFor="filiere">
+              <Select
+                value={filiereId ? String(filiereId) : ""}
+                onValueChange={(v) => {
+                  setFiliereId(v ? Number(v) : undefined);
+                  setSalleId(undefined);
+                }}
+                disabled={!niveauId}
+              >
+                <SelectTrigger className={triggerClass}>
+                  <SelectValue placeholder="Choisir…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filieres?.map((f) => (
+                    <SelectItem key={f.id} value={String(f.id)}>
+                      {f.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
 
-          <Field label="Salle" htmlFor="salle" error={fieldErrors?.salle_id?.[0]}>
-            <Select
-              value={salleId ? String(salleId) : ""}
-              onValueChange={(v) => setSalleId(v ? Number(v) : undefined)}
-              disabled={!filiereId}
-            >
-              <SelectTrigger className={triggerClass}>
-                <SelectValue placeholder="Choisir…" />
-              </SelectTrigger>
-              <SelectContent>
-                {salles?.map((s) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    {s.nom} ({s.formation})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+            <Field label="Salle" htmlFor="salle">
+              <Select
+                value={salleId ? String(salleId) : ""}
+                onValueChange={(v) => setSalleId(v ? Number(v) : undefined)}
+                disabled={!filiereId}
+              >
+                <SelectTrigger className={triggerClass}>
+                  <SelectValue placeholder="Choisir…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {salles?.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.nom} ({s.formation})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
 
-          <Field label="Formation" htmlFor="formation">
-            <Select value={formation} onValueChange={(v) => v && setFormation(v)}>
-              <SelectTrigger className={triggerClass}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="FI">Formation Initiale</SelectItem>
-                <SelectItem value="FA">Formation Alternance</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-        </>
-      )}
+            <Field label="Formation" htmlFor="formation">
+              <Select value={formation} onValueChange={(v) => v && setFormation(v)}>
+                <SelectTrigger className={triggerClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FI">Formation Initiale</SelectItem>
+                  <SelectItem value="FA">Formation Alternance</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </>
+        )}
 
-      <Button
-        type="submit"
-        disabled={register.isPending}
-        className="mt-1 h-12 rounded-xl text-base font-medium shadow-sm"
-      >
-        {register.isPending ? "Inscription…" : "S'inscrire"}
-      </Button>
+        <Button type="submit" className="mt-1 h-12 rounded-xl text-base font-medium shadow-sm">
+          S&apos;inscrire
+        </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Déjà inscrit ?{" "}
-        <Link href="/login" className="font-medium text-primary">
-          Se connecter
-        </Link>
-      </p>
-    </form>
+        <p className="text-center text-sm text-muted-foreground">
+          Déjà inscrit ?{" "}
+          <Link href="/login" className="font-medium text-primary">
+            Se connecter
+          </Link>
+        </p>
+      </form>
+
+      <Dialog open={registrationBlockedOpen} onOpenChange={setRegistrationBlockedOpen}>
+        <DialogContent className="rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Inscriptions publiques fermées</DialogTitle>
+            <DialogDescription className="leading-relaxed">
+              Votre compte doit être préinscrit par l&apos;administration. Si vos identifiants
+              vous ont déjà été transmis, vous pouvez vous connecter directement.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRegistrationBlockedOpen(false)}>
+              Fermer
+            </Button>
+            <Button onClick={() => router.push("/login")}>Se connecter</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
 function Field({
   label,
   htmlFor,
-  error,
   children,
 }: {
   label: string;
   htmlFor: string;
-  error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }

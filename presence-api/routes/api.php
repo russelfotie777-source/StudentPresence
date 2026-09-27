@@ -48,6 +48,8 @@ Route::prefix('auth')->group(function () {
     // Limiteurs nommés (voir AppServiceProvider) : la connexion est comptée
     // par compte visé et par adresse, pas par adresse seule — tout le campus
     // sort par la même IP publique.
+    // Conservé pour répondre clairement aux anciens clients, mais aucune
+    // création de compte publique n'est autorisée par ce point d'entrée.
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:inscription');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:connexion');
 

@@ -48,9 +48,8 @@ class AppServiceProvider extends ServiceProvider
      * même adresse, ce qui borne la devinette de mot de passe sans jamais
      * gêner deux personnes distinctes.
      *
-     * L'inscription n'a pas de compte à protéger : une limite par adresse
-     * suffit, large pour ne pas entraver une salle entière qui s'inscrit
-     * pendant un même TP.
+     * L'ancien point d'inscription publique reste limité par adresse afin
+     * d'éviter les appels répétés, même s'il ne crée plus aucun compte.
      */
     private function definirLimitesDeDebit(): void
     {

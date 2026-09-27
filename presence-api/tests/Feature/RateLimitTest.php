@@ -114,7 +114,7 @@ class RateLimitTest extends TestCase
     public function test_registration_is_limited_per_address(): void
     {
         for ($i = 0; $i < 30; $i++) {
-            $this->postJson('/api/auth/register')->assertStatus(422);
+            $this->postJson('/api/auth/register')->assertForbidden();
         }
 
         $this->postJson('/api/auth/register')->assertStatus(429);

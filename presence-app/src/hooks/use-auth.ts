@@ -9,17 +9,6 @@ export interface LoginInput {
   password: string;
 }
 
-export interface RegisterInput {
-  name: string;
-  phone: string;
-  password: string;
-  role: "Etudiant" | "Delegue" | "Enseignant";
-  formation?: string;
-  salle_id?: number;
-  niveau_id?: number;
-  filiere_id?: number;
-}
-
 export function useMe() {
   return useQuery({
     queryKey: ["me"],
@@ -46,28 +35,6 @@ export function useLogin() {
         face_pending: data.requires_face ?? false,
         face_enrolled: data.face_enrolled ?? false,
       } satisfies MeResponse);
-    },
-  });
-}
-
-export function useRegister() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (input: RegisterInput) =>
-      apiFetch<AuthResponse>("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: (data) => {
-      if (data.token) {
-        setToken(data.token);
-        queryClient.setQueryData(["me"], {
-          user: data.user,
-          face_pending: data.requires_face ?? false,
-          face_enrolled: data.face_enrolled ?? false,
-        } satisfies MeResponse);
-      }
     },
   });
 }
