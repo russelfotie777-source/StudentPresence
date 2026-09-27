@@ -6,6 +6,7 @@ import type { Semaine } from "./use-catalog";
 import type { Seance, Weekday } from "@/types/api";
 
 export type ModeGrille = "salle" | "enseignant";
+export type PorteeModification = "seance" | "suivantes" | "serie";
 
 interface ReponseGrille {
   data: Seance[];
@@ -75,17 +76,27 @@ export function useProgrammerCours() {
 }
 
 export interface ModificationSeance {
+  portee?: PorteeModification;
   date_seance?: string;
+  jour?: Weekday;
   heure_debut?: string;
   heure_fin?: string;
   enseignant_id?: number;
 }
 
+export type ResultatModification = Seance & {
+  seances_modifiees: number;
+  seances_preservees: number;
+};
+
 export function useModifierSeance() {
   const invalider = useInvaliderSeances();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: ModificationSeance }) =>
-      apiFetch<Seance>(`/api/seances/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+      apiFetch<ResultatModification>(`/api/seances/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
     onSuccess: invalider,
   });
 }

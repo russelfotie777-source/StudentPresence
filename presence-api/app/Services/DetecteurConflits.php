@@ -17,9 +17,9 @@ class DetecteurConflits
      * Motif lisible du conflit, ou null si le créneau est libre.
      *
      * @param  array{salle_id:int, groupe:string, enseignant_id:int, date_seance:string, heure_debut:string, heure_fin:string, semaine_id?:int, jour?:string}  $creneau
-     * @param  int|null  $ignorerSeanceId  la séance en cours de modification, qui ne doit pas entrer en conflit avec elle-même
+     * @param  int|array<int, int>|null  $ignorerSeanceIds  les séances en cours de modification, qui ne doivent pas entrer en conflit avec elles-mêmes
      */
-    public function pour(array $creneau, ?int $ignorerSeanceId = null): ?string
+    public function pour(array $creneau, int|array|null $ignorerSeanceIds = null): ?string
     {
         // Même jour = même date, ou même jour de la même semaine : les deux
         // coïncident pour toute séance générée, mais une séance saisie à la
@@ -35,7 +35,11 @@ class DetecteurConflits
             ->where($memeJour)
             ->where('heure_debut', '<', $creneau['heure_fin'])
             ->where('heure_fin', '>', $creneau['heure_debut'])
-            ->when($ignorerSeanceId, fn ($q, $id) => $q->whereKeyNot($id));
+            ->when($ignorerSeanceIds, function ($query, $ids) {
+                $ids = is_array($ids) ? $ids : [$ids];
+
+                return $query->whereNotIn('id', $ids);
+            });
 
         $salleOccupee = Seance::query()
             ->where('salle_id', $creneau['salle_id'])

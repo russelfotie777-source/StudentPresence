@@ -69,6 +69,7 @@ export function pastilleCours(seance: Pick<Seance, "matiere_id" | "matiere">): s
  */
 export function seanceFigee(seance: Seance): boolean {
   return (
+    seance.is_past ||
     seance.etat_delegue !== null ||
     seance.etat_prof !== null ||
     seance.presences_locked ||

@@ -81,6 +81,12 @@ class CourseTemplateController extends Controller
     {
         $data = $this->validated($request);
 
+        if ($courseTemplate->seances()->exists()) {
+            throw ValidationException::withMessages([
+                'cours' => ["Ce cours possède déjà des séances : modifiez-le depuis l'emploi du temps en choisissant la portée souhaitée."],
+            ]);
+        }
+
         $courseTemplate->update($data);
 
         return $courseTemplate->load(['matiere', 'enseignant', 'salle']);

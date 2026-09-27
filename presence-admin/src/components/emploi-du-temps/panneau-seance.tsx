@@ -27,12 +27,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Enseignant } from "@/hooks/use-scheduling";
-import { useAnnulerSeance, useModifierSeance, useSupprimerCours } from "@/hooks/use-emploi-du-temps";
+import {
+  useAnnulerSeance,
+  useModifierSeance,
+  useSupprimerCours,
+  type PorteeModification,
+} from "@/hooks/use-emploi-du-temps";
 import { ApiError } from "@/lib/api-client";
 import { formaterYmd, hhmm } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import type { Seance } from "@/types/api";
-import { pastilleCours, seanceFigee } from "./constantes";
+import type { Seance, Weekday } from "@/types/api";
+import { JOURS, pastilleCours, seanceFigee } from "./constantes";
 import { Selecteur } from "./dialogue-cours";
 
 interface Props {
@@ -66,21 +71,32 @@ export function PanneauSeance({ seance, enseignants, onFermer }: Props) {
   const [debut, setDebut] = useState(hhmm(seance.heure_debut));
   const [fin, setFin] = useState(hhmm(seance.heure_fin));
   const [enseignantId, setEnseignantId] = useState(String(seance.enseignant_id));
+  const [jour, setJour] = useState<Weekday>(seance.jour);
+  const [portee, setPortee] = useState<PorteeModification>("seance");
 
   function enregistrer() {
     modifier.mutate(
       {
         id: seance.id,
         data: {
-          date_seance: date,
+          portee,
+          date_seance: portee === "seance" ? date : undefined,
+          jour: portee === "seance" ? undefined : jour,
           heure_debut: debut,
           heure_fin: fin,
           enseignant_id: Number(enseignantId),
         },
       },
       {
-        onSuccess: () => {
-          toast.success("Séance modifiée.");
+        onSuccess: (resultat) => {
+          const message =
+            resultat.seances_modifiees === 1
+              ? "Séance modifiée."
+              : `${resultat.seances_modifiees} séances modifiées.`;
+          const preservees = resultat.seances_preservees
+            ? ` ${resultat.seances_preservees} séance(s) historique(s) conservée(s).`
+            : "";
+          toast.success(message + preservees);
           onFermer();
         },
         onError: (e) => toast.error(messageErreur(e, "La modification a échoué.")),
@@ -189,10 +205,40 @@ export function PanneauSeance({ seance, enseignants, onFermer }: Props) {
           ) : edition ? (
             <div className="flex flex-col gap-3 rounded-xl border border-border p-3.5">
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 flex flex-col gap-1.5">
-                  <Label className="text-xs text-muted-foreground">Date</Label>
-                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-lg" />
-                </div>
+                {seance.course_template_id && (
+                  <div className="col-span-2 flex flex-col gap-1.5">
+                    <Label className="text-xs text-muted-foreground">Appliquer à</Label>
+                    <Selecteur
+                      valeur={portee}
+                      onChange={(valeur) => setPortee(valeur as PorteeModification)}
+                      options={[
+                        { valeur: "seance", label: "Cette séance uniquement" },
+                        { valeur: "suivantes", label: "Cette séance et les suivantes" },
+                        { valeur: "serie", label: "Toute la série à venir" },
+                      ]}
+                    />
+                  </div>
+                )}
+                {portee === "seance" ? (
+                  <div className="col-span-2 flex flex-col gap-1.5">
+                    <Label className="text-xs text-muted-foreground">Date</Label>
+                    <Input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="h-10 rounded-lg"
+                    />
+                  </div>
+                ) : (
+                  <div className="col-span-2 flex flex-col gap-1.5">
+                    <Label className="text-xs text-muted-foreground">Jour</Label>
+                    <Selecteur
+                      valeur={jour}
+                      onChange={(valeur) => setJour(valeur as Weekday)}
+                      options={JOURS.map((option) => ({ valeur: option.valeur, label: option.long }))}
+                    />
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs text-muted-foreground">Début</Label>
                   <Input type="time" step={300} value={debut} onChange={(e) => setDebut(e.target.value)} className="h-10 rounded-lg" />
@@ -229,7 +275,7 @@ export function PanneauSeance({ seance, enseignants, onFermer }: Props) {
             <div className="flex flex-col gap-2">
               <Button variant="outline" className="justify-start gap-2" onClick={() => setEdition(true)}>
                 <Pencil className="size-4" />
-                Modifier l&apos;horaire ou l&apos;enseignant
+                Modifier la séance ou la série
               </Button>
               <Button
                 variant="outline"
