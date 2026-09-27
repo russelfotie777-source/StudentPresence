@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Enums\ValidationStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\CodesEmail;
@@ -18,37 +17,12 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Inscription. Les Étudiants sont auto-connectés immédiatement (comme
-     * dans l'ancienne app) ; Délégué/Enseignant doivent se connecter
-     * manuellement puis passer par le flux de validation.
-     */
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(): JsonResponse
     {
-        $role = UserRole::from($request->string('role')->value());
-
-        $user = User::create([
-            'name' => $request->string('name')->value(),
-            'phone' => $request->string('phone')->value(),
-            'password' => Hash::make($request->string('password')->value()),
-            'role' => $role,
-            // Les étudiants n'ont jamais de flux de validation à traverser ;
-            // Délégué/Enseignant démarrent à "none" (voir requestValidation()).
-            'validation_status' => $role === UserRole::Etudiant ? ValidationStatus::Approved : ValidationStatus::None,
-            'formation' => $request->input('formation'),
-            'salle_id' => $request->input('salle_id'),
-            'niveau_id' => $request->input('niveau_id'),
-            'filiere_id' => $request->input('filiere_id'),
-        ]);
-
-        if ($role !== UserRole::Etudiant) {
-            return response()->json([
-                'message' => 'Inscription réussie. Vous pouvez maintenant vous connecter.',
-                'user' => new UserResource($user),
-            ], 201);
-        }
-
-        return response()->json($this->authPayload($user), 201);
+        return response()->json([
+            'message' => 'Les inscriptions publiques sont fermées. Votre compte doit être préinscrit par l\'administration.',
+            'code' => 'PUBLIC_REGISTRATION_DISABLED',
+        ], 403);
     }
 
     public function login(LoginRequest $request): JsonResponse
