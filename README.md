@@ -14,7 +14,6 @@ Trois applications, un seul dépôt :
 | `presence-api/` | API REST et règles métier | Laravel 13, PHP 8.4, MySQL, Sanctum |
 | `presence-app/` | Application mobile (étudiant, délégué, enseignant) | Next.js 16, React 19, Tailwind v4 |
 | `presence-admin/` | Back-office de l'administration | Next.js 16, shadcn/base-ui |
-| `legacy-php/` | Première version (PHP sans framework), conservée pour référence | — |
 
 ## Démarrer en local
 

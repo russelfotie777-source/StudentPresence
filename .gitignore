@@ -1,13 +1,3 @@
-# --- legacy-php/ (ancienne app PHP, v1) ---
-# Vrais identifiants (voir *.example.php pour les modèles)
-legacy-php/includes/config.php
-legacy-php/superprotect/includes/db.php
-legacy-php/superprotect/includes/admin_credentials.php
-
-# Vrais fichiers déposés par des utilisateurs (preuves de contestation, etc.)
-legacy-php/uploads/requetes/*
-!legacy-php/uploads/requetes/.gitkeep
-
 # --- presence-api/ (Laravel) ---
 presence-api/.env
 presence-api/vendor/
