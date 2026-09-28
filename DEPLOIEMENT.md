@@ -8,8 +8,8 @@ Architecture recommandée pour ce dépôt :
 | Administration | `https://ziris-administration.vercel.app` | Vercel, projet `ziris-administration`, racine `presence-admin` |
 | API | `https://api.mboamarkets.com` | iFastNet, racine web `api.ziris/public` |
 
-Remplacer `CPANEL_USER` et les noms de base de données dans les commandes
-ci-dessous. Ne jamais versionner les valeurs secrètes.
+Les chemins ci-dessous correspondent au compte cPanel `mboamark`. Ne jamais
+versionner les valeurs secrètes.
 
 ## 1. DNS
 
@@ -20,7 +20,7 @@ ci-dessous. Ne jamais versionner les valeurs secrètes.
 3. Dans cPanel, faire pointer le sous-domaine `api.mboamarkets.com` vers :
 
    ```text
-   /home/CPANEL_USER/api.ziris/public
+   /home/mboamark/api.ziris/public
    ```
 
 4. Activer le certificat Let's Encrypt. Ne pas ouvrir l'application aux
@@ -32,7 +32,7 @@ ci-dessous. Ne jamais versionner les valeurs secrètes.
 Prérequis cPanel : PHP 8.4, MySQL, extensions `curl`, `dom`, `fileinfo`, `gd`,
 `mbstring`, `openssl`, `pdo_mysql`, `xml`, `zip`, cron et, idéalement, SSH.
 
-Le code complet doit rester dans `/home/CPANEL_USER/api.ziris`; seul son
+Le code complet doit rester dans `/home/mboamark/api.ziris`; seul son
 dossier `public` est exposé par Apache. Ne jamais placer `.env`, `vendor`,
 `storage` ou la racine Laravel dans un dossier publiquement accessible.
 
@@ -72,8 +72,8 @@ LOG_LEVEL=warning
 DB_CONNECTION=mysql
 DB_HOST=localhost
 DB_PORT=3306
-DB_DATABASE=CPANEL_USER_presence
-DB_USERNAME=CPANEL_USER_presence
+DB_DATABASE=mboamark_ziris
+DB_USERNAME=mboamark_mind
 DB_PASSWORD=MOT_DE_PASSE_LONG_ET_UNIQUE
 
 SESSION_DRIVER=database
@@ -131,19 +131,20 @@ mais le découpage des PDF longs doit rester désactivé.
 Ajouter dans cPanel > Cron Jobs, toutes les minutes :
 
 ```cron
-* * * * * cd /home/CPANEL_USER/api.ziris && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/mboamark/api.ziris && /opt/alt/php84/usr/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
 
 L'assistant IA utilise une file de base de données. Ajouter un second cron ;
 `flock` empêche deux imports longs de tourner en même temps :
 
 ```cron
-* * * * * flock -n /tmp/ziris-assistant.lock sh -c 'cd /home/CPANEL_USER/api.ziris && /usr/local/bin/php artisan queue:work database --queue=assistant,default --stop-when-empty --max-jobs=1 --tries=1 --timeout=3600' >> /home/CPANEL_USER/api.ziris/storage/logs/queue.log 2>&1
+* * * * * flock -n /tmp/ziris-assistant.lock sh -c 'cd /home/mboamark/api.ziris && /opt/alt/php84/usr/bin/php artisan queue:work database --queue=assistant,default --stop-when-empty --max-jobs=1 --tries=1 --timeout=3600' >> /home/mboamark/api.ziris/storage/logs/queue.log 2>&1
 ```
 
-Le chemin PHP varie selon le serveur. Le confirmer avec `which php` en SSH ou
-avec l'interface MultiPHP de cPanel. Si `flock` n'existe pas, demander à
-iFastNet le mécanisme de verrouillage disponible avant d'activer ce cron.
+Le binaire `php` par défaut du Terminal est en version 8.2. Il faut donc
+conserver le chemin explicite `/opt/alt/php84/usr/bin/php` dans les commandes
+et les tâches cron. Si `flock` n'existe pas, demander à iFastNet le mécanisme
+de verrouillage disponible avant d'activer ce cron.
 
 ## 4. Projets Vercel
 
