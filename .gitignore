@@ -24,3 +24,6 @@ presence-admin/.env*
 
 # OS/editor cruft
 .DS_Store
+/.vercel/
+/.env.local
+/ziris-api-ifastnet.zip

@@ -4,35 +4,35 @@ Architecture recommandée pour ce dépôt :
 
 | Service | Hôte | Plateforme |
 |---|---|---|
-| Application utilisateur | `https://domaine.tld` | Vercel, racine `presence-app` |
-| Administration | `https://admin.domaine.tld` | Vercel, racine `presence-admin` |
-| API | `https://api.domaine.tld` | iFastNet, racine web `presence-api/public` |
+| Application utilisateur | `https://ziris.vercel.app` | Vercel, projet `ziris`, racine `presence-app` |
+| Administration | `https://ziris-administration.vercel.app` | Vercel, projet `ziris-administration`, racine `presence-admin` |
+| API | `https://api.mboamarkets.com` | iFastNet, racine web `api.ziris/public` |
 
-Remplacer `domaine.tld`, `CPANEL_USER` et les noms de base de données dans
-les commandes ci-dessous. Ne jamais versionner les valeurs secrètes.
+Remplacer `CPANEL_USER` et les noms de base de données dans les commandes
+ci-dessous. Ne jamais versionner les valeurs secrètes.
 
 ## 1. DNS
 
-1. Dans Vercel, ajouter `domaine.tld` au projet utilisateur et
-   `admin.domaine.tld` au projet admin.
-2. Appliquer chez le gestionnaire DNS les enregistrements demandés par
-   Vercel pour le domaine principal et `admin`.
-3. Dans cPanel, créer le sous-domaine `api.domaine.tld` et faire pointer sa
-   racine de document vers :
+1. Les projets Vercel `ziris` et `ziris-administration` sont reliés au dépôt
+   GitHub et exposés par leurs domaines `vercel.app` respectifs.
+2. Un domaine personnalisé pourra être ajouté plus tard sans modifier
+   l'application.
+3. Dans cPanel, faire pointer le sous-domaine `api.mboamarkets.com` vers :
 
    ```text
-   /home/CPANEL_USER/presence-api/public
+   /home/CPANEL_USER/api.ziris/public
    ```
 
-4. Activer le certificat Let's Encrypt pour les trois hôtes. Ne pas lancer
-   l'application tant que `https://api.domaine.tld/up` n'est pas en HTTPS.
+4. Activer le certificat Let's Encrypt. Ne pas ouvrir l'application aux
+   utilisateurs tant que `https://api.mboamarkets.com/up` ne répond pas en
+   HTTPS.
 
 ## 2. API Laravel sur iFastNet
 
 Prérequis cPanel : PHP 8.4, MySQL, extensions `curl`, `dom`, `fileinfo`, `gd`,
 `mbstring`, `openssl`, `pdo_mysql`, `xml`, `zip`, cron et, idéalement, SSH.
 
-Le code complet doit rester dans `/home/CPANEL_USER/presence-api`; seul son
+Le code complet doit rester dans `/home/CPANEL_USER/api.ziris`; seul son
 dossier `public` est exposé par Apache. Ne jamais placer `.env`, `vendor`,
 `storage` ou la racine Laravel dans un dossier publiquement accessible.
 
@@ -56,16 +56,15 @@ aussi le dossier `vendor`.
 Configuration minimale du `.env` de production :
 
 ```dotenv
-APP_NAME="Présence API"
+APP_NAME="Ziris API"
 APP_ENV=production
 APP_KEY=base64:VALEUR_GENEREE_PAR_ARTISAN
 APP_DEBUG=false
-APP_URL=https://api.domaine.tld
+APP_URL=https://api.mboamarkets.com
 
-CORS_ALLOWED_ORIGINS=https://domaine.tld,https://admin.domaine.tld
-# Remplacer les deux noms par les noms réels des projets Vercel si les
-# previews doivent appeler cette API. Sinon laisser vide.
-CORS_ALLOWED_ORIGIN_PATTERNS=/^https:\/\/presence-app(?:-[a-z0-9-]+)?\.vercel\.app$/,/^https:\/\/presence-admin(?:-[a-z0-9-]+)?\.vercel\.app$/
+CORS_ALLOWED_ORIGINS=https://ziris.vercel.app,https://ziris-administration.vercel.app
+# Autorise également les déploiements Preview générés par Vercel.
+CORS_ALLOWED_ORIGIN_PATTERNS=/^https:\/\/ziris(?:-[a-z0-9-]+)?\.vercel\.app$/,/^https:\/\/ziris-administration(?:-[a-z0-9-]+)?\.vercel\.app$/
 
 LOG_CHANNEL=daily
 LOG_LEVEL=warning
@@ -95,10 +94,10 @@ MAIL_HOST=SERVEUR_SMTP
 MAIL_PORT=587
 MAIL_USERNAME=COMPTE_SMTP
 MAIL_PASSWORD=MOT_DE_PASSE_SMTP
-MAIL_FROM_ADDRESS=presence@domaine.tld
-MAIL_FROM_NAME="Présence IUT"
+MAIL_FROM_ADDRESS=ziris@mboamarkets.com
+MAIL_FROM_NAME="Ziris"
 
-VAPID_SUBJECT=mailto:presence@domaine.tld
+VAPID_SUBJECT=mailto:ziris@mboamarkets.com
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 
@@ -132,14 +131,14 @@ mais le découpage des PDF longs doit rester désactivé.
 Ajouter dans cPanel > Cron Jobs, toutes les minutes :
 
 ```cron
-* * * * * cd /home/CPANEL_USER/presence-api && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/CPANEL_USER/api.ziris && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
 
 L'assistant IA utilise une file de base de données. Ajouter un second cron ;
 `flock` empêche deux imports longs de tourner en même temps :
 
 ```cron
-* * * * * flock -n /tmp/presence-assistant.lock sh -c 'cd /home/CPANEL_USER/presence-api && /usr/local/bin/php artisan queue:work database --queue=assistant,default --stop-when-empty --max-jobs=1 --tries=1 --timeout=3600' >> /home/CPANEL_USER/presence-api/storage/logs/queue.log 2>&1
+* * * * * flock -n /tmp/ziris-assistant.lock sh -c 'cd /home/CPANEL_USER/api.ziris && /usr/local/bin/php artisan queue:work database --queue=assistant,default --stop-when-empty --max-jobs=1 --tries=1 --timeout=3600' >> /home/CPANEL_USER/api.ziris/storage/logs/queue.log 2>&1
 ```
 
 Le chemin PHP varie selon le serveur. Le confirmer avec `which php` en SSH ou
@@ -152,21 +151,23 @@ Importer deux fois le même dépôt GitHub :
 
 ### Application utilisateur
 
+- Projet : `ziris`
 - Framework : Next.js
 - Root Directory : `presence-app`
 - Build Command : `npm run build`
 - Variable Production et Preview :
-  `NEXT_PUBLIC_API_URL=https://api.domaine.tld`
-- Domaine : `domaine.tld`
+  `NEXT_PUBLIC_API_URL=https://api.mboamarkets.com`
+- Domaine : `https://ziris.vercel.app`
 
 ### Administration
 
+- Projet : `ziris-administration`
 - Framework : Next.js
 - Root Directory : `presence-admin`
 - Build Command : `npm run build`
 - Variable Production et Preview :
-  `NEXT_PUBLIC_API_URL=https://api.domaine.tld`
-- Domaine : `admin.domaine.tld`
+  `NEXT_PUBLIC_API_URL=https://api.mboamarkets.com`
+- Domaine : `https://ziris-administration.vercel.app`
 
 La variable `NEXT_PUBLIC_API_URL` est publique par conception : elle ne
 contient aucun secret. Toute modification de cette variable exige un nouveau
@@ -174,7 +175,7 @@ déploiement Vercel.
 
 ## 5. Ordre de mise en ligne
 
-1. Déployer l'API et vérifier `GET https://api.domaine.tld/up`.
+1. Déployer l'API et vérifier `GET https://api.mboamarkets.com/up`.
 2. Créer l'admin initial :
    `php artisan app:make-admin "Nom complet" "6XXXXXXXX" "mot-de-passe"`.
 3. Déployer les deux projets Vercel en Preview.
@@ -186,8 +187,8 @@ déploiement Vercel.
 ## 6. Vérifications après déploiement
 
 ```bash
-curl -fsS https://api.domaine.tld/up
-curl -fsS https://api.domaine.tld/api/heure
+curl -fsS https://api.mboamarkets.com/up
+curl -fsS https://api.mboamarkets.com/api/heure
 php artisan about
 php artisan migrate:status
 php artisan schedule:list
