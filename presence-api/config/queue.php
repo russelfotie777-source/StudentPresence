@@ -40,7 +40,10 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // L'assistant peut traiter un gros PDF pendant une heure. Ce
+            // délai doit rester supérieur au timeout du worker (3600 s), sinon
+            // le même import peut être repris une seconde fois en parallèle.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 3660),
             'after_commit' => false,
         ],
 

@@ -15,6 +15,9 @@ Trois applications, un seul dépôt :
 | `presence-app/` | Application mobile (étudiant, délégué, enseignant) | Next.js 16, React 19, Tailwind v4 |
 | `presence-admin/` | Back-office de l'administration | Next.js 16, shadcn/base-ui |
 
+Le passage en production (Vercel + hébergement Laravel mutualisé) est décrit
+dans [`DEPLOIEMENT.md`](DEPLOIEMENT.md).
+
 ## Démarrer en local
 
 Prérequis : PHP 8.4, Composer, Node 20+, MySQL, et Ghostscript (`gs`) pour la

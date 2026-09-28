@@ -16,17 +16,22 @@ return [
     */
 
     // presence-app et presence-admin (Next.js/Vercel) parlent à cette API en
-    // Bearer token (Sanctum personal access tokens), jamais en cookies — pas
-    // de session cross-domaine à sécuriser ici, donc une origine "*" avec
-    // supports_credentials=false est volontairement laissée telle quelle
-    // (pas besoin d'énumérer les domaines Vercel, y compris les previews).
+    // Bearer token (Sanctum personal access tokens), jamais en cookies. Les
+    // origines restent toutefois explicites : un domaine tiers n'a aucune
+    // raison d'appeler l'API depuis le navigateur d'un utilisateur.
     'paths' => ['api/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001')),
+    ))),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('CORS_ALLOWED_ORIGIN_PATTERNS', '')),
+    ))),
 
     'allowed_headers' => ['*'],
 

@@ -8,6 +8,10 @@ import type { NextConfig } from "next";
  */
 const API_LOCALE = process.env.API_PROXY ?? "http://localhost:8001";
 
+if (process.env.VERCEL && !process.env.NEXT_PUBLIC_API_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL doit être configurée sur Vercel.");
+}
+
 const nextConfig: NextConfig = {
   async rewrites() {
     if (process.env.NEXT_PUBLIC_API_URL) return [];
