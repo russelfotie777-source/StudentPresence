@@ -27,3 +27,4 @@ presence-admin/.env*
 /.vercel/
 /.env.local
 /ziris-api-ifastnet.zip
+/ziris-production.env
