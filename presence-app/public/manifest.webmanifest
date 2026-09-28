@@ -1,14 +1,22 @@
 {
   "name": "Ziris",
   "short_name": "Ziris",
-  "description": "Pointage de présence en ligne",
+  "description": "Pointage, emploi du temps et suivi de présence sur le campus.",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#087953",
+  "background_color": "#0f1828",
+  "theme_color": "#0f1828",
+  "lang": "fr",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "utilities"],
+  "prefer_related_applications": false,
   "icons": [
     { "src": "/ziris.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/ziris-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/ziris-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/ziris-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/ziris-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/ziris-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/ziris-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

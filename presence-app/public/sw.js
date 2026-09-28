@@ -1,5 +1,5 @@
 /*
- * Service worker de Présence : reçoit les rappels de pointage poussés par
+ * Service worker de Ziris : reçoit les rappels de pointage poussés par
  * l'API (Web Push) et les affiche même quand l'app est fermée. Aucune
  * interception réseau : il ne fait que des notifications.
  */
@@ -14,11 +14,11 @@ self.addEventListener("push", (event) => {
     charge = { body: event.data ? event.data.text() : "" };
   }
 
-  const titre = charge.title || "Présence";
+  const titre = charge.title || "Ziris";
   const options = {
     body: charge.body || "",
-    icon: charge.icon || "/iut-douala.png",
-    badge: charge.badge || "/iut-douala.png",
+    icon: charge.icon || "/ziris-192.png",
+    badge: charge.badge || "/ziris-192.png",
     tag: charge.tag,
     renotify: Boolean(charge.renotify),
     data: charge.data || { url: "/dashboard" },

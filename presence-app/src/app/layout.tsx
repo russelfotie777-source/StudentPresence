@@ -3,6 +3,7 @@ import { Fira_Sans } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppToaster } from "@/components/app-toaster";
+import { InstallPrompt } from "@/components/install-prompt";
 import "./globals.css";
 
 // Une seule voix, celle de la maquette de référence : Fira Sans, dessinée
@@ -25,9 +26,40 @@ const body = Fira_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Ziris",
-  description: "Ziris, votre espace de présence et de vie sur le campus.",
-  icons: { icon: "/ziris.svg" },
+  metadataBase: new URL("https://ziris.vercel.app"),
+  applicationName: "Ziris",
+  title: {
+    default: "Ziris — La présence, simplement",
+    template: "%s · Ziris",
+  },
+  description:
+    "Pointage, emploi du temps et suivi de présence réunis dans votre espace campus.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: "/",
+    siteName: "Ziris",
+    title: "Ziris — La présence, simplement",
+    description:
+      "Pointage, emploi du temps et suivi de présence réunis dans votre espace campus.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ziris — La présence, simplement",
+    description:
+      "Pointage, emploi du temps et suivi de présence réunis dans votre espace campus.",
+  },
+  icons: {
+    icon: "/ziris.svg",
+    apple: "/ziris-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Ziris",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: { telephone: false },
   manifest: "/manifest.webmanifest",
 };
 
@@ -47,6 +79,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>
+          <InstallPrompt />
           <AppToaster />
         </ThemeProvider>
       </body>
