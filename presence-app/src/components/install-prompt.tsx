@@ -2,17 +2,6 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { motion, MotionConfig } from "motion/react";
-import {
-  BellRing,
-  Check,
-  Clock3,
-  Download,
-  ExternalLink,
-  MonitorSmartphone,
-  Share,
-  SquarePlus,
-} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +22,14 @@ interface NavigatorWithStandalone extends Navigator {
 }
 
 const DISMISSED_AT_KEY = "ziris-install-dismissed-at";
-const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+const PROMPT_DELAY_MS = 2 * 60 * 1000;
+const DISMISSAL_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+const IOS_STEPS = [
+  "Ouvrez cette page dans Safari.",
+  "Touchez Partager, puis « Sur l’écran d’accueil ».",
+  "Activez « Ouvrir comme app », puis touchez Ajouter.",
+];
 
 function isInstalled() {
   return (
@@ -50,8 +46,31 @@ function isAppleMobile() {
 }
 
 function dismissedRecently() {
-  const dismissedAt = Number(window.localStorage.getItem(DISMISSED_AT_KEY));
-  return Number.isFinite(dismissedAt) && Date.now() - dismissedAt < SEVEN_DAYS;
+  try {
+    const dismissedAt = Number(window.localStorage.getItem(DISMISSED_AT_KEY));
+    return (
+      Number.isFinite(dismissedAt) &&
+      Date.now() - dismissedAt < DISMISSAL_WINDOW_MS
+    );
+  } catch {
+    return false;
+  }
+}
+
+function rememberDismissal() {
+  try {
+    window.localStorage.setItem(DISMISSED_AT_KEY, String(Date.now()));
+  } catch {
+    // L'installation reste utilisable quand le stockage est indisponible.
+  }
+}
+
+function clearDismissal() {
+  try {
+    window.localStorage.removeItem(DISMISSED_AT_KEY);
+  } catch {
+    // Le stockage peut être bloqué en navigation privée.
+  }
 }
 
 export function InstallPrompt() {
@@ -65,202 +84,168 @@ export function InstallPrompt() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/" })
+        .catch(() => undefined);
     }
 
     if (isInstalled() || dismissedRecently()) return;
 
+    const showAfter = Date.now() + PROMPT_DELAY_MS;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    if (ios) {
-      timer = setTimeout(() => setOpen(true), 1400);
-    }
+    let waitingForVisibility = false;
+
+    const reveal = () => {
+      if (document.visibilityState === "visible") {
+        setOpen(true);
+      } else {
+        waitingForVisibility = true;
+      }
+    };
+
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(reveal, Math.max(0, showAfter - Date.now()));
+    };
+
+    if (ios) schedule();
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallEvent(event as BeforeInstallPromptEvent);
-      timer = setTimeout(() => setOpen(true), 900);
+      schedule();
     };
 
     const handleInstalled = () => {
+      if (timer) clearTimeout(timer);
+      waitingForVisibility = false;
       setOpen(false);
       setInstallEvent(null);
-      window.localStorage.removeItem(DISMISSED_AT_KEY);
+      clearDismissal();
+    };
+
+    const handleVisibilityChange = () => {
+      if (waitingForVisibility && document.visibilityState === "visible") {
+        waitingForVisibility = false;
+        setOpen(true);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleInstallPrompt);
     window.addEventListener("appinstalled", handleInstalled);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       if (timer) clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [ios]);
 
   function dismiss() {
-    window.localStorage.setItem(DISMISSED_AT_KEY, String(Date.now()));
+    rememberDismissal();
     setOpen(false);
   }
 
   async function install() {
     if (!installEvent) return;
     setInstalling(true);
-    await installEvent.prompt();
-    const choice = await installEvent.userChoice;
-    setInstallEvent(null);
-    setInstalling(false);
 
-    if (choice.outcome === "accepted") {
-      setOpen(false);
-      window.localStorage.removeItem(DISMISSED_AT_KEY);
-    } else {
-      dismiss();
+    try {
+      await installEvent.prompt();
+      const choice = await installEvent.userChoice;
+      setInstallEvent(null);
+
+      if (choice.outcome === "accepted") {
+        setOpen(false);
+        clearDismissal();
+      } else {
+        dismiss();
+      }
+    } finally {
+      setInstalling(false);
     }
   }
 
-  const steps = [
-    {
-      icon: ExternalLink,
-      title: "Ouvrez Ziris dans Safari",
-      detail: "L’installation depuis l’écran d’accueil passe par Safari.",
-    },
-    {
-      icon: Share,
-      title: "Touchez Partager",
-      detail: "Utilisez l’icône carrée avec la flèche vers le haut.",
-    },
-    {
-      icon: SquarePlus,
-      title: "Sur l’écran d’accueil",
-      detail: "Activez « Ouvrir comme app », puis touchez Ajouter.",
-    },
-  ];
-
   return (
-    <MotionConfig reducedMotion="user">
-      <Dialog
-        open={open}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) dismiss();
-          else setOpen(true);
-        }}
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) dismiss();
+        else setOpen(true);
+      }}
+    >
+      <DialogContent
+        className="max-h-[calc(100dvh-1rem)] gap-0 overflow-y-auto rounded-[8px] border-0 bg-white p-0 text-[#111827] shadow-[0_24px_80px_rgba(4,12,24,0.28)] ring-1 ring-black/10 sm:max-w-[420px]"
+        showCloseButton
       >
-        <DialogContent
-          className="max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-[8px] border-0 bg-[#0f1828] p-0 text-white ring-1 ring-white/15 sm:max-w-[460px]"
-          showCloseButton
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="border-b border-white/10 px-6 pb-5 pt-6">
-              <div className="flex items-start gap-4 pr-8">
-                <motion.div
-                  initial={{ scale: 0.72, rotate: -8 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 310, damping: 20 }}
-                  className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[8px] ring-1 ring-white/15"
-                >
-                  <Image src="/ziris-192.png" alt="" fill sizes="64px" />
-                </motion.div>
-                <DialogHeader className="pt-1 text-left">
-                  <p className="text-xs font-semibold text-[#55e7ad]">
-                    Ziris sur votre écran d’accueil
-                  </p>
-                  <DialogTitle className="font-display text-2xl font-bold leading-tight text-white">
-                    {ios ? "Installer sur cet iPhone" : "Installer Ziris"}
-                  </DialogTitle>
-                  <DialogDescription className="text-sm leading-relaxed text-white/65">
-                    {ios
-                      ? "Trois gestes suffisent pour ouvrir Ziris comme une vraie app."
-                      : "Un accès direct, plein écran et prêt pour vos rappels de présence."}
-                  </DialogDescription>
-                </DialogHeader>
+        <div>
+          <div className="px-6 pb-6 pt-7 sm:px-7">
+            <div className="flex items-start gap-4 pr-7">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] ring-1 ring-black/10">
+                <Image src="/ziris-192.png" alt="" fill sizes="48px" />
               </div>
+              <DialogHeader className="gap-2 text-left">
+                <DialogTitle className="font-display text-xl font-semibold leading-snug text-[#111827]">
+                  {ios ? "Ajouter Ziris à votre iPhone" : "Installer Ziris ?"}
+                </DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed text-[#5f6877]">
+                  {ios
+                    ? "L’ajout à l’écran d’accueil se fait depuis Safari."
+                    : "Ajoutez Ziris à votre écran d’accueil pour la retrouver plus facilement."}
+                </DialogDescription>
+              </DialogHeader>
             </div>
 
-            {ios ? (
-              <ol className="grid gap-0 px-6 py-3">
-                {steps.map((step, index) => {
-                  const Icon = step.icon;
-                  return (
-                    <motion.li
-                      key={step.title}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.35, delay: 0.12 + index * 0.08 }}
-                      className="flex gap-4 border-b border-white/8 py-4 last:border-0"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/8 text-[#55e7ad] ring-1 ring-white/10">
-                        <Icon size={19} aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0">
-                        <strong className="block text-sm font-semibold text-white">
-                          {index + 1}. {step.title}
-                        </strong>
-                        <span className="mt-1 block text-xs leading-relaxed text-white/55">
-                          {step.detail}
-                        </span>
-                      </span>
-                    </motion.li>
-                  );
-                })}
-              </ol>
-            ) : (
-              <div className="grid grid-cols-3 border-b border-white/10 px-6 py-6 text-center">
-                {[
-                  { icon: MonitorSmartphone, label: "Accès direct" },
-                  { icon: BellRing, label: "Rappels prêts" },
-                  { icon: Check, label: "Plein écran" },
-                ].map(({ icon: Icon, label }, index) => (
-                  <motion.div
-                    key={label}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.1 + index * 0.08 }}
-                    className="flex min-w-0 flex-col items-center gap-2 px-1"
+            {ios && (
+              <ol className="mt-6 grid gap-3 border-t border-black/8 pt-5">
+                {IOS_STEPS.map((step, index) => (
+                  <li
+                    key={step}
+                    className="grid grid-cols-[1.25rem_1fr] gap-3 text-sm leading-relaxed text-[#4f5968]"
                   >
-                    <Icon size={20} className="text-[#55e7ad]" aria-hidden="true" />
-                    <span className="text-xs font-medium text-white/70">{label}</span>
-                  </motion.div>
+                    <span className="font-semibold text-[#087953]">
+                      {index + 1}.
+                    </span>
+                    <span>{step}</span>
+                  </li>
                 ))}
-              </div>
+              </ol>
             )}
+          </div>
 
-            <div className="flex flex-col gap-2 px-6 py-5 sm:flex-row-reverse">
-              {ios ? (
-                <button
-                  type="button"
-                  onClick={dismiss}
-                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#18d98b] px-5 text-sm font-semibold text-[#07180f] transition-colors hover:bg-[#55e7ad] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55e7ad]"
-                >
-                  <Check size={18} aria-hidden="true" />
-                  J’ai compris
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={install}
-                  disabled={installing || !installEvent}
-                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#18d98b] px-5 text-sm font-semibold text-[#07180f] transition-colors hover:bg-[#55e7ad] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55e7ad] disabled:cursor-wait disabled:opacity-60"
-                >
-                  <Download size={18} aria-hidden="true" />
-                  {installing ? "Ouverture…" : "Installer Ziris"}
-                </button>
-              )}
+          <div className="flex flex-col gap-2 border-t border-black/8 bg-[#f7f9fb] px-6 py-4 sm:flex-row-reverse sm:px-7">
+            {ios ? (
               <button
                 type="button"
                 onClick={dismiss}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium text-white/65 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="inline-flex h-11 flex-1 items-center justify-center rounded-[6px] bg-[#087953] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#066747] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087953]"
               >
-                <Clock3 size={17} aria-hidden="true" />
-                Plus tard
+                D’accord
               </button>
-            </div>
-          </motion.div>
-        </DialogContent>
-      </Dialog>
-    </MotionConfig>
+            ) : (
+              <button
+                type="button"
+                onClick={install}
+                disabled={installing || !installEvent}
+                className="inline-flex h-11 flex-1 items-center justify-center rounded-[6px] bg-[#087953] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#066747] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087953] disabled:cursor-wait disabled:opacity-60"
+              >
+                {installing ? "Ouverture…" : "Installer"}
+              </button>
+            )}
+            {!ios && (
+              <button
+                type="button"
+                onClick={dismiss}
+                className="inline-flex h-11 items-center justify-center rounded-[6px] px-4 text-sm font-medium text-[#5f6877] transition-colors hover:bg-black/5 hover:text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087953]"
+              >
+                Pas maintenant
+              </button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
