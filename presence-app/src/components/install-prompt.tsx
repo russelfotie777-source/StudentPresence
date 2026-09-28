@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { motion, MotionConfig } from "motion/react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,7 @@ interface NavigatorWithStandalone extends Navigator {
 }
 
 const DISMISSED_AT_KEY = "ziris-install-dismissed-at";
-const PROMPT_DELAY_MS = 2 * 60 * 1000;
+const PROMPT_DELAY_MS = 15_000;
 const DISMISSAL_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 const IOS_STEPS = [
@@ -169,83 +170,94 @@ export function InstallPrompt() {
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) dismiss();
-        else setOpen(true);
-      }}
-    >
-      <DialogContent
-        className="max-h-[calc(100dvh-1rem)] gap-0 overflow-y-auto rounded-[8px] border-0 bg-white p-0 text-[#111827] shadow-[0_24px_80px_rgba(4,12,24,0.28)] ring-1 ring-black/10 sm:max-w-[420px]"
-        showCloseButton
+    <MotionConfig reducedMotion="user">
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) dismiss();
+          else setOpen(true);
+        }}
       >
-        <div>
-          <div className="px-6 pb-6 pt-7 sm:px-7">
-            <div className="flex items-start gap-4 pr-7">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[8px] ring-1 ring-black/10">
-                <Image src="/ziris-192.png" alt="" fill sizes="48px" />
+        <DialogContent
+          data-install-prompt
+          className="install-prompt-dialog gap-0 overflow-visible rounded-none border-0 bg-transparent p-0 text-[#17191d] shadow-none ring-0 data-closed:animate-none data-open:animate-none sm:max-w-[400px]"
+          overlayClassName="bg-black/35 supports-backdrop-filter:backdrop-blur-none"
+          showCloseButton
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[10px] bg-white text-[#17191d] shadow-[0_20px_60px_rgba(15,23,42,0.20)] ring-1 ring-black/8"
+          >
+            <div className="px-5 pb-5 pt-5 sm:px-6 sm:pt-6">
+              <div className="flex items-start gap-3.5 pr-7">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[8px] ring-1 ring-black/10">
+                  <Image src="/ziris-192.png" alt="" fill sizes="44px" />
+                </div>
+                <DialogHeader className="gap-1.5 text-left">
+                  <DialogTitle className="font-display text-xl font-semibold leading-snug text-[#17191d]">
+                    {ios ? "Ajouter Ziris à votre iPhone" : "Installer Ziris"}
+                  </DialogTitle>
+                  <DialogDescription className="text-sm leading-relaxed text-[#697180]">
+                    {ios
+                      ? "Depuis Safari, ajoutez Ziris à votre écran d’accueil."
+                      : "Accédez à Ziris directement depuis votre écran d’accueil."}
+                  </DialogDescription>
+                </DialogHeader>
               </div>
-              <DialogHeader className="gap-2 text-left">
-                <DialogTitle className="font-display text-xl font-semibold leading-snug text-[#111827]">
-                  {ios ? "Ajouter Ziris à votre iPhone" : "Installer Ziris ?"}
-                </DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-[#5f6877]">
-                  {ios
-                    ? "L’ajout à l’écran d’accueil se fait depuis Safari."
-                    : "Ajoutez Ziris à votre écran d’accueil pour la retrouver plus facilement."}
-                </DialogDescription>
-              </DialogHeader>
+
+              {ios && (
+                <ol className="mt-5 grid gap-2.5 border-t border-[#e7e9ed] pt-4">
+                  {IOS_STEPS.map((step, index) => (
+                    <li
+                      key={step}
+                      className="grid grid-cols-[1.15rem_1fr] gap-2.5 text-sm leading-relaxed text-[#555d6a]"
+                    >
+                      <span className="font-semibold text-[#17191d]">
+                        {index + 1}.
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </div>
 
-            {ios && (
-              <ol className="mt-6 grid gap-3 border-t border-black/8 pt-5">
-                {IOS_STEPS.map((step, index) => (
-                  <li
-                    key={step}
-                    className="grid grid-cols-[1.25rem_1fr] gap-3 text-sm leading-relaxed text-[#4f5968]"
+            <div className="border-t border-[#e7e9ed] px-5 py-4 sm:px-6">
+              {ios ? (
+                <motion.button
+                  type="button"
+                  onClick={dismiss}
+                  whileTap={{ scale: 0.985 }}
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-[8px] bg-[#17191d] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#272b32] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#17191d]"
+                >
+                  J’ai compris
+                </motion.button>
+              ) : (
+                <>
+                  <motion.button
+                    type="button"
+                    onClick={install}
+                    disabled={installing || !installEvent}
+                    whileTap={{ scale: 0.985 }}
+                    className="inline-flex min-h-12 w-full items-center justify-center rounded-[8px] bg-[#17191d] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#272b32] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#17191d] disabled:cursor-wait disabled:opacity-60"
                   >
-                    <span className="font-semibold text-[#087953]">
-                      {index + 1}.
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2 border-t border-black/8 bg-[#f7f9fb] px-6 py-4 sm:flex-row-reverse sm:px-7">
-            {ios ? (
-              <button
-                type="button"
-                onClick={dismiss}
-                className="inline-flex h-11 flex-1 items-center justify-center rounded-[6px] bg-[#087953] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#066747] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087953]"
-              >
-                D’accord
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={install}
-                disabled={installing || !installEvent}
-                className="inline-flex h-11 flex-1 items-center justify-center rounded-[6px] bg-[#087953] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#066747] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087953] disabled:cursor-wait disabled:opacity-60"
-              >
-                {installing ? "Ouverture…" : "Installer"}
-              </button>
-            )}
-            {!ios && (
-              <button
-                type="button"
-                onClick={dismiss}
-                className="inline-flex h-11 items-center justify-center rounded-[6px] px-4 text-sm font-medium text-[#5f6877] transition-colors hover:bg-black/5 hover:text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087953]"
-              >
-                Pas maintenant
-              </button>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+                    {installing ? "Ouverture…" : "Installer l’application"}
+                  </motion.button>
+                  <button
+                    type="button"
+                    onClick={dismiss}
+                    className="mt-1 inline-flex min-h-10 w-full items-center justify-center rounded-[8px] px-4 text-sm font-medium text-[#666e7b] transition-colors hover:bg-[#f5f6f8] hover:text-[#17191d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#17191d]"
+                  >
+                    Plus tard
+                  </button>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+    </MotionConfig>
   );
 }

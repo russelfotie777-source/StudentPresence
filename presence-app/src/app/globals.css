@@ -1497,6 +1497,29 @@ a {
     padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
   }
 }
+[data-slot="dialog-content"][data-install-prompt] {
+  max-height: none;
+  overflow: visible;
+}
+[data-slot="dialog-content"][data-install-prompt] button:focus-visible {
+  outline-color: #4b5563;
+  outline-offset: 2px;
+}
+@media (max-width: 639px) {
+  [data-slot="dialog-content"][data-install-prompt] {
+    inset: auto 16px calc(16px + env(safe-area-inset-bottom)) 16px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 32px - env(safe-area-inset-bottom));
+    transform: none;
+    translate: none;
+    --tw-translate-x: 0;
+    --tw-translate-y: 0;
+    overflow: visible;
+    border-radius: 0;
+    padding: 0;
+  }
+}
 .ziris-wordmark {
   display: inline-block;
   font-family: var(--font-display), sans-serif;
